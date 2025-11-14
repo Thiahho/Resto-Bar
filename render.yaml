@@ -14,9 +14,7 @@ services:
       - key: ASPNETCORE_URLS
         value: http://0.0.0.0:5000
       - key: ConnectionStrings__DefaultConnection
-        fromDatabase:
-          name: BDCodianB
-          property: connectionString
+        sync: false
       - key: Admin__Password
         generateValue: true
         sync: false
@@ -30,11 +28,3 @@ services:
       - key: Cors__AllowedOrigins
         value: https://tu-dominio.vercel.app
     autoDeploy: true
-
-databases:
-  # PostgreSQL Database
-  - name: BDCodianB
-    databaseName: BDCodianB
-    plan: free
-    region: oregon
-    user: postgres
