@@ -1,0 +1,40 @@
+services:
+  # Backend API Service
+  - type: web
+    name: burger-api
+    runtime: docker
+    region: oregon
+    plan: free
+    branch: master
+    dockerfilePath: ./Back/Dockerfile
+    healthCheckPath: /api/public/health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:5000
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: burger-db
+          property: connectionString
+      - key: Admin__Password
+        generateValue: true
+        sync: false
+      - key: Jwt__Key
+        generateValue: true
+        sync: false
+      - key: Jwt__Issuer
+        value: DigitalCatalog.Api
+      - key: Jwt__Audience
+        value: DigitalCatalog.Frontend
+      - key: Cors__AllowedOrigins
+        value: https://tu-dominio.vercel.app
+    autoDeploy: true
+
+databases:
+  # PostgreSQL Database
+  - name: burger-db
+    databaseName: burgerdb
+    plan: free
+    region: oregon
+    user: burgeruser

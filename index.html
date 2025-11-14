@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/img/cartelito.png" />
+    <link rel="apple-touch-icon" href="/img/cartelito.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cartelito - Web</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#267f6f", // Teal green
+              secondary: "#1F2937", // Gray 800
+              accent: "#34D399", // Emerald 400
+              background: "#F9FAFB", // Gray 50
+              "text-main": "#111827", // Gray 900
+              "text-light": "#6B7280", // Gray 500
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <style>
+      @keyframes slide-in-right {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      .animate-slide-in-right {
+        animation: slide-in-right 0.3s ease-out;
+      }
+    </style>
+  </head>
+  <body class="bg-background text-text-main">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
