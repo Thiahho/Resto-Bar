@@ -1,5 +1,6 @@
 export interface BusinessInfo {
   name: string;
+  description?: string; // Descripción del negocio que aparece en InfoPage
   banner: {
     imageUrl: string;
     title: string;
@@ -9,6 +10,7 @@ export interface BusinessInfo {
   contact: {
     phone: string;
     address: string;
+    transferAlias?: string; // Alias para transferencias bancarias
     social: {
       instagram: string;
       facebook: string;

@@ -668,21 +668,22 @@ const OrderManager: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Gestión de Órdenes</h1>
-        <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Gestión de Órdenes</h1>
+        <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => exportToCSV()}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+            className="flex-1 sm:flex-initial bg-green-500 hover:bg-green-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
             title="Exportar órdenes a CSV"
           >
-            📊 Exportar CSV
+            <span className="hidden sm:inline">📊 Exportar CSV</span>
+            <span className="sm:hidden">📊 CSV</span>
           </button>
           <button
             onClick={fetchOrders}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+            className="flex-1 sm:flex-initial bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base"
           >
-            🔄 Actualizar
+            🔄<span className="hidden sm:inline ml-1">Actualizar</span>
           </button>
         </div>
       </div>
@@ -712,10 +713,10 @@ const OrderManager: React.FC = () => {
         </div>
 
         {/* Filtros por estado */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1 sm:gap-2">
           <button
             onClick={() => setFilterStatus("ALL")}
-            className={`px-4 py-2 rounded-lg transition-colors ${
+            className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
               filterStatus === "ALL"
                 ? "bg-gray-800 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -731,7 +732,7 @@ const OrderManager: React.FC = () => {
               <button
                 key={status.value}
                 onClick={() => setFilterStatus(status.value)}
-                className={`px-4 py-2 rounded-lg transition-colors ${
+                className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
                   filterStatus === status.value
                     ? `${status.color} text-white`
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300"

@@ -134,17 +134,18 @@ const CategoryManager: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Categorias</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Categorias</h1>
         <button
           onClick={() => openModal()}
-          className="bg-primary text-white font-bold py-2 px-4 rounded hover:bg-amber-600 transition-colors"
+          className="bg-primary text-white font-bold py-2 px-4 rounded hover:bg-amber-600 transition-colors whitespace-nowrap"
         >
-          Añadir Categoria
+          + Añadir
         </button>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      {/* Table view for desktop */}
+      <div className="hidden md:block bg-white shadow-md rounded-lg overflow-hidden">
         <table className="min-w-full leading-normal">
           <thead>
             <tr>
@@ -212,9 +213,61 @@ const CategoryManager: React.FC = () => {
         </table>
       </div>
 
+      {/* Card view for mobile */}
+      <div className="md:hidden space-y-3">
+        {categories.map((category, index) => (
+          <div
+            key={category.id}
+            className="bg-white shadow-md rounded-lg p-4"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="font-bold text-lg text-gray-800 flex-1">
+                {category.name}
+              </h3>
+            </div>
+
+            {/* Botones de orden */}
+            <div className="flex gap-2 mb-3 border-t pt-3">
+              <button
+                onClick={() => moveCategory(category, "up")}
+                disabled={index === 0}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 text-gray-700 py-2 px-3 rounded text-sm font-medium transition-colors"
+                title="Mover arriba"
+              >
+                ▲ Subir
+              </button>
+              <button
+                onClick={() => moveCategory(category, "down")}
+                disabled={index === categories.length - 1}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 text-gray-700 py-2 px-3 rounded text-sm font-medium transition-colors"
+                title="Mover abajo"
+              >
+                ▼ Bajar
+              </button>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => openModal(category)}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => handleDelete(category.id)}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {isModalOpen && currentCategory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
-          <div className="bg-white rounded-lg p-8 z-50 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
+          <div className="bg-white rounded-lg p-4 md:p-8 z-50 w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">
               {currentCategory.id ? "Editar Categoria" : "Añadir Categoria"}
             </h2>

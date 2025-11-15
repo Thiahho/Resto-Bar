@@ -48,11 +48,13 @@ namespace Back.Controller
                 {
                     s.Id,
                     s.Name,
+                    s.Description,
                     s.BannerTitle,
                     s.BannerSubtitle,
                     s.OpeningHours,
                     s.PhoneWa,
                     s.Address,
+                    s.TransferAlias,
                     s.Instagram,
                     s.Facebook
                 })
@@ -66,6 +68,7 @@ namespace Back.Controller
             var businessInfo = new BusinessInfoDto
             {
                 Name = settings.Name,
+                Description = settings.Description,
                 Banner = new BannerDto
                 {
                     Title = settings.BannerTitle ?? "",
@@ -77,6 +80,7 @@ namespace Back.Controller
                 {
                     Phone = settings.PhoneWa ?? "",
                     Address = settings.Address ?? "",
+                    TransferAlias = settings.TransferAlias,
                     Social = new SocialDto { Instagram = settings.Instagram ?? "", Facebook = settings.Facebook ?? "" }
                 }
             };

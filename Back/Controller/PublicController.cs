@@ -33,12 +33,14 @@ namespace Back.Controller
             return new BusinessInfoDto
             {
                 Name = settings.Name,
+                Description = settings.Description,
                 Banner = new BannerDto { Title = settings.BannerTitle ?? "", Subtitle = settings.BannerSubtitle ?? "", ImageUrl = "" },
                 Hours = JsonSerializer.Deserialize<string[]>(settings.OpeningHours ?? "[]") ?? Array.Empty<string>(),
                 Contact = new ContactDto
                 {
                     Phone = settings.PhoneWa ?? "",
                     Address = settings.Address ?? "",
+                    TransferAlias = settings.TransferAlias,
                     Social = new SocialDto { Instagram = settings.Instagram ?? "", Facebook = settings.Facebook ?? "" }
                 }
             };
@@ -66,11 +68,13 @@ namespace Back.Controller
                 }
 
                 settings.Name = settingsDto.Name ?? "Mi Negocio";
+                settings.Description = settingsDto.Description;
                 settings.BannerTitle = settingsDto.BannerTitle ?? "";
                 settings.BannerSubtitle = settingsDto.BannerSubtitle ?? "";
                 settings.OpeningHours = JsonSerializer.Serialize(settingsDto.Hours ?? Array.Empty<string>());
                 settings.PhoneWa = settingsDto.ContactPhone ?? "";
                 settings.Address = settingsDto.ContactAddress ?? "";
+                settings.TransferAlias = settingsDto.ContactTransferAlias;
                 settings.Instagram = settingsDto.SocialInstagram ?? "";
                 settings.Facebook = settingsDto.SocialFacebook ?? "";
 

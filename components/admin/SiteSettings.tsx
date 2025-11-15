@@ -53,8 +53,10 @@ const SiteSettings: React.FC = () => {
     // Siempre enviar como FormData
     const formData = new FormData();
     formData.append("Name", settings.name);
+    if (settings.description) formData.append("Description", settings.description);
     formData.append("ContactAddress", settings.contact.address);
     formData.append("ContactPhone", settings.contact.phone);
+    if (settings.contact.transferAlias) formData.append("ContactTransferAlias", settings.contact.transferAlias);
     formData.append("BannerTitle", settings.banner.title);
     formData.append("BannerSubtitle", settings.banner.subtitle);
     formData.append("SocialInstagram", settings.contact.social.instagram);
@@ -81,10 +83,10 @@ const SiteSettings: React.FC = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6">
         Configuracion de la tienda
       </h1>
-      <div className="bg-white p-8 rounded-lg shadow-md">
+      <div className="bg-white p-4 md:p-8 rounded-lg shadow-md">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
@@ -97,6 +99,17 @@ const SiteSettings: React.FC = () => {
                 name="name"
                 value={settings.name}
                 onChange={handleInputChange}
+                className={inputClasses}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className={labelClasses}>Descripción del Negocio</label>
+              <input
+                type="text"
+                name="description"
+                value={settings.description || ""}
+                onChange={handleInputChange}
+                placeholder="Ej: Todas incluyen papas fritas caseras"
                 className={inputClasses}
               />
             </div>
@@ -117,6 +130,17 @@ const SiteSettings: React.FC = () => {
                 name="contact.phone"
                 value={settings.contact.phone}
                 onChange={handleInputChange}
+                className={inputClasses}
+              />
+            </div>
+            <div>
+              <label className={labelClasses}>Alias de Transferencia</label>
+              <input
+                type="text"
+                name="contact.transferAlias"
+                value={settings.contact.transferAlias || ""}
+                onChange={handleInputChange}
+                placeholder="Ej: MI.ALIAS.CVU"
                 className={inputClasses}
               />
             </div>

@@ -173,19 +173,20 @@ const ProductsManager: React.FC = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
           Gestion de Productos
         </h1>
         <button
           onClick={() => openModal()}
-          className="bg-primary text-white font-bold py-2 px-4 rounded hover:bg-amber-600 transition-colors"
+          className="bg-primary text-white font-bold py-2 px-4 rounded hover:bg-amber-600 transition-colors whitespace-nowrap"
         >
-          Añadir Producto
+          + Añadir
         </button>
       </div>
 
-      <div className="bg-white shadow-md rounded-lg overflow-x-auto">
+      {/* Table view for desktop */}
+      <div className="hidden md:block bg-white shadow-md rounded-lg overflow-x-auto">
         <table className="min-w-full leading-normal">
           <thead>
             <tr>
@@ -290,9 +291,94 @@ const ProductsManager: React.FC = () => {
         </table>
       </div>
 
+      {/* Card view for mobile */}
+      <div className="md:hidden space-y-4">
+        {products.map((product, index) => (
+          <div
+            key={product.id}
+            className="bg-white shadow-md rounded-lg p-4"
+          >
+            <div className="flex gap-4">
+              {/* Imagen */}
+              <div className="flex-shrink-0">
+                {product.hasImage ? (
+                  <img
+                    src={getProductsImageUrl(product.id)}
+                    alt={product.name}
+                    className="w-20 h-20 object-cover rounded"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/placeholder.png";
+                    }}
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs text-center">
+                    No Img
+                  </div>
+                )}
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg text-gray-800 truncate">
+                  {product.name}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {categories.find((c) => c.id === product.categoryId)?.name}
+                </p>
+                <p className="text-lg font-semibold text-primary mt-1">
+                  ${Math.round(product.priceCents / 100).toLocaleString("es-AR")}
+                </p>
+              </div>
+            </div>
+
+            {/* Botones de orden */}
+            <div className="flex gap-2 mt-3 border-t pt-3">
+              <button
+                onClick={() => moveProduct(product, "up")}
+                disabled={index === 0}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 text-gray-700 py-2 px-3 rounded text-sm font-medium transition-colors"
+                title="Mover arriba"
+              >
+                ▲ Subir
+              </button>
+              <button
+                onClick={() => moveProduct(product, "down")}
+                disabled={index === products.length - 1}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-300 text-gray-700 py-2 px-3 rounded text-sm font-medium transition-colors"
+                title="Mover abajo"
+              >
+                ▼ Bajar
+              </button>
+            </div>
+
+            {/* Acciones */}
+            <div className="flex flex-col gap-2 mt-3">
+              <button
+                onClick={() => openModal(product)}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => setModifiersModalProduct(product)}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+              >
+                Modificadores
+              </button>
+              <button
+                onClick={() => handleDelete(product.id)}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded text-sm font-medium transition-colors"
+              >
+                Borrar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {isModalOpen && currentProducts && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center">
-          <div className="bg-white rounded-lg p-8 z-50 w-full max-w-lg max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center p-4">
+          <div className="bg-white rounded-lg p-4 md:p-8 z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold mb-4">
               {currentProducts.id ? "Editar Productos" : "Añadir Productos"}
             </h2>

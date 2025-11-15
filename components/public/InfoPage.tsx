@@ -82,9 +82,11 @@ const InfoPage: React.FC = () => {
               ))}
             </div>
           </div>
-          <p className="text-gray-400 text-sm mt-2">
-            Todas incluyen papas fritas caseras
-          </p>
+          {businessInfo.description && (
+            <p className="text-gray-400 text-sm mt-2">
+              {businessInfo.description}
+            </p>
+          )}
         </div>
 
         {/* Contacto */}
@@ -143,24 +145,29 @@ const InfoPage: React.FC = () => {
           <div className="space-y-2 text-gray-300">
             <p>Efectivo</p>
             <p>Transferencia</p>
-            <div className="flex items-center justify-between bg-gray-800 p-2 rounded">
-              <p className="text-sm">Alias: ******</p>
-              <button className="text-primary">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+            {businessInfo.contact.transferAlias && (
+              <div className="flex items-center justify-between bg-gray-800 p-2 rounded">
+                <p className="text-sm">Alias: {businessInfo.contact.transferAlias}</p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(businessInfo.contact.transferAlias || "")}
+                  className="text-primary"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-              </button>
-            </div>
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -188,34 +195,15 @@ const InfoPage: React.FC = () => {
             </span>
           </div>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Lunes</span>
-              <span className="text-white">Cerrado</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Martes</span>
-              <span className="text-white">De 19:30 a 23:30 hs.</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Miércoles</span>
-              <span className="text-white">De 19:30 a 23:30 hs.</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Jueves</span>
-              <span className="text-white">De 19:30 a 23:30 hs.</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Viernes</span>
-              <span className="text-white">De 19:30 a 23:30 hs.</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Sábado</span>
-              <span className="text-white">De 19:30 a 23:30 hs.</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Domingo</span>
-              <span className="text-white">De 19:30 a 23:30 hs.</span>
-            </div>
+            {businessInfo.hours && businessInfo.hours.length > 0 ? (
+              businessInfo.hours.map((hour, index) => (
+                <div key={index} className="text-white">
+                  {hour}
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-400">No hay horarios configurados</p>
+            )}
           </div>
         </div>
       </div>

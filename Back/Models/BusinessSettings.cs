@@ -7,10 +7,12 @@ namespace Back.Models
     public class BusinessSettings {
     [Key] public short Id { get; set; } = 1;
     [Required, MaxLength(160)] public string Name { get; set; } = "Cartelito";
+    [MaxLength(300)] public string? Description { get; set; }
     [MaxLength(160)] public string? BannerTitle { get; set; }
     [MaxLength(200)] public string? BannerSubtitle { get; set; }
     [MaxLength(40)] public string? PhoneWa { get; set; }
     [MaxLength(200)] public string? Address { get; set; }
+    [MaxLength(100)] public string? TransferAlias { get; set; }
     [MaxLength(160)] public string? Instagram { get; set; }
     [MaxLength(160)] public string? Facebook { get; set; }
     [MaxLength(160)] public string? Tiktok { get; set; }
