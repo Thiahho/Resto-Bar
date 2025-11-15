@@ -1,15 +1,11 @@
 import React from "react";
 import { BusinessInfo } from "../../types";
-import { Check } from "lucide-react";
 
 interface BusinessProfileProps {
   businessInfo: BusinessInfo;
 }
 
 const BusinessProfile: React.FC<BusinessProfileProps> = ({ businessInfo }) => {
-  const orderType = "delivery";
-  const deliveryTime = "asap";
-
   // Obtener el horario de hoy
   const getTodayHours = () => {
     if (!businessInfo.hours || businessInfo.hours.length === 0) {
