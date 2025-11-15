@@ -467,7 +467,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               className="flex-1 bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-lg transition-all"
             >
               {editMode ? "Actualizar" : "Agregar"} ${" "}
-              {(calculateTotal() / 100).toLocaleString("es-AR", {
+              {calculateTotal().toLocaleString("es-AR", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               })}
