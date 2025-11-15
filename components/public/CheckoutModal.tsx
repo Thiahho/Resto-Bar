@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { useCart } from "../../contexts/CartContext";
 import { OrderType, OrderRequest, CartItem } from "../../types";
-import { api, getProductsImageUrl, createOrder } from "../../services/api/apiClient";
+import {
+  api,
+  getProductsImageUrl,
+  createOrder,
+} from "../../services/api/apiClient";
 import { useToast } from "../../contexts/ToastContext";
 import ProductDetailModal from "./ProductDetailModal";
 
@@ -22,8 +26,8 @@ const CheckoutModal: React.FC = () => {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [reference, setReference] = useState("");
-  const [note, setNote] = useState("");
+  //const [reference, setReference] = useState("");
+  //const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "transfer" | "split"
   >("cash");
@@ -107,7 +111,10 @@ const CheckoutModal: React.FC = () => {
       return;
     }
     if (showSchedule && !scheduledDateTime) {
-      showToast("Por favor selecciona una fecha y hora para tu pedido", "error");
+      showToast(
+        "Por favor selecciona una fecha y hora para tu pedido",
+        "error"
+      );
       return;
     }
     if (cart.length === 0) {
@@ -125,9 +132,12 @@ const CheckoutModal: React.FC = () => {
         channel: "WEB",
         takeMode: orderType === "delivery" ? "DELIVERY" : "TAKEAWAY",
         address: orderType === "delivery" ? deliveryAddress.trim() : undefined,
-        reference: reference.trim() || undefined,
-        note: note.trim() || undefined,
-        scheduledAt: showSchedule && scheduledDateTime ? new Date(scheduledDateTime).toISOString() : undefined,
+        // reference: reference.trim() || undefined,
+        //note: note.trim() || undefined,
+        scheduledAt:
+          showSchedule && scheduledDateTime
+            ? new Date(scheduledDateTime).toISOString()
+            : undefined,
         subtotalCents: Math.round(cartTotal * 100),
         discountCents: appliedCoupon ? appliedCoupon.discountCents : 0,
         tipCents: Math.round(tipAmount * 100),
@@ -145,8 +155,8 @@ const CheckoutModal: React.FC = () => {
               modifiersSnapshot: JSON.stringify({
                 isCombo: true,
                 comboId: item.combo.id,
-                items: item.combo.items
-              })
+                items: item.combo.items,
+              }),
             };
           }
 
@@ -188,11 +198,25 @@ const CheckoutModal: React.FC = () => {
           // Crear snapshot de modificadores para guardar en la BD
           const modifiersSnapshot = {
             size: item.size,
-            complementos: item.modifiers.complementos?.map(m => ({ name: m.name, price: m.priceCents })),
-            aderezos: item.modifiers.aderezos?.map(m => ({ name: m.name, price: m.priceCents })),
-            extras: item.modifiers.extras?.map(m => ({ name: m.name, price: m.priceCents })),
-            bebidas: item.modifiers.bebidas ? { name: item.modifiers.bebidas.name, price: item.modifiers.bebidas.priceCents } : undefined,
-            notes: item.notes || undefined
+            complementos: item.modifiers.complementos?.map((m) => ({
+              name: m.name,
+              price: m.priceCents,
+            })),
+            aderezos: item.modifiers.aderezos?.map((m) => ({
+              name: m.name,
+              price: m.priceCents,
+            })),
+            extras: item.modifiers.extras?.map((m) => ({
+              name: m.name,
+              price: m.priceCents,
+            })),
+            bebidas: item.modifiers.bebidas
+              ? {
+                  name: item.modifiers.bebidas.name,
+                  price: item.modifiers.bebidas.priceCents,
+                }
+              : undefined,
+            notes: item.notes || undefined,
           };
 
           return {
@@ -202,7 +226,7 @@ const CheckoutModal: React.FC = () => {
             unitPriceCents,
             modifiersTotalCents: modifiersPriceCents,
             lineTotalCents,
-            modifiersSnapshot: JSON.stringify(modifiersSnapshot)
+            modifiersSnapshot: JSON.stringify(modifiersSnapshot),
           };
         }),
       };
@@ -227,8 +251,16 @@ const CheckoutModal: React.FC = () => {
   };
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-90 flex ${cart.length === 0 ? 'items-center' : 'items-end'} justify-center z-50`}>
-      <div className={`bg-gray-900 ${cart.length === 0 ? 'rounded-lg' : 'rounded-t-3xl'} w-full max-w-2xl max-h-[95vh] overflow-y-auto animate-slide-in-right`}>
+    <div
+      className={`fixed inset-0 bg-black bg-opacity-90 flex ${
+        cart.length === 0 ? "items-center" : "items-end"
+      } justify-center z-50`}
+    >
+      <div
+        className={`bg-gray-900 ${
+          cart.length === 0 ? "rounded-lg" : "rounded-t-3xl"
+        } w-full max-w-2xl max-h-[95vh] overflow-y-auto animate-slide-in-right`}
+      >
         {/* Header */}
         <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 z-10">
           <div className="flex items-center justify-between mb-4">
@@ -335,8 +367,12 @@ const CheckoutModal: React.FC = () => {
                   type="datetime-local"
                   value={scheduledDateTime}
                   onChange={(e) => setScheduledDateTime(e.target.value)}
-                  min={new Date(Date.now() + 30 * 60 * 1000).toISOString().slice(0, 16)}
-                  max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
+                  min={new Date(Date.now() + 30 * 60 * 1000)
+                    .toISOString()
+                    .slice(0, 16)}
+                  max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                    .toISOString()
+                    .slice(0, 16)}
                   className="w-full bg-gray-900 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none"
                   required={showSchedule}
                 />
@@ -473,15 +509,30 @@ const CheckoutModal: React.FC = () => {
                           <div className="text-gray-400 text-xs space-y-1 mt-1">
                             {item.modifiers.complementos &&
                               item.modifiers.complementos.length > 0 && (
-                                <p>+ {item.modifiers.complementos.map((a) => a.name).join(", ")}</p>
+                                <p>
+                                  +{" "}
+                                  {item.modifiers.complementos
+                                    .map((a) => a.name)
+                                    .join(", ")}
+                                </p>
                               )}
                             {item.modifiers.aderezos &&
                               item.modifiers.aderezos.length > 0 && (
-                                <p>+ {item.modifiers.aderezos.map((a) => a.name).join(", ")}</p>
+                                <p>
+                                  +{" "}
+                                  {item.modifiers.aderezos
+                                    .map((a) => a.name)
+                                    .join(", ")}
+                                </p>
                               )}
                             {item.modifiers.extras &&
                               item.modifiers.extras.length > 0 && (
-                                <p>+ {item.modifiers.extras.map((e) => e.name).join(", ")}</p>
+                                <p>
+                                  +{" "}
+                                  {item.modifiers.extras
+                                    .map((e) => e.name)
+                                    .join(", ")}
+                                </p>
                               )}
                             {item.modifiers.bebidas && (
                               <p>+ {item.modifiers.bebidas.name}</p>
@@ -772,8 +823,14 @@ const CheckoutModal: React.FC = () => {
                             Descuento:{" "}
                             {appliedCoupon.type === "PERCENT"
                               ? `${appliedCoupon.value}%`
-                              : `$${Math.round(appliedCoupon.discountCents / 100).toLocaleString("es-AR")}`}{" "}
-                            (-${Math.round(appliedCoupon.discountCents / 100).toLocaleString("es-AR")})
+                              : `$${Math.round(
+                                  appliedCoupon.discountCents / 100
+                                ).toLocaleString("es-AR")}`}{" "}
+                            (-$
+                            {Math.round(
+                              appliedCoupon.discountCents / 100
+                            ).toLocaleString("es-AR")}
+                            )
                           </p>
                         </div>
                       </div>
@@ -801,7 +858,12 @@ const CheckoutModal: React.FC = () => {
                   {appliedCoupon && (
                     <div className="flex justify-between text-green-400">
                       <span>Descuento ({appliedCoupon.code})</span>
-                      <span>- $ {Math.round(appliedCoupon.discountCents / 100).toLocaleString("es-AR")}</span>
+                      <span>
+                        - ${" "}
+                        {Math.round(
+                          appliedCoupon.discountCents / 100
+                        ).toLocaleString("es-AR")}
+                      </span>
                     </div>
                   )}
                   {tipAmount > 0 && (

@@ -1,16 +1,15 @@
 import React, { useState } from "react";
 import { BusinessInfo, OrderType } from "../../types";
-import { Check } from "lucide-react";
+//import { Check } from "lucide-react";
 
 interface BusinessProfileProps {
   businessInfo: BusinessInfo;
 }
 
 const BusinessProfile: React.FC<BusinessProfileProps> = ({ businessInfo }) => {
-  const [orderType, setOrderType] = useState<OrderType>("delivery");
-  const [deliveryTime, setDeliveryTime] = useState<"asap" | "scheduled">(
-    "asap"
-  );
+  // const [orderType, setOrderType] = useState<OrderType>("delivery");
+  //const [deliveryTime, setDeliveryTime] = useState<"asap" | "scheduled">
+  ("asap");
 
   // Obtener el horario de hoy
   const getTodayHours = () => {
