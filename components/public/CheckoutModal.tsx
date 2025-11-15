@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useCart } from "../../contexts/CartContext";
 import { OrderType, OrderRequest, CartItem } from "../../types";
-import { api, getProductsImageUrl } from "../../services/api/apiClient";
+import { api, getProductsImageUrl, createOrder } from "../../services/api/apiClient";
 import { useToast } from "../../contexts/ToastContext";
 import ProductDetailModal from "./ProductDetailModal";
 
@@ -20,6 +20,7 @@ const CheckoutModal: React.FC = () => {
   const [scheduledDateTime, setScheduledDateTime] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");

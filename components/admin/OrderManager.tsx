@@ -1005,20 +1005,13 @@ const OrderManager: React.FC = () => {
                     try {
                       if (item.modifiersSnapshot) {
                         modifiersData = JSON.parse(item.modifiersSnapshot);
-                        // console.log(
-                          `Item ${index} modifiersData:`,
-                          modifiersData
-                        );
+                        // console.log(`Item ${index} modifiersData:`, modifiersData);
                       }
                     } catch (e) {
                       // console.error("Error parsing modifiers:", e);
                     }
 
-                    // console.log(`Item ${index}:`, {
-                      modifiersSnapshot: item.modifiersSnapshot,
-                      modifiersTotalCents: item.modifiersTotalCents,
-                      modifiersData,
-                    });
+                    // console.log(`Item ${index}:`, { modifiersSnapshot: item.modifiersSnapshot, modifiersTotalCents: item.modifiersTotalCents, modifiersData });
 
                     return (
                       <div key={index} className="bg-gray-50 rounded-lg p-3">
