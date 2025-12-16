@@ -645,8 +645,15 @@ const OrderManager: React.FC = () => {
     yPos += 4;
     addCenteredText("Gracias por su compra!", yPos);
 
-    // Guardar PDF
-    doc.save(`Ticket_Orden_${order.id}.pdf`);
+    // Abrir PDF en nueva pestaña
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+
+    // Liberar memoria después de un tiempo
+    setTimeout(() => {
+      URL.revokeObjectURL(pdfUrl);
+    }, 100);
   };
 
   if (loading) {
