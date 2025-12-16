@@ -645,10 +645,20 @@ const OrderManager: React.FC = () => {
     yPos += 4;
     addCenteredText("Gracias por su compra!", yPos);
 
-    // Abrir PDF en nueva pestaña
+    // Crear blob y descargar con nombre correcto
     const pdfBlob = doc.output('blob');
     const pdfUrl = URL.createObjectURL(pdfBlob);
-    window.open(pdfUrl, '_blank');
+
+    // Crear link temporal para descarga
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `Ticket_Orden_${order.id}.pdf`;
+    link.target = '_blank';
+
+    // Agregar al DOM, hacer clic y remover
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     // Liberar memoria después de un tiempo
     setTimeout(() => {
