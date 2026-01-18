@@ -367,7 +367,7 @@ const CheckoutModal: React.FC = () => {
               <button
                 onClick={() => {
                   setShowSchedule(false);
-                  setScheduledDateTime("");
+                  setScheduledTime("");
                 }}
                 className={`py-2.5 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all text-xs md:text-sm ${
                   !showSchedule
