@@ -71,10 +71,14 @@ const InfoPage: React.FC = () => {
 
         {/* Info Principal sobre el banner */}
         <div className="absolute bottom-0 left-0 w-full p-6 text-center z-10 flex flex-col items-center">
-          <div className="w-24 h-24 bg-zinc-900 border-4 border-zinc-950 rounded-full flex items-center justify-center shadow-2xl mb-3 overflow-hidden">
-             {/* Si tienes un logo real, cambia el span por <img /> */}
-             <span className="text-4xl">🍔</span> 
-          </div>
+          <div className="w-24 h-24 bg-zinc-900 border-4 border-zinc-950 rounded-full shadow-2xl mb-3 overflow-hidden flex items-center justify-center">
+              <img
+                src="/images/logo.webp"
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
           
           <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight drop-shadow-md">
             {businessInfo.name}

@@ -19,9 +19,15 @@ const BusinessProfile: React.FC<BusinessProfileProps> = ({ businessInfo }) => {
       <div className="w-full max-w-2xl relative">
         {/* Logo superpuesto al banner */}
         <div className="absolute -top-8 left-0">
-          <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center text-white font-bold text-2xl border-4 border-black shadow-lg">
-            {businessInfo.name.charAt(0)}
+          <div className="w-16 h-16 rounded-full bg-zinc-900 border-4 border-black shadow-lg overflow-hidden flex items-center justify-center">
+            <img
+              src="/images/logo.webp"
+              alt="Logo"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
           </div>
+
         </div>
 
         <div className="pt-12 pb-4">
