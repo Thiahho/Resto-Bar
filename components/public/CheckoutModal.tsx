@@ -22,7 +22,7 @@ const CheckoutModal: React.FC = () => {
   const [orderType, setOrderType] = useState<OrderType>("delivery");
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduledTime, setScheduledTime] = useState("");
-  const [scheduledDateTime, setScheduledDateTime] = useState("");
+  // const [scheduledDateTime, setScheduledDateTime] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");

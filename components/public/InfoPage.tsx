@@ -9,7 +9,6 @@ import {
   Copy, 
   Check, 
   Instagram, 
-  Facebook, 
   Phone 
 } from "lucide-react"; // Asegúrate de tener lucide-react instalado
 import Footer from "./Footer";
