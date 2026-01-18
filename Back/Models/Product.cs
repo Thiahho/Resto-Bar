@@ -15,6 +15,7 @@ namespace Back.Models
     public byte[]? ImageData { get; set; }
     public int DisplayOrder { get; set; } = 0;
 
+    public int? DoublePriceCents {get;set;}
     public List<ProductModifier> ProductModifiers { get; set; } = new();
     // public List<ProductImage> Images { get; set; } = new(); // TODO: Descomentar cuando exista la tabla
     }

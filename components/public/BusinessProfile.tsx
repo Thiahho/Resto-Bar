@@ -9,7 +9,7 @@ const BusinessProfile: React.FC<BusinessProfileProps> = ({ businessInfo }) => {
   // Obtener el horario de hoy
   const getTodayHours = () => {
     if (!businessInfo.hours || businessInfo.hours.length === 0) {
-      return "19:30";
+      return "18:30";
     }
     return businessInfo.hours[0] || "19:30";
   };

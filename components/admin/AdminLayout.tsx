@@ -26,7 +26,7 @@ const AdminLayout: React.FC = () => {
     }`;
 
   return (
-    <div className="flex h-screen bg-gray-100 font-sans">
+    <div className="flex h-screen bg-gray-100 font-sans text-gray-800">
       {/* Mobile Menu Button */}
       <button
         onClick={toggleMobileMenu}

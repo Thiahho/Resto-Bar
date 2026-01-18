@@ -124,8 +124,10 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     }));
   };
 
+  // Usar el precio doble del producto si está definido, sino no se muestra la opción
+  const hasDoubleOption = product.doublePriceCents !== undefined && product.doublePriceCents !== null;
   const basePrice =
-    size === "doble" ? product.priceCents + 2000 : product.priceCents;
+    size === "doble" && hasDoubleOption ? product.doublePriceCents! : product.priceCents;
 
   // Funciones para manejar cantidades de modificadores
   const incrementModifier = (modifier: ProductModifier) => {
@@ -157,8 +159,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         total += modifier.priceCents * count;
       }
     });
-    // Convertir de centavos a pesos y multiplicar por cantidad
-    return (total / 100) * quantity;
+    // Multiplicar por cantidad
+    return total * quantity;
   };
 
   const handleAddToCart = () => {
@@ -217,8 +219,8 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-900 rounded-2xl p-8">
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
+        <div className="bg-gray-900 rounded-2xl p-4 md:p-8">
           <p className="text-white">Cargando opciones...</p>
         </div>
       </div>
@@ -226,104 +228,106 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header con imagen */}
-        <div className="relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 left-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 z-10"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+    <div className="fixed inset-0 bottom-16 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-full flex flex-col">
+        {/* Contenido scrolleable */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Header con imagen */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={onClose}
+              className="absolute top-3 left-3 md:top-4 md:left-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 z-10"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="w-full h-64 object-cover rounded-t-2xl"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/placeholder.png";
-            }}
-          />
-        </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 md:h-6 md:w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <img
+              src={imageUrl}
+              alt={product.name}
+              className="w-full h-48 md:h-64 object-cover rounded-t-2xl"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder.png";
+              }}
+            />
+          </div>
 
-        <div className="p-6">
+          <div className="p-4 md:p-6">
           {/* Título y descripción */}
-          <div className="mb-6">
-            <p className="text-gray-400 text-sm mb-1">Hamburguesas de carne</p>
-            <h2 className="text-2xl font-bold text-white mb-2">
+          <div className="mb-4 md:mb-6">
+            <p className="text-gray-400 text-xs md:text-sm mb-1">Hamburguesas de carne</p>
+            <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
               {product.name}
             </h2>
-            <p className="text-gray-400 text-sm">{product.description}</p>
+            <p className="text-gray-400 text-xs md:text-sm">{product.description}</p>
           </div>
 
-          {/* Selector de tamaño */}
-          <div className="mb-6">
-            <div className="flex gap-3">
-              <button
-                onClick={() => setSize("simple")}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
-                  size === "simple"
-                    ? "border-primary bg-primary bg-opacity-10 text-white"
-                    : "border-gray-700 text-gray-400 hover:border-gray-600"
-                }`}
-              >
-                <div className="font-semibold">Simple</div>
-                <div className="text-sm">
-                  $
-                  {(product.priceCents / 100).toLocaleString("es-AR", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
-                </div>
-              </button>
-              <button
-                onClick={() => setSize("doble")}
-                className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${
-                  size === "doble"
-                    ? "border-primary bg-primary bg-opacity-10 text-white"
-                    : "border-gray-700 text-gray-400 hover:border-gray-600"
-                }`}
-              >
-                <div className="font-semibold">Doble</div>
-                <div className="text-sm">
-                  $
-                  {((product.priceCents + 2000) / 100).toLocaleString("es-AR", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}
-                </div>
-              </button>
+          {/* Selector de tamaño - Solo mostrar si el producto tiene precio doble */}
+          {hasDoubleOption ? (
+            <div className="mb-4 md:mb-6">
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
+                <button
+                  onClick={() => setSize("simple")}
+                  className={`py-2 md:py-3 px-3 md:px-4 rounded-lg border-2 transition-all ${
+                    size === "simple"
+                      ? "border-primary bg-primary bg-opacity-10 text-white"
+                      : "border-gray-700 text-gray-400 hover:border-gray-600"
+                  }`}
+                >
+                  <div className="font-semibold text-sm md:text-base">Simple</div>
+                  <div className="text-xs md:text-sm">
+                    ${product.priceCents.toLocaleString("es-AR")}
+                  </div>
+                </button>
+                <button
+                  onClick={() => setSize("doble")}
+                  className={`py-2 md:py-3 px-3 md:px-4 rounded-lg border-2 transition-all ${
+                    size === "doble"
+                      ? "border-primary bg-primary bg-opacity-10 text-white"
+                      : "border-gray-700 text-gray-400 hover:border-gray-600"
+                  }`}
+                >
+                  <div className="font-semibold text-sm md:text-base">Doble</div>
+                  <div className="text-xs md:text-sm">
+                    ${product.doublePriceCents!.toLocaleString("es-AR")}
+                  </div>
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mb-4 md:mb-6">
+              <div className="text-xl md:text-2xl font-bold text-primary">
+                ${product.priceCents.toLocaleString("es-AR")}
+              </div>
+            </div>
+          )}
 
           {/* Secciones dinámicas de modificadores por categoría */}
           {availableCategories.map((category) => (
-            <div key={category} className="mb-6">
+            <div key={category} className="mb-4 md:mb-6">
               <button
                 onClick={() => toggleSection(category)}
-                className="w-full flex items-center justify-between text-left py-3 border-b border-gray-800"
+                className="w-full flex items-center justify-between text-left py-2 md:py-3 border-b border-gray-800"
               >
                 <div>
-                  <h3 className="text-white font-semibold capitalize">
+                  <h3 className="text-white font-semibold capitalize text-sm md:text-base">
                     {category}
                   </h3>
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className={`h-5 w-5 text-gray-400 transition-transform ${
+                  className={`h-4 w-4 md:h-5 md:w-5 text-gray-400 transition-transform ${
                     expandedSections[category] ? "rotate-180" : ""
                   }`}
                   fill="none"
@@ -339,33 +343,33 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </svg>
               </button>
               {expandedSections[category] && (
-                <div className="mt-3 space-y-2">
+                <div className="mt-2 md:mt-3 space-y-1 md:space-y-2">
                   {groupedByCategory[category].map((modifier) => (
                     <div
                       key={modifier.id}
-                      className="flex items-center justify-between py-2"
+                      className="flex items-center justify-between py-1.5 md:py-2"
                     >
-                      <span className="text-white">{modifier.name}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-400">
-                          $ {Math.round(modifier.priceCents / 100).toLocaleString("es-AR")}
+                      <span className="text-white text-sm md:text-base flex-1 pr-2">{modifier.name}</span>
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <span className="text-gray-400 text-xs md:text-sm whitespace-nowrap">
+                          ${modifier.priceCents.toLocaleString("es-AR")}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 md:gap-2">
                           {/* Botón para remover */}
                           <button
                             onClick={() => decrementModifier(modifier.id)}
-                            className="px-3 py-1 rounded-full text-xl font-bold bg-gray-800 text-gray-400 hover:bg-red-600 hover:text-white transition-colors"
+                            className="w-7 h-7 md:w-8 md:h-8 rounded-full text-base md:text-xl font-bold bg-gray-800 text-gray-400 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center"
                           >
                             -
                           </button>
                           {/* Contador */}
-                          <span className="text-white font-semibold min-w-[2rem] text-center">
+                          <span className="text-white font-semibold w-6 md:w-8 text-center text-sm md:text-base">
                             {modifierCounts[modifier.id] || 0}
                           </span>
                           {/* Botón para agregar */}
                           <button
                             onClick={() => incrementModifier(modifier)}
-                            className="px-3 py-1 rounded-full text-xl font-bold bg-primary text-white hover:bg-opacity-90 transition-colors"
+                            className="w-7 h-7 md:w-8 md:h-8 rounded-full text-base md:text-xl font-bold bg-primary text-white hover:bg-opacity-90 transition-colors flex items-center justify-center"
                           >
                             +
                           </button>
@@ -380,11 +384,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
           {/* Resumen de modificadores seleccionados */}
           {Object.keys(modifierCounts).length > 0 && (
-            <div className="mb-6 bg-gray-800 rounded-lg p-4">
-              <h3 className="text-white font-semibold mb-3">
+            <div className="mb-4 md:mb-6 bg-gray-800 rounded-lg p-3 md:p-4">
+              <h3 className="text-white font-semibold mb-2 md:mb-3 text-sm md:text-base">
                 📝 Modificadores agregados
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-1.5 md:space-y-2">
                 {Object.entries(modifierCounts).map(([modifierId, count]) => {
                   const modifier = modifiers.find(
                     (m) => m.id === parseInt(modifierId)
@@ -393,23 +397,22 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   return (
                     <div
                       key={modifierId}
-                      className="flex items-center justify-between text-sm"
+                      className="flex items-center justify-between text-xs md:text-sm"
                     >
                       <span className="text-gray-300">
                         {count}x {modifier.name}
                       </span>
                       <span className="text-primary font-medium">
-                        $ {Math.round((modifier.priceCents * count) / 100).toLocaleString("es-AR")}
+                        ${(modifier.priceCents * count).toLocaleString("es-AR")}
                       </span>
                     </div>
                   );
                 })}
                 <div className="border-t border-gray-700 pt-2 mt-2">
-                  <div className="flex items-center justify-between font-semibold">
+                  <div className="flex items-center justify-between font-semibold text-sm md:text-base">
                     <span className="text-white">Total modificadores:</span>
                     <span className="text-primary">
-                      ${" "}
-                      {Math.round(
+                      ${Math.round(
                         Object.entries(modifierCounts).reduce(
                           (sum, [modifierId, count]) => {
                             const modifier = modifiers.find(
@@ -420,7 +423,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             );
                           },
                           0
-                        ) / 100
+                        )
                       ).toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -430,25 +433,28 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           )}
 
           {/* Nota al producto */}
-          <div className="mb-6">
-            <label className="block text-white font-semibold mb-2">
+          <div className="mb-4 md:mb-6">
+            <label className="block text-white font-semibold mb-2 text-sm md:text-base">
               Nota al producto
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Aclará lo que necesites"
-              className="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none resize-none"
-              rows={3}
+              className="w-full bg-gray-800 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none resize-none text-sm md:text-base"
+              rows={2}
             />
           </div>
+          </div>
+        </div>
 
-          {/* Footer con cantidad y botón agregar */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3 bg-gray-800 rounded-lg px-4 py-2">
+        {/* Footer fijo con cantidad y botón agregar */}
+        <div className="flex-shrink-0 p-4 md:p-6 pt-3 md:pt-4 border-t border-gray-800 bg-gray-900 rounded-b-2xl">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
+            <div className="flex items-center justify-center gap-3 bg-gray-800 rounded-lg px-4 py-2">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="text-white text-xl font-bold"
+                className="text-white text-lg md:text-xl font-bold w-8 h-8 flex items-center justify-center"
               >
                 -
               </button>
@@ -457,17 +463,16 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               </span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="text-white text-xl font-bold"
+                className="text-white text-lg md:text-xl font-bold w-8 h-8 flex items-center justify-center"
               >
                 +
               </button>
             </div>
             <button
               onClick={handleAddToCart}
-              className="flex-1 bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-lg transition-all"
+              className="flex-1 bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-4 md:px-6 rounded-lg transition-all text-sm md:text-base"
             >
-              {editMode ? "Actualizar" : "Agregar"} ${" "}
-              {calculateTotal().toLocaleString("es-AR", {
+              {editMode ? "Actualizar" : "Agregar"} ${calculateTotal().toLocaleString("es-AR", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0,
               })}

@@ -9,6 +9,9 @@ namespace Back.Models
     [Required, MaxLength(160)] public string Name { get; set; } = "Cartelito";
     [MaxLength(300)] public string? Description { get; set; }
     [MaxLength(160)] public string? BannerTitle { get; set; }
+    [Column(TypeName = "bytea")] // Postgres
+    public byte[]? BannerImageWebp { get; set; }    
+    public DateTime? BannerImageUpdatedAt { get; set; }
     [MaxLength(200)] public string? BannerSubtitle { get; set; }
     [MaxLength(40)] public string? PhoneWa { get; set; }
     [MaxLength(200)] public string? Address { get; set; }

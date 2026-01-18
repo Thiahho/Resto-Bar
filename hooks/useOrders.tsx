@@ -11,10 +11,12 @@ export const useOrders = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log("Fetching orders...");
       const response = await apiClient.get<OrderResponse[]>("/api/admin/orders");
+      console.log("Orders response:", response.data);
       setOrders(response.data);
     } catch (err: any) {
-      // console.error("Error fetching orders:", err);
+      console.error("Error fetching orders:", err);
       setError(err.response?.data?.message || "Error al cargar las órdenes");
     } finally {
       setLoading(false);

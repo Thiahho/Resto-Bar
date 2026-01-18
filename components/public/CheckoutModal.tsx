@@ -21,6 +21,7 @@ const CheckoutModal: React.FC = () => {
   const { showToast } = useToast();
   const [orderType, setOrderType] = useState<OrderType>("delivery");
   const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState("");
   const [scheduledDateTime, setScheduledDateTime] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -91,7 +92,7 @@ const CheckoutModal: React.FC = () => {
   const calculateFinalTotal = () => {
     let total = cartTotal + tipAmount;
     if (appliedCoupon) {
-      total -= appliedCoupon.discountCents / 100;
+      total -= appliedCoupon.discountCents;
     }
     return Math.max(0, total);
   };
@@ -110,12 +111,31 @@ const CheckoutModal: React.FC = () => {
       showToast("Por favor ingresa tu dirección de entrega", "error");
       return;
     }
-    if (showSchedule && !scheduledDateTime) {
+    if (showSchedule && !scheduledTime) {
       showToast(
-        "Por favor selecciona una fecha y hora para tu pedido",
+        "Por favor selecciona una hora para tu pedido",
         "error"
       );
       return;
+    }
+    // Validar que la hora programada sea al menos 30 minutos en el futuro
+    if (showSchedule && scheduledTime) {
+      const now = new Date();
+      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      const scheduledDate = new Date();
+      scheduledDate.setHours(hours, minutes, 0, 0);
+
+      const minTime = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutos desde ahora
+
+      if (scheduledDate < minTime) {
+        const minHour = minTime.getHours().toString().padStart(2, '0');
+        const minMinute = minTime.getMinutes().toString().padStart(2, '0');
+        showToast(
+          `La hora programada debe ser al menos 30 minutos en el futuro. Mínimo: ${minHour}:${minMinute}`,
+          "error"
+        );
+        return;
+      }
     }
     if (cart.length === 0) {
       showToast("El carrito está vacío", "error");
@@ -135,13 +155,18 @@ const CheckoutModal: React.FC = () => {
         // reference: reference.trim() || undefined,
         //note: note.trim() || undefined,
         scheduledAt:
-          showSchedule && scheduledDateTime
-            ? new Date(scheduledDateTime).toISOString()
+          showSchedule && scheduledTime
+            ? (() => {
+                const today = new Date();
+                const [hours, minutes] = scheduledTime.split(':').map(Number);
+                today.setHours(hours, minutes, 0, 0);
+                return today.toISOString();
+              })()
             : undefined,
-        subtotalCents: Math.round(cartTotal * 100),
+        subtotalCents: cartTotal,
         discountCents: appliedCoupon ? appliedCoupon.discountCents : 0,
-        tipCents: Math.round(tipAmount * 100),
-        totalCents: Math.round(calculateFinalTotal() * 100),
+        tipCents: tipAmount,
+        totalCents: calculateFinalTotal(),
         items: cart.map((item) => {
           // Si es un combo
           if (item.type === "combo" && item.combo) {
@@ -151,7 +176,7 @@ const CheckoutModal: React.FC = () => {
               qty: item.quantity,
               unitPriceCents: item.combo.priceCents,
               modifiersTotalCents: 0,
-              lineTotalCents: Math.round(item.subtotal * 100),
+              lineTotalCents: item.subtotal,
               modifiersSnapshot: JSON.stringify({
                 isCombo: true,
                 comboId: item.combo.id,
@@ -193,7 +218,7 @@ const CheckoutModal: React.FC = () => {
           }
 
           const unitPriceCents = item.product.priceCents;
-          const lineTotalCents = Math.round(item.subtotal * 100);
+          const lineTotalCents = item.subtotal;
 
           // Crear snapshot de modificadores para guardar en la BD
           const modifiersSnapshot = {
@@ -240,10 +265,17 @@ const CheckoutModal: React.FC = () => {
       closeCheckout();
     } catch (error: any) {
       // console.error("Error al crear orden:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data ||
-        "Error al procesar el pedido. Por favor intenta nuevamente.";
+      let errorMessage = "Error al procesar el pedido. Por favor intenta nuevamente.";
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (typeof data === "string") {
+          errorMessage = data;
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (data.error) {
+          errorMessage = data.error;
+        }
+      }
       showToast(errorMessage, "error");
     } finally {
       setIsSubmitting(false);
@@ -262,15 +294,15 @@ const CheckoutModal: React.FC = () => {
         } w-full max-w-2xl max-h-[95vh] overflow-y-auto animate-slide-in-right`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-4 z-10">
-          <div className="flex items-center justify-between mb-4">
+        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-3 md:p-4 z-10">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
             <button
               onClick={closeCheckout}
               className="text-gray-400 hover:text-white"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5 md:h-6 md:w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -283,11 +315,11 @@ const CheckoutModal: React.FC = () => {
                 />
               </svg>
             </button>
-            <h2 className="text-xl font-bold text-white">Pedido de delivery</h2>
+            <h2 className="text-lg md:text-xl font-bold text-white">Pedido de delivery</h2>
             <button className="text-gray-400">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-5 w-5 md:h-6 md:w-6"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -303,10 +335,10 @@ const CheckoutModal: React.FC = () => {
           </div>
 
           {/* Tabs Delivery/Retirar */}
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setOrderType("delivery")}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+              className={`py-2.5 md:py-3 px-3 md:px-4 rounded-lg font-semibold transition-all text-sm md:text-base ${
                 orderType === "delivery"
                   ? "bg-primary text-white"
                   : "bg-gray-800 text-gray-400"
@@ -316,7 +348,7 @@ const CheckoutModal: React.FC = () => {
             </button>
             <button
               onClick={() => setOrderType("pickup")}
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition-all ${
+              className={`py-2.5 md:py-3 px-3 md:px-4 rounded-lg font-semibold transition-all text-sm md:text-base ${
                 orderType === "pickup"
                   ? "bg-primary text-white"
                   : "bg-gray-800 text-gray-400"
@@ -327,17 +359,17 @@ const CheckoutModal: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Recibir pedido */}
-          <div className="mb-6">
-            <h3 className="text-white font-semibold mb-3">Recibir pedido</h3>
-            <div className="flex gap-2">
+          <div className="mb-4 md:mb-6">
+            <h3 className="text-white font-semibold mb-2 md:mb-3 text-sm md:text-base">Recibir pedido</h3>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
                   setShowSchedule(false);
                   setScheduledDateTime("");
                 }}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                className={`py-2.5 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all text-xs md:text-sm ${
                   !showSchedule
                     ? "bg-primary text-white"
                     : "bg-gray-800 text-gray-400"
@@ -347,37 +379,40 @@ const CheckoutModal: React.FC = () => {
               </button>
               <button
                 onClick={() => setShowSchedule(true)}
-                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+                className={`py-2.5 md:py-3 px-3 md:px-4 rounded-lg font-medium transition-all text-xs md:text-sm ${
                   showSchedule
                     ? "bg-primary text-white"
                     : "bg-gray-800 text-gray-400"
                 }`}
               >
-                📅 Programar entrega
+                📅 Programar
               </button>
             </div>
 
-            {/* Selector de fecha/hora */}
+            {/* Selector de hora */}
             {showSchedule && (
-              <div className="mt-4 bg-gray-800 rounded-lg p-4">
-                <label className="block text-white text-sm font-medium mb-2">
-                  ¿Cuándo quieres recibir tu pedido?
+              <div className="mt-3 md:mt-4 bg-gray-800 rounded-lg p-3 md:p-4">
+                <label className="block text-white text-xs md:text-sm font-medium mb-2">
+                  ¿A qué hora quieres recibir tu pedido hoy?
                 </label>
                 <input
-                  type="datetime-local"
-                  value={scheduledDateTime}
-                  onChange={(e) => setScheduledDateTime(e.target.value)}
-                  min={new Date(Date.now() + 30 * 60 * 1000)
-                    .toISOString()
-                    .slice(0, 16)}
-                  max={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                    .toISOString()
-                    .slice(0, 16)}
-                  className="w-full bg-gray-900 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none"
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  min={(() => {
+                    const minTime = new Date(Date.now() + 30 * 60 * 1000);
+                    const businessOpen = "19:00";
+                    const minHour = minTime.getHours().toString().padStart(2, '0');
+                    const minMinute = minTime.getMinutes().toString().padStart(2, '0');
+                    const calculatedMin = `${minHour}:${minMinute}`;
+                    return calculatedMin > businessOpen ? calculatedMin : businessOpen;
+                  })()}
+                  max="23:00"
+                  className="w-full bg-gray-900 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none text-sm md:text-base"
                   required={showSchedule}
                 />
                 <p className="text-gray-400 text-xs mt-2">
-                  Mínimo 30 minutos de anticipación, máximo 7 días
+                  Mínimo 30 min desde ahora. Horario: 19:30 a 23:00
                 </p>
               </div>
             )}
@@ -385,20 +420,20 @@ const CheckoutModal: React.FC = () => {
 
           {/* Lista de productos */}
           {cart.length > 0 && (
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-semibold">
+            <div className="mb-4 md:mb-6">
+              <div className="flex items-center justify-between mb-2 md:mb-3">
+                <h3 className="text-white font-semibold text-sm md:text-base">
                   🍔 {cart.reduce((sum, item) => sum + item.quantity, 0)}{" "}
                   Producto{cart.length > 1 ? "s" : ""}
                 </h3>
                 <button
                   onClick={() => setShowSchedule(!showSchedule)}
-                  className="text-primary text-sm font-medium"
+                  className="text-primary text-xs md:text-sm font-medium"
                 >
                   {showSchedule ? "Ocultar" : "Programar"}
                 </button>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {cart.map((item) => (
                   <div key={item.id} className="bg-gray-800 rounded-lg p-3">
                     {item.type === "combo" && item.combo ? (
@@ -620,20 +655,20 @@ const CheckoutModal: React.FC = () => {
           {cart.length > 0 && (
             <>
               {/* Datos del cliente */}
-              <div className="mb-6">
-                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <div className="mb-4 md:mb-6">
+                <h3 className="text-white font-semibold mb-2 md:mb-3 flex items-center gap-2 text-sm md:text-base">
                   👤 Tus datos
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-2 md:space-y-3">
                   <input
                     type="text"
                     placeholder="Nombre y apellido"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none"
+                    className="w-full bg-gray-800 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none text-sm md:text-base"
                   />
                   <div className="flex gap-2">
-                    <select className="bg-gray-800 text-white rounded-lg p-3 border border-gray-700">
+                    <select className="bg-gray-800 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 text-sm md:text-base">
                       <option>+54</option>
                     </select>
                     <input
@@ -641,7 +676,7 @@ const CheckoutModal: React.FC = () => {
                       placeholder="Teléfono*"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="flex-1 bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none"
+                      className="flex-1 bg-gray-800 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none text-sm md:text-base"
                     />
                   </div>
                   <input
@@ -649,15 +684,15 @@ const CheckoutModal: React.FC = () => {
                     placeholder="Email (opcional)"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none"
+                    className="w-full bg-gray-800 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none text-sm md:text-base"
                   />
                 </div>
               </div>
 
               {/* Dirección de entrega */}
               {orderType === "delivery" && (
-                <div className="mb-6">
-                  <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <div className="mb-4 md:mb-6">
+                  <h3 className="text-white font-semibold mb-2 md:mb-3 flex items-center gap-2 text-sm md:text-base">
                     📍 Dirección de entrega
                   </h3>
                   <input
@@ -665,50 +700,50 @@ const CheckoutModal: React.FC = () => {
                     placeholder="Dirección*"
                     value={deliveryAddress}
                     onChange={(e) => setDeliveryAddress(e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none"
+                    className="w-full bg-gray-800 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none text-sm md:text-base"
                   />
                 </div>
               )}
 
               {/* Método de pago */}
-              <div className="mb-6">
-                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <div className="mb-4 md:mb-6">
+                <h3 className="text-white font-semibold mb-2 md:mb-3 flex items-center gap-2 text-sm md:text-base">
                   💳 Método de pago
                 </h3>
                 <div className="space-y-2">
                   <button
                     onClick={() => setPaymentMethod("cash")}
-                    className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                    className={`w-full flex items-center justify-between p-3 md:p-4 rounded-lg border-2 transition-all ${
                       paymentMethod === "cash"
                         ? "border-primary bg-primary bg-opacity-10"
                         : "border-gray-700 bg-gray-800"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">💵</span>
-                      <span className="text-white font-medium">Efectivo</span>
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <span className="text-xl md:text-2xl">💵</span>
+                      <span className="text-white font-medium text-sm md:text-base">Efectivo</span>
                     </div>
                   </button>
                   <button
                     onClick={() => setPaymentMethod("transfer")}
-                    className={`w-full p-4 rounded-lg border-2 transition-all ${
+                    className={`w-full p-3 md:p-4 rounded-lg border-2 transition-all ${
                       paymentMethod === "transfer"
                         ? "border-primary bg-primary bg-opacity-10"
                         : "border-gray-700 bg-gray-800"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">🏦</span>
-                        <span className="text-white font-medium">
+                      <div className="flex items-center gap-2 md:gap-3">
+                        <span className="text-xl md:text-2xl">🏦</span>
+                        <span className="text-white font-medium text-sm md:text-base">
                           Transferencia
                         </span>
                       </div>
                       <button className="text-gray-400 text-sm">📋</button>
                     </div>
                     {paymentMethod === "transfer" && (
-                      <div className="mt-3 pt-3 border-t border-gray-700">
-                        <p className="text-gray-400 text-sm">
+                      <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-gray-700">
+                        <p className="text-gray-400 text-xs md:text-sm">
                           Alias: *********
                         </p>
                       </div>
@@ -718,16 +753,16 @@ const CheckoutModal: React.FC = () => {
               </div>
 
               {/* Propina */}
-              <div className="mb-6">
-                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <div className="mb-4 md:mb-6">
+                <h3 className="text-white font-semibold mb-2 md:mb-3 flex items-center gap-2 text-sm md:text-base">
                   🙏 Propina
                 </h3>
-                <div className="flex gap-2 mb-2">
+                <div className="flex flex-wrap gap-2 mb-2">
                   {[0, 100, 200, 500].map((amount) => (
                     <button
                       key={amount}
                       onClick={() => setTipAmount(amount)}
-                      className={`flex-1 py-2 px-3 rounded-lg font-medium transition-all ${
+                      className={`flex-1 min-w-[60px] py-2 px-2 md:px-3 rounded-lg font-medium transition-all text-xs md:text-sm ${
                         tipAmount === amount
                           ? "bg-primary text-white"
                           : "bg-gray-800 text-gray-400 hover:bg-gray-700"
@@ -736,30 +771,30 @@ const CheckoutModal: React.FC = () => {
                       ${amount}
                     </button>
                   ))}
-                  <button className="px-4 py-2 bg-gray-800 text-gray-400 rounded-lg hover:bg-gray-700">
+                  <button className="px-3 md:px-4 py-2 bg-gray-800 text-gray-400 rounded-lg hover:bg-gray-700 text-xs md:text-sm">
                     Otro
                   </button>
                 </div>
               </div>
 
               {/* Código promocional */}
-              <div className="mb-6">
+              <div className="mb-4 md:mb-6">
                 {!appliedCoupon ? (
                   <>
                     {!showPromoInput ? (
                       <button
                         onClick={() => setShowPromoInput(true)}
-                        className="w-full flex items-center justify-between p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all"
+                        className="w-full flex items-center justify-between p-2.5 md:p-3 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-2xl">🏷️</span>
-                          <span className="text-white font-medium">
+                          <span className="text-xl md:text-2xl">🏷️</span>
+                          <span className="text-white font-medium text-sm md:text-base">
                             Código promocional
                           </span>
                         </div>
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5 text-gray-400"
+                          className="h-4 w-4 md:h-5 md:w-5 text-gray-400"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -773,10 +808,10 @@ const CheckoutModal: React.FC = () => {
                         </svg>
                       </button>
                     ) : (
-                      <div className="bg-gray-800 rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-2xl">🏷️</span>
-                          <span className="text-white font-medium">
+                      <div className="bg-gray-800 rounded-lg p-3 md:p-4">
+                        <div className="flex items-center gap-2 mb-2 md:mb-3">
+                          <span className="text-xl md:text-2xl">🏷️</span>
+                          <span className="text-white font-medium text-sm md:text-base">
                             Ingresa tu cupón
                           </span>
                         </div>
@@ -788,12 +823,12 @@ const CheckoutModal: React.FC = () => {
                             onChange={(e) =>
                               setPromoCode(e.target.value.toUpperCase())
                             }
-                            className="flex-1 bg-gray-900 text-white rounded-lg p-3 border border-gray-700 focus:border-primary outline-none uppercase"
+                            className="flex-1 bg-gray-900 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none uppercase text-sm md:text-base"
                           />
                           <button
                             onClick={handleValidateCoupon}
                             disabled={validatingCoupon}
-                            className="bg-primary hover:bg-opacity-90 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50"
+                            className="bg-primary hover:bg-opacity-90 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-lg font-medium disabled:opacity-50 text-sm md:text-base"
                           >
                             {validatingCoupon ? "..." : "Aplicar"}
                           </button>
@@ -803,7 +838,7 @@ const CheckoutModal: React.FC = () => {
                             setShowPromoInput(false);
                             setPromoCode("");
                           }}
-                          className="text-gray-400 text-sm mt-2 hover:text-white"
+                          className="text-gray-400 text-xs md:text-sm mt-2 hover:text-white"
                         >
                           Cancelar
                         </button>
@@ -811,32 +846,25 @@ const CheckoutModal: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <div className="bg-green-900 bg-opacity-20 border border-green-700 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl">✅</span>
-                        <div>
-                          <p className="text-white font-medium">
-                            Cupón aplicado: {appliedCoupon.code}
+                  <div className="bg-green-900 bg-opacity-20 border border-green-700 rounded-lg p-3 md:p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-xl md:text-2xl flex-shrink-0">✅</span>
+                        <div className="min-w-0">
+                          <p className="text-white font-medium text-sm md:text-base truncate">
+                            Cupón: {appliedCoupon.code}
                           </p>
-                          <p className="text-green-400 text-sm">
-                            Descuento:{" "}
+                          <p className="text-green-400 text-xs md:text-sm">
                             {appliedCoupon.type === "PERCENT"
                               ? `${appliedCoupon.value}%`
-                              : `$${Math.round(
-                                  appliedCoupon.discountCents / 100
-                                ).toLocaleString("es-AR")}`}{" "}
-                            (-$
-                            {Math.round(
-                              appliedCoupon.discountCents / 100
-                            ).toLocaleString("es-AR")}
-                            )
+                              : `$${appliedCoupon.discountCents.toLocaleString("es-AR")}`}{" "}
+                            (-${appliedCoupon.discountCents.toLocaleString("es-AR")})
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={handleRemoveCoupon}
-                        className="text-red-400 hover:text-red-300 text-sm"
+                        className="text-red-400 hover:text-red-300 text-xs md:text-sm flex-shrink-0"
                       >
                         Remover
                       </button>
@@ -846,11 +874,11 @@ const CheckoutModal: React.FC = () => {
               </div>
 
               {/* Resumen */}
-              <div className="mb-6 bg-gray-800 rounded-lg p-4">
-                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <div className="mb-4 md:mb-6 bg-gray-800 rounded-lg p-3 md:p-4">
+                <h3 className="text-white font-semibold mb-2 md:mb-3 flex items-center gap-2 text-sm md:text-base">
                   📋 Resumen
                 </h3>
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
                   <div className="flex justify-between text-gray-400">
                     <span>Productos</span>
                     <span>$ {cartTotal.toLocaleString()}</span>
@@ -859,10 +887,7 @@ const CheckoutModal: React.FC = () => {
                     <div className="flex justify-between text-green-400">
                       <span>Descuento ({appliedCoupon.code})</span>
                       <span>
-                        - ${" "}
-                        {Math.round(
-                          appliedCoupon.discountCents / 100
-                        ).toLocaleString("es-AR")}
+                        - $ {appliedCoupon.discountCents.toLocaleString("es-AR")}
                       </span>
                     </div>
                   )}
@@ -873,7 +898,7 @@ const CheckoutModal: React.FC = () => {
                     </div>
                   )}
                   <div className="border-t border-gray-700 pt-2 mt-2">
-                    <div className="flex justify-between text-white font-bold text-lg">
+                    <div className="flex justify-between text-white font-bold text-base md:text-lg">
                       <span>Total</span>
                       <span>$ {calculateFinalTotal().toLocaleString()}</span>
                     </div>
@@ -885,7 +910,7 @@ const CheckoutModal: React.FC = () => {
               <button
                 onClick={handlePlaceOrder}
                 disabled={isSubmitting}
-                className={`w-full bg-primary hover:bg-opacity-90 text-white font-bold py-4 px-6 rounded-lg transition-all text-lg ${
+                className={`w-full bg-primary hover:bg-opacity-90 text-white font-bold py-3 md:py-4 px-4 md:px-6 rounded-lg transition-all text-base md:text-lg ${
                   isSubmitting ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >

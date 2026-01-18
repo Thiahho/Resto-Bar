@@ -4,6 +4,9 @@ using Back.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace Back.Controller
 {
@@ -34,7 +37,12 @@ namespace Back.Controller
             {
                 Name = settings.Name,
                 Description = settings.Description,
-                Banner = new BannerDto { Title = settings.BannerTitle ?? "", Subtitle = settings.BannerSubtitle ?? "", ImageUrl = "" },
+                Banner = new BannerDto
+                {
+                    Title = settings.BannerTitle ?? "",
+                    Subtitle = settings.BannerSubtitle ?? "",
+                    ImageUrl = $"/api/admin/settings/banner-image?v={(settings.BannerImageUpdatedAt?.Ticks ?? 0)}"
+                },
                 Hours = JsonSerializer.Deserialize<string[]>(settings.OpeningHours ?? "[]") ?? Array.Empty<string>(),
                 Contact = new ContactDto
                 {
@@ -47,46 +55,66 @@ namespace Back.Controller
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateSettings([FromForm] UpdateBusinessInfoDto settingsDto)
+        public async Task<IActionResult> UpdateSettings(
+            [FromForm] UpdateBusinessInfoDto settingsDto,
+            IFormFile? bannerImage
+        )
         {
-            try
+            if (!ModelState.IsValid)
+                return BadRequest(new { error = "Invalid model state", details = ModelState });
+
+            var settings = await _context.BusinessSettings.FindAsync((short)1);
+            if (settings == null)
             {
-                if (!ModelState.IsValid)
+                settings = new BusinessSettings { Id = 1 };
+                _context.BusinessSettings.Add(settings);
+            }
+
+            settings.Name = settingsDto.Name ?? "Mi Negocio";
+            settings.Description = settingsDto.Description;
+            settings.BannerTitle = settingsDto.BannerTitle ?? "";
+            settings.BannerSubtitle = settingsDto.BannerSubtitle ?? "";
+            settings.OpeningHours = JsonSerializer.Serialize(settingsDto.Hours ?? Array.Empty<string>());
+            settings.PhoneWa = settingsDto.ContactPhone ?? "";
+            settings.Address = settingsDto.ContactAddress ?? "";
+            settings.TransferAlias = settingsDto.ContactTransferAlias;
+            settings.Instagram = settingsDto.SocialInstagram ?? "";
+            settings.Facebook = settingsDto.SocialFacebook ?? "";
+
+            if (bannerImage != null && bannerImage.Length > 0)
+            {
+                if (!bannerImage.ContentType.StartsWith("image/"))
+                    return BadRequest(new { error = "El archivo debe ser una imagen" });
+
+                await using var inStream = bannerImage.OpenReadStream();
+                using var image = await Image.LoadAsync(inStream);
+
+                // Opcional para reducir tamaño: limitar ancho
+                const int maxWidth = 1600;
+                if (image.Width > maxWidth)
                 {
-                    return BadRequest(new { error = "Invalid model state", details = ModelState });
+                    var newHeight = (int)(image.Height * (maxWidth / (double)image.Width));
+                    image.Mutate(x => x.Resize(maxWidth, newHeight));
                 }
 
-                var settings = await _context.BusinessSettings.FindAsync((short)1);
-                if (settings == null)
+                var encoder = new WebpEncoder
                 {
-                    // Si no existe, crear uno nuevo
-                    settings = new BusinessSettings
-                    {
-                        Id = 1
-                    };
-                    _context.BusinessSettings.Add(settings);
-                }
+                    Quality = 80, // 70-85 suele ser buen balance
+                    FileFormat = WebpFileFormatType.Lossy
+                };
 
-                settings.Name = settingsDto.Name ?? "Mi Negocio";
-                settings.Description = settingsDto.Description;
-                settings.BannerTitle = settingsDto.BannerTitle ?? "";
-                settings.BannerSubtitle = settingsDto.BannerSubtitle ?? "";
-                settings.OpeningHours = JsonSerializer.Serialize(settingsDto.Hours ?? Array.Empty<string>());
-                settings.PhoneWa = settingsDto.ContactPhone ?? "";
-                settings.Address = settingsDto.ContactAddress ?? "";
-                settings.TransferAlias = settingsDto.ContactTransferAlias;
-                settings.Instagram = settingsDto.SocialInstagram ?? "";
-                settings.Facebook = settingsDto.SocialFacebook ?? "";
+                using var outStream = new MemoryStream();
+                await image.SaveAsWebpAsync(outStream, encoder);
 
-                await _context.SaveChangesAsync();
-                return NoContent();
+                settings.BannerImageWebp = outStream.ToArray();
+                settings.BannerImageUpdatedAt = DateTime.UtcNow;
             }
-            catch (Exception ex)
-            {
-                // El middleware global se encargará de manejar excepciones no controladas
-                // Solo devolvemos un mensaje genérico sin exponer detalles internos
-                return StatusCode(500, new { error = "Error al actualizar la configuración" });
-            }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
+
+
+
     }
 }

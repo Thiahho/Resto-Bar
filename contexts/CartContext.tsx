@@ -45,7 +45,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       combo: combo,
       quantity: quantity,
       modifiers: {},
-      subtotal: (combo.priceCents / 100) * quantity,
+      subtotal: combo.priceCents * quantity,
     };
     setCart((prev) => [...prev, comboCartItem]);
   };

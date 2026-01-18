@@ -50,6 +50,16 @@ const CatalogPage: React.FC = () => {
       <div className="sticky top-0 bg-black border-b border-gray-800 z-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex overflow-x-auto scrollbar-hide py-4 px-4 gap-4">
+            <button
+              onClick={() => setSelectedCategoryId(null)}
+              className={`flex-shrink-0 px-4 py-2 font-medium transition-all whitespace-nowrap ${
+                selectedCategoryId === null
+                  ? "text-white border-b-2 border-primary"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              Todos
+            </button>
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -88,7 +98,7 @@ const CatalogPage: React.FC = () => {
                       {combo.name}
                     </h3>
                     <span className="text-primary font-bold text-xl">
-                      ${Math.round(combo.priceCents / 100).toLocaleString("es-AR")}
+                      ${combo.priceCents.toLocaleString("es-AR")}
                     </span>
                   </div>
                   <div className="space-y-1 mb-3">

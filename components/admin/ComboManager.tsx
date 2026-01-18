@@ -77,7 +77,7 @@ const ComboManager: React.FC = () => {
     try {
       const payload = {
         name: formData.name.trim(),
-        priceCents: Math.round(parseFloat(formData.priceCents) * 100),
+        priceCents: parseInt(formData.priceCents) || 0,
         isActive: formData.isActive,
         items: formData.items,
       };
@@ -102,7 +102,7 @@ const ComboManager: React.FC = () => {
   const handleEdit = (combo: Combo) => {
     setFormData({
       name: combo.name,
-      priceCents: (combo.priceCents / 100).toString(),
+      priceCents: combo.priceCents.toString(),
       isActive: combo.isActive,
       items: combo.items.map((item) => ({
         productId: item.productId,
@@ -166,8 +166,8 @@ const ComboManager: React.FC = () => {
     setShowForm(false);
   };
 
-  const formatCurrency = (cents: number) => {
-    return `$${Math.round(cents / 100).toLocaleString("es-AR")}`;
+  const formatCurrency = (value: number) => {
+    return `$${value.toLocaleString("es-AR")}`;
   };
 
   const calculateTotalPrice = () => {
@@ -228,8 +228,8 @@ const ComboManager: React.FC = () => {
                   className="w-full border rounded px-3 py-2"
                   required
                   min="0"
-                  step="0.01"
-                  placeholder="0.00"
+                  step="1"
+                  placeholder="Ej: 15000"
                 />
               </div>
 
@@ -329,18 +329,15 @@ const ComboManager: React.FC = () => {
                   <div className="flex justify-between text-sm mt-1">
                     <span>Precio del combo:</span>
                     <span className="font-semibold text-green-600">
-                      {formatCurrency(
-                        Math.round(parseFloat(formData.priceCents || "0") * 100)
-                      )}
+                      {formatCurrency(parseInt(formData.priceCents || "0"))}
                     </span>
                   </div>
-                  {parseFloat(formData.priceCents || "0") > 0 && (
+                  {parseInt(formData.priceCents || "0") > 0 && (
                     <div className="flex justify-between text-sm mt-1">
                       <span className="text-red-600 font-semibold">Ahorro:</span>
                       <span className="text-red-600 font-semibold">
                         {formatCurrency(
-                          calculateTotalPrice() -
-                            Math.round(parseFloat(formData.priceCents || "0") * 100)
+                          calculateTotalPrice() - parseInt(formData.priceCents || "0")
                         )}
                       </span>
                     </div>

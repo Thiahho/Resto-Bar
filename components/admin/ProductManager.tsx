@@ -23,6 +23,7 @@ const ProductsManager: React.FC = () => {
         name: "",
         description: "",
         priceCents: 0,
+        doublePriceCents: 0,
         categoryId: categories[0]?.id || "",
         hasImage: false,
       }
@@ -44,10 +45,20 @@ const ProductsManager: React.FC = () => {
   ) => {
     if (!currentProducts) return;
     const { name, value } = e.target;
-    setCurrentProducts({
-      ...currentProducts,
-      [name]: name === "priceCents" ? Math.round(parseFloat(value) * 100) : value,
-    });
+
+    // Manejar campos de precio (valores enteros)
+    if (name === "priceCents" || name === "doublePriceCents") {
+      const numValue = parseInt(value, 10);
+      setCurrentProducts({
+        ...currentProducts,
+        [name]: isNaN(numValue) ? undefined : numValue,
+      });
+    } else {
+      setCurrentProducts({
+        ...currentProducts,
+        [name]: value,
+      });
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,6 +82,10 @@ const ProductsManager: React.FC = () => {
     formData.append("description", currentProducts.description || "");
     formData.append("priceCents", (currentProducts.priceCents || 0).toString());
     formData.append("categoryId", currentProducts.categoryId);
+    // Enviar precio doble solo si está definido
+    if (currentProducts.doublePriceCents !== undefined && currentProducts.doublePriceCents !== null) {
+      formData.append("doublePriceCents", currentProducts.doublePriceCents.toString());
+    }
     if (imageFile) {
       formData.append("ImageData", imageFile); // Debe coincidir con el nombre del DTO del backend
     }
@@ -206,6 +221,9 @@ const ProductsManager: React.FC = () => {
                 Precio
               </th>
               <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Precio Doble
+              </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -263,7 +281,10 @@ const ProductsManager: React.FC = () => {
                   {categories.find((c) => c.id === product.categoryId)?.name}
                 </td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  ${Math.round(product.priceCents / 100).toLocaleString("es-AR")}
+                  ${product.priceCents.toLocaleString("es-AR")}
+                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  ${(product.doublePriceCents || 0).toLocaleString("es-AR")}
                 </td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   <button
@@ -326,7 +347,7 @@ const ProductsManager: React.FC = () => {
                   {categories.find((c) => c.id === product.categoryId)?.name}
                 </p>
                 <p className="text-lg font-semibold text-primary mt-1">
-                  ${Math.round(product.priceCents / 100).toLocaleString("es-AR")}
+                  ${product.priceCents.toLocaleString("es-AR")}
                 </p>
               </div>
             </div>
@@ -411,16 +432,33 @@ const ProductsManager: React.FC = () => {
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700 text-sm font-bold mb-2">
-                  Precio (en pesos)
+                  Precio Simple (en pesos)
                 </label>
                 <input
                   type="number"
                   name="priceCents"
-                  value={(currentProducts.priceCents || 0) / 100}
+                  value={currentProducts.priceCents || 0}
                   onChange={handleInputChange}
-                  step="0.01"
+                  step="1"
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Precio Doble (en pesos)
+                  <span className="text-gray-500 font-normal text-xs ml-2">
+                    Opcional - dejar vacío si no aplica
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  name="doublePriceCents"
+                  value={currentProducts.doublePriceCents || ""}
+                  onChange={handleInputChange}
+                  step="1"
+                  placeholder="Ej: 150"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 />
               </div>
               <div className="mb-4">

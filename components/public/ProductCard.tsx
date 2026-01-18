@@ -36,10 +36,7 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product }) => {
           </p>
           <div className="mt-3 flex justify-between items-center">
             <p className="text-xl font-bold text-white">
-              ${(product.priceCents / 100).toLocaleString("es-AR", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
+              ${product.priceCents.toLocaleString("es-AR")}
             </p>
           </div>
         </div>

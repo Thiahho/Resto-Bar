@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useOrders } from "../../hooks/useOrders";
 import { useToast } from "../../contexts/ToastContext";
-import { OrderResponse } from "../../types";
+import { OrderResponse, ParsedModifiers, ParsedComboItem, ParsedModifierItem } from "../../types";
 import jsPDF from "jspdf";
 
 const ORDER_STATUSES = [
@@ -87,11 +87,8 @@ const OrderManager: React.FC = () => {
     setSelectedOrder(null);
   };
 
-  const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toLocaleString("es-AR", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })}`;
+  const formatCurrency = (value: number) => {
+    return `$${value.toLocaleString("es-AR")}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -102,6 +99,7 @@ const OrderManager: React.FC = () => {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      hour12: false,
     });
   };
 
@@ -134,13 +132,13 @@ const OrderManager: React.FC = () => {
       // Agregar modificadores si existen
       try {
         if (item.modifiersSnapshot) {
-          const modifiers = JSON.parse(item.modifiersSnapshot);
+          const modifiers: ParsedModifiers = JSON.parse(item.modifiersSnapshot);
 
           // Si es un combo, mostrar items del combo
           if (modifiers.isCombo) {
             message += `   🎁 *COMBO ESPECIAL*\n`;
             if (modifiers.items && modifiers.items.length > 0) {
-              modifiers.items.forEach((comboItem: any) => {
+              modifiers.items.forEach((comboItem: ParsedComboItem) => {
                 message += `   • ${comboItem.qty}x ${comboItem.productName}\n`;
               });
             }
@@ -151,17 +149,17 @@ const OrderManager: React.FC = () => {
             }
             if (modifiers.complementos && modifiers.complementos.length > 0) {
               message += `   • Complementos: ${modifiers.complementos
-                .map((c: any) => c.name)
+                .map((c: ParsedModifierItem) => c.name)
                 .join(", ")}\n`;
             }
             if (modifiers.aderezos && modifiers.aderezos.length > 0) {
               message += `   • Aderezos: ${modifiers.aderezos
-                .map((a: any) => a.name)
+                .map((a: ParsedModifierItem) => a.name)
                 .join(", ")}\n`;
             }
             if (modifiers.extras && modifiers.extras.length > 0) {
               message += `   • Extras: ${modifiers.extras
-                .map((e: any) => e.name)
+                .map((e: ParsedModifierItem) => e.name)
                 .join(", ")}\n`;
             }
             if (modifiers.bebidas) {
@@ -243,13 +241,13 @@ const OrderManager: React.FC = () => {
           // Agregar modificadores si existen
           try {
             if (item.modifiersSnapshot) {
-              const modifiers = JSON.parse(item.modifiersSnapshot);
+              const modifiers: ParsedModifiers = JSON.parse(item.modifiersSnapshot);
 
               // Si es un combo
               if (modifiers.isCombo) {
                 const comboItems =
                   modifiers.items
-                    ?.map((ci: any) => `${ci.qty}x ${ci.productName}`)
+                    ?.map((ci: ParsedComboItem) => `${ci.qty}x ${ci.productName}`)
                     .join(", ") || "";
                 itemStr += ` [COMBO: ${comboItems}]`;
               } else {
@@ -259,19 +257,19 @@ const OrderManager: React.FC = () => {
                 if (modifiers.complementos?.length)
                   mods.push(
                     `Complementos: ${modifiers.complementos
-                      .map((c: any) => c.name)
+                      .map((c: ParsedModifierItem) => c.name)
                       .join(", ")}`
                   );
                 if (modifiers.aderezos?.length)
                   mods.push(
                     `Aderezos: ${modifiers.aderezos
-                      .map((a: any) => a.name)
+                      .map((a: ParsedModifierItem) => a.name)
                       .join(", ")}`
                   );
                 if (modifiers.extras?.length)
                   mods.push(
                     `Extras: ${modifiers.extras
-                      .map((e: any) => e.name)
+                      .map((e: ParsedModifierItem) => e.name)
                       .join(", ")}`
                   );
                 if (modifiers.bebidas)
@@ -481,7 +479,7 @@ const OrderManager: React.FC = () => {
       // Modificadores
       try {
         if (item.modifiersSnapshot) {
-          const modifiers = JSON.parse(item.modifiersSnapshot);
+          const modifiers: ParsedModifiers = JSON.parse(item.modifiersSnapshot);
           doc.setFontSize(7);
 
           // Si es un combo, mostrar items del combo
@@ -492,7 +490,7 @@ const OrderManager: React.FC = () => {
             doc.setFont("helvetica", "normal");
 
             if (modifiers.items && modifiers.items.length > 0) {
-              modifiers.items.forEach((comboItem: any) => {
+              modifiers.items.forEach((comboItem: ParsedComboItem) => {
                 doc.text(
                   `   - ${comboItem.qty}x ${comboItem.productName}`,
                   leftMargin + 4,
@@ -509,7 +507,7 @@ const OrderManager: React.FC = () => {
             }
             if (modifiers.complementos && modifiers.complementos.length > 0) {
               const complementosText = modifiers.complementos
-                .map((c: any) => c.name)
+                .map((c: ParsedModifierItem) => c.name)
                 .join(", ");
               const lines = doc.splitTextToSize(
                 `   - ${complementosText}`,
@@ -520,7 +518,7 @@ const OrderManager: React.FC = () => {
             }
             if (modifiers.aderezos && modifiers.aderezos.length > 0) {
               const aderezosText = modifiers.aderezos
-                .map((a: any) => a.name)
+                .map((a: ParsedModifierItem) => a.name)
                 .join(", ");
               const lines = doc.splitTextToSize(
                 `   - ${aderezosText}`,
@@ -531,7 +529,7 @@ const OrderManager: React.FC = () => {
             }
             if (modifiers.extras && modifiers.extras.length > 0) {
               const extrasText = modifiers.extras
-                .map((e: any) => e.name)
+                .map((e: ParsedModifierItem) => e.name)
                 .join(", ");
               const lines = doc.splitTextToSize(
                 `   - ${extrasText}`,
@@ -1019,7 +1017,7 @@ const OrderManager: React.FC = () => {
                 </h3>
                 <div className="space-y-2">
                   {selectedOrder.items.map((item, index) => {
-                    let modifiersData: any = null;
+                    let modifiersData: ParsedModifiers | null = null;
                     try {
                       if (item.modifiersSnapshot) {
                         modifiersData = JSON.parse(item.modifiersSnapshot);
@@ -1048,7 +1046,7 @@ const OrderManager: React.FC = () => {
                                   </p>
                                   <div className="space-y-1">
                                     {modifiersData.items?.map(
-                                      (comboItem: any, idx: number) => (
+                                      (comboItem: ParsedComboItem, idx: number) => (
                                         <p
                                           key={idx}
                                           className="ml-2 text-xs text-gray-700"
@@ -1066,17 +1064,14 @@ const OrderManager: React.FC = () => {
                             {/* Detalles de modificadores */}
                             {modifiersData &&
                               !modifiersData.isCombo &&
-                              Object.keys(modifiersData).some((key) => {
-                                const value = modifiersData[key];
-                                return (
-                                  value &&
-                                  ((Array.isArray(value) && value.length > 0) ||
-                                    (!Array.isArray(value) &&
-                                      value !== null &&
-                                      key !== "notes" &&
-                                      key !== "size"))
-                                );
-                              }) && (
+                              (
+                                (modifiersData.size && modifiersData.size !== "simple") ||
+                                (modifiersData.complementos && modifiersData.complementos.length > 0) ||
+                                (modifiersData.aderezos && modifiersData.aderezos.length > 0) ||
+                                (modifiersData.extras && modifiersData.extras.length > 0) ||
+                                modifiersData.bebidas ||
+                                modifiersData.notes
+                              ) && (
                                 <div className="mt-2 space-y-1 text-sm text-gray-600">
                                   {modifiersData.size &&
                                     modifiersData.size !== "simple" && (
@@ -1104,7 +1099,7 @@ const OrderManager: React.FC = () => {
                                             }
                                           > = {};
                                           modifiersData.complementos.forEach(
-                                            (m: any) => {
+                                            (m: ParsedModifierItem) => {
                                               if (!counts[m.name]) {
                                                 counts[m.name] = {
                                                   name: m.name,
@@ -1123,9 +1118,7 @@ const OrderManager: React.FC = () => {
                                               >
                                                 {item.count}x {item.name}{" "}
                                                 {item.price > 0 &&
-                                                  `(+$${Math.round(
-                                                    item.price / 100
-                                                  ).toLocaleString("es-AR")})`}
+                                                  `(+$${item.price.toLocaleString("es-AR")})`}
                                               </p>
                                             )
                                           );
@@ -1148,7 +1141,7 @@ const OrderManager: React.FC = () => {
                                             }
                                           > = {};
                                           modifiersData.aderezos.forEach(
-                                            (m: any) => {
+                                            (m: ParsedModifierItem) => {
                                               if (!counts[m.name]) {
                                                 counts[m.name] = {
                                                   name: m.name,
@@ -1167,9 +1160,7 @@ const OrderManager: React.FC = () => {
                                               >
                                                 {item.count}x {item.name}{" "}
                                                 {item.price > 0 &&
-                                                  `(+$${Math.round(
-                                                    item.price / 100
-                                                  ).toLocaleString("es-AR")})`}
+                                                  `(+$${item.price.toLocaleString("es-AR")})`}
                                               </p>
                                             )
                                           );
@@ -1192,7 +1183,7 @@ const OrderManager: React.FC = () => {
                                             }
                                           > = {};
                                           modifiersData.extras.forEach(
-                                            (m: any) => {
+                                            (m: ParsedModifierItem) => {
                                               if (!counts[m.name]) {
                                                 counts[m.name] = {
                                                   name: m.name,
@@ -1211,9 +1202,7 @@ const OrderManager: React.FC = () => {
                                               >
                                                 {item.count}x {item.name}{" "}
                                                 {item.price > 0 &&
-                                                  `(+$${Math.round(
-                                                    item.price / 100
-                                                  ).toLocaleString("es-AR")})`}
+                                                  `(+$${item.price.toLocaleString("es-AR")})`}
                                               </p>
                                             )
                                           );
@@ -1227,9 +1216,7 @@ const OrderManager: React.FC = () => {
                                         {modifiersData.bebidas.name}
                                       </span>{" "}
                                       {modifiersData.bebidas.price > 0 &&
-                                        `(+$${Math.round(
-                                          modifiersData.bebidas.price / 100
-                                        ).toLocaleString("es-AR")})`}
+                                        `(+$${modifiersData.bebidas.price.toLocaleString("es-AR")})`}
                                     </p>
                                   )}
                                   {modifiersData.notes && (

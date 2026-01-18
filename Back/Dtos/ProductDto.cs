@@ -12,6 +12,8 @@ namespace Back.Dtos
         public int CategoryId { get; set; }
         public string CategoryName { get; set; }
         public int DisplayOrder { get; set; }
+        public int? DoublePriceCents {get;set;}
+
     }
 
     public class CreateProductDto
@@ -22,6 +24,8 @@ namespace Back.Dtos
         public string Description { get; set; }
         [Required]
         public int PriceCents { get; set; }
+        public int? DoublePriceCents {get;set;}
+
         [Required]
         public int CategoryId { get; set; }
         public IFormFile? ImageData { get; set; }
@@ -35,6 +39,8 @@ namespace Back.Dtos
         public string Description { get; set; }
         [Required]
         public int PriceCents { get; set; }
+        public int? DoublePriceCents {get;set;}
+
         [Required]
         public int CategoryId { get; set; }
         public IFormFile? ImageData { get; set; }

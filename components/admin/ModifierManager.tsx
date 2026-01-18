@@ -27,10 +27,6 @@ const ModifierManager: React.FC = () => {
     isActive: true,
   });
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
   const loadCategories = async () => {
     try {
       const categories = await getModifierCategories();
@@ -40,12 +36,16 @@ const ModifierManager: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const dataToSave = {
       ...formData,
-      priceCentsDelta: formData.priceCentsDelta * 100
+      priceCentsDelta: formData.priceCentsDelta
     };
 
     if (editingModifier) {
@@ -73,7 +73,7 @@ const ModifierManager: React.FC = () => {
     setEditingModifier(modifier);
     setFormData({
       name: modifier.name,
-      priceCentsDelta: Math.round(modifier.priceCentsDelta / 100),
+      priceCentsDelta: modifier.priceCentsDelta,
       category: modifier.category || "",
       isActive: modifier.isActive,
     });
@@ -260,7 +260,7 @@ const ModifierManager: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    ${Math.round(modifier.priceCentsDelta / 100).toLocaleString("es-AR")}
+                    ${modifier.priceCentsDelta.toLocaleString("es-AR")}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button

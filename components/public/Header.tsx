@@ -3,113 +3,91 @@ import { Link } from "react-router-dom";
 import { useCatalog } from "../../hooks/useCatalog";
 import { useAuth } from "../../hooks/useAuth";
 import { useCart } from "../../contexts/CartContext";
-import { getFullApiUrl } from "../../services/api/apiClient";
+import { ShoppingCart, User, Settings, Info } from "lucide-react";
 
 const Header: React.FC = () => {
   const { businessInfo } = useCatalog();
   const { isAuthenticated } = useAuth();
   const { cartItemsCount, openCheckout } = useCart();
 
-  // Mientras carga la información, no mostrar nada o un esqueleto de carga
   if (!businessInfo) {
     return (
-      <div className="relative w-full h-64 md:h-80 lg:h-96 bg-gray-200 animate-pulse"></div>
+      <div className="relative w-full h-56 bg-zinc-900 animate-pulse rounded-b-3xl"></div>
     );
   }
 
   const { banner } = businessInfo;
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5277";
+  const bannerSrc = banner.imageUrl
+    ? `${API_URL}${banner.imageUrl}`
+    : "/images/banner2.webp";
+
   return (
-    <header className="relative w-full flex justify-center bg-black">
-      <div className="relative w-full max-w-2xl h-48 md:h-56">
+    <header className="relative w-full flex justify-center bg-zinc-950">
+      <div className="relative w-full max-w-4xl h-56 md:h-64 overflow-hidden shadow-2xl">
+
+        {/* IMAGEN DE FONDO (BANNER) */}
         <img
-          src={getFullApiUrl(banner.imageUrl)}
+          src={bannerSrc}
           alt="Banner"
-          className="w-full h-full object-cover rounded-b-2xl"
+          className="w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
+          onError={(e) => {
+            // Fallback a imagen local si la URL de la BD falla
+            e.currentTarget.src = "/images/banner2.webp";
+          }}
         />
-        <div className="absolute inset-0 bg-black bg-opacity-30 flex flex-col items-center justify-center text-center p-4 rounded-b-2xl">
-          <h1 className="text-white text-2xl md:text-3xl font-bold drop-shadow-lg">
-            {banner.title}
+
+        {/* OVERLAY GRADIENTE PROFESIONAL */}
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/40 to-transparent flex flex-col items-center justify-center text-center p-6">
+          <h1 className="text-white text-3xl md:text-4xl font-black uppercase tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
+            {banner.title || businessInfo.name}
           </h1>
-          <p className="text-white text-sm md:text-base mt-1 drop-shadow-md">
+          <div className="h-1 w-12 bg-yellow-500 my-2 rounded-full"></div>
+          <p className="text-gray-200 text-sm md:text-base font-medium max-w-xs md:max-w-md drop-shadow-md italic">
             {banner.subtitle}
           </p>
         </div>
 
-        {/* Botones superiores */}
-        <div className="absolute top-4 right-4 flex gap-2">
-        {/* Botón del carrito */}
-        <button
-          onClick={openCheckout}
-          className="relative bg-white bg-opacity-90 hover:bg-opacity-100 p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-          title="Ver carrito"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-gray-800"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
+        {/* BOTONES SUPERIORES IZQUIERDA (Info) */}
+        <div className="absolute top-4 left-4">
+          <Link
+            to="/info"
+            className="flex items-center gap-2 bg-black/30 backdrop-blur-md border border-white/10 text-white p-2 px-3 rounded-full hover:bg-white/20 transition-all"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-          {cartItemsCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-              {cartItemsCount}
-            </span>
-          )}
-        </button>
+            <Info size={18} />
+            <span className="text-xs font-bold uppercase tracking-wider hidden md:block">Info</span>
+          </Link>
+        </div>
 
-        {/* Botón de Login/Admin */}
-        <Link
-          to={isAuthenticated ? "/admin" : "/login"}
-          className="bg-white bg-opacity-90 hover:bg-opacity-100 p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
-          title={isAuthenticated ? "Panel Admin" : "Iniciar Sesión"}
-        >
-        {isAuthenticated ? (
-          // Ícono de configuración/admin cuando está logueado
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-gray-800"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
+        {/* BOTONES SUPERIORES DERECHA (Carrito y Admin) */}
+        <div className="absolute top-4 right-4 flex gap-3">
+          
+          {/* Botón Carrito */}
+          <button
+            onClick={openCheckout}
+            className="relative bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-full text-white hover:bg-yellow-500 hover:text-black transition-all duration-300 shadow-xl group"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        ) : (
-          // Ícono de usuario cuando no está logueado
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6 text-gray-800"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
+            <ShoppingCart size={22} className="group-hover:scale-110 transition-transform" />
+            {cartItemsCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-zinc-950 animate-bounce">
+                {cartItemsCount}
+              </span>
+            )}
+          </button>
+
+          {/* Botón Admin/Login */}
+          <Link
+            to={isAuthenticated ? "/admin" : "/login"}
+            className="bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-full text-white hover:bg-white/30 transition-all duration-300 shadow-xl"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-        )}
-        </Link>
+            {isAuthenticated ? (
+              <Settings size={22} />
+            ) : (
+              <User size={22} />
+            )}
+          </Link>
+
         </div>
       </div>
     </header>

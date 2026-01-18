@@ -72,8 +72,8 @@ const CouponManager: React.FC = () => {
       const payload = {
         code: formData.code.trim().toUpperCase(),
         type: formData.type,
-        value: formData.type === 'AMOUNT' ? Math.round(formData.value * 100) : Math.round(formData.value),
-        minTotalCents: formData.minTotalCents ? Math.round(parseFloat(formData.minTotalCents) * 100) : null,
+        value: Math.round(formData.value),
+        minTotalCents: formData.minTotalCents ? parseInt(formData.minTotalCents) : null,
         validFrom: validFromDate.toISOString(),
         validTo: validToDate.toISOString(),
         usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
@@ -101,8 +101,8 @@ const CouponManager: React.FC = () => {
     setFormData({
       code: coupon.code,
       type: coupon.type,
-      value: coupon.type === 'AMOUNT' ? coupon.value / 100 : coupon.value,
-      minTotalCents: coupon.minTotalCents ? (coupon.minTotalCents / 100).toString() : '',
+      value: coupon.value,
+      minTotalCents: coupon.minTotalCents ? coupon.minTotalCents.toString() : '',
       validFrom: new Date(coupon.validFrom).toISOString().slice(0, 16),
       validTo: new Date(coupon.validTo).toISOString().slice(0, 16),
       usageLimit: coupon.usageLimit ? coupon.usageLimit.toString() : '',
@@ -147,6 +147,7 @@ const CouponManager: React.FC = () => {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: false,
     });
   };
 
@@ -369,11 +370,11 @@ const CouponManager: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap font-semibold text-blue-600">
                     {coupon.type === 'PERCENT'
                       ? `${coupon.value}%`
-                      : `$${Math.round(coupon.value / 100).toLocaleString("es-AR")}`}
+                      : `$${coupon.value.toLocaleString("es-AR")}`}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {coupon.minTotalCents
-                      ? `$${Math.round(coupon.minTotalCents / 100).toLocaleString("es-AR")}`
+                      ? `$${coupon.minTotalCents.toLocaleString("es-AR")}`
                       : '-'}
                   </td>
                   <td className="px-6 py-4">

@@ -46,18 +46,19 @@ namespace Back.Controller
                     var scheduledLocal = orderDto.ScheduledAt.Value.ToLocalTime();
                     var nowLocal = DateTimeOffset.Now.ToLocalTime();
 
-                    // Validar que sea en el futuro (al menos 30 minutos)
-                    if (scheduledLocal <= nowLocal.AddMinutes(30))
+                    // Validar que la hora esté entre 19:30 y 23:00
+                    var scheduledHour = scheduledLocal.Hour;
+                    if (scheduledHour < 19.30 || scheduledHour >= 23)
                     {
-                        _logger.LogWarning("ScheduledAt debe ser al menos 30 minutos en el futuro");
-                        return BadRequest(new { message = "La hora programada debe ser al menos 30 minutos en el futuro" });
+                        _logger.LogWarning("Hora fuera del rango permitido: {Hour}", scheduledHour);
+                        return BadRequest(new { message = "El horario de entrega es de 19:30 a 23:00" });
                     }
 
-                    // Validar que no sea más de 7 días en el futuro
-                    if (scheduledLocal > nowLocal.AddDays(7))
+                    // Validar que sea en el futuro
+                    if (scheduledLocal <= nowLocal)
                     {
-                        _logger.LogWarning("ScheduledAt no puede ser más de 7 días en el futuro");
-                        return BadRequest(new { message = "No se pueden programar pedidos con más de 7 días de anticipación" });
+                        _logger.LogWarning("ScheduledAt debe ser en el futuro");
+                        return BadRequest(new { message = "La hora programada debe ser posterior a la hora actual" });
                     }
 
                     _logger.LogInformation("Orden programada para: {ScheduledAt}", scheduledLocal);

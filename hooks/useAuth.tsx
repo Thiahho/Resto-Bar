@@ -3,7 +3,6 @@ import React, {
   useContext,
   useState,
   ReactNode,
-  useEffect,
 } from "react";
 import apiClient from "../services/api/apiClient";
 
@@ -16,20 +15,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Función para obtener el token inicial de sessionStorage (lazy initialization)
+const getInitialToken = (): string | null => {
+  if (typeof window !== "undefined") {
+    return sessionStorage.getItem("authToken");
+  }
+  return null;
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Esto mantiene la sesión activa solo durante la sesión del navegador
-    const storedToken = sessionStorage.getItem("authToken");
-    if (storedToken) {
-      setToken(storedToken);
-    }
-    setIsLoading(false);
-  }, []);
+  // Usar lazy initialization para evitar re-render innecesario
+  const [token, setToken] = useState<string | null>(getInitialToken);
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
@@ -55,14 +53,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     sessionStorage.removeItem("authToken");
     setToken(null);
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        Loading authentication...
-      </div>
-    );
-  }
 
   return (
     <AuthContext.Provider

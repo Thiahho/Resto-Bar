@@ -29,6 +29,7 @@ export interface Products {
   name: string;
   description: string;
   priceCents: number;
+  doublePriceCents: number; // Precio para versión doble (opcional)
   hasImage: boolean;
   categoryId: string;
   displayOrder: number;
@@ -142,4 +143,27 @@ export interface OrderResponse {
   createdAt: string;
   updatedAt: string;
   items: OrderItemRequest[];
+}
+
+// Tipos para los modificadores parseados del JSON (modifiersSnapshot)
+export interface ParsedModifierItem {
+  name: string;
+  price: number;
+}
+
+export interface ParsedComboItem {
+  productId?: number;
+  productName: string;
+  qty: number;
+}
+
+export interface ParsedModifiers {
+  isCombo?: boolean;
+  items?: ParsedComboItem[];
+  size?: string;
+  complementos?: ParsedModifierItem[];
+  aderezos?: ParsedModifierItem[];
+  extras?: ParsedModifierItem[];
+  bebidas?: ParsedModifierItem;
+  notes?: string;
 }

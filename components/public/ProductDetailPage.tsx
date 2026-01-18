@@ -33,7 +33,7 @@ const ProductsDetailPage: React.FC = () => {
             }}
           />
           <p className="text-2xl text-primary font-bold mb-4">
-            ${Math.round(product.priceCents / 100).toLocaleString("es-AR")}
+            ${product.priceCents.toLocaleString("es-AR")}
           </p>
           <p className="text-lg text-text-light">{product.description}</p>
         </div>

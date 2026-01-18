@@ -36,6 +36,7 @@ namespace Back.Controller
                     Name = p.Name,
                     Description = p.Description,
                     PriceCents = p.PriceCents,
+                    DoublePriceCents= p.DoublePriceCents,
                     HasImage = p.ImageData != null && p.ImageData.Length > 0,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
@@ -59,6 +60,7 @@ namespace Back.Controller
                     Name = productDto.Name,
                     Description = productDto.Description,
                     PriceCents = productDto.PriceCents,
+                    DoublePriceCents=productDto.DoublePriceCents,
                     CategoryId = productDto.CategoryId
                 };
 
@@ -88,6 +90,7 @@ namespace Back.Controller
                     Name = product.Name,
                     Description = product.Description,
                     PriceCents = product.PriceCents,
+                    DoublePriceCents= product.DoublePriceCents,
                     HasImage = product.ImageData != null && product.ImageData.Length > 0,
                     CategoryId = product.CategoryId,
                     CategoryName = product.Category.Name,
@@ -113,6 +116,7 @@ namespace Back.Controller
             product.Name = productDto.Name;
             product.Description = productDto.Description;
             product.PriceCents = productDto.PriceCents;
+            product.DoublePriceCents= productDto.DoublePriceCents;
             product.CategoryId = productDto.CategoryId;
 
             // Actualizar imagen si se proporcionó una nueva

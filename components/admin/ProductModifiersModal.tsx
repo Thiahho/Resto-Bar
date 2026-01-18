@@ -203,7 +203,7 @@ const ProductModifiersModal: React.FC<ProductModifiersModalProps> = ({
                           </div>
                         </div>
                         <div className="text-gray-600">
-                          ${Math.round(modifier.priceCentsDelta / 100).toLocaleString("es-AR")}
+                          ${modifier.priceCentsDelta.toLocaleString("es-AR")}
                         </div>
                       </label>
                     ))}

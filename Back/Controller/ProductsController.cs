@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Webp;
 
 namespace Back.Controller
 {
@@ -31,6 +34,7 @@ namespace Back.Controller
                     Name = p.Name,
                     Description = p.Description,
                     PriceCents = p.PriceCents,
+                    DoublePriceCents= p.DoublePriceCents,
                     HasImage = p.ImageData != null && p.ImageData.Length > 0,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category.Name,
@@ -51,6 +55,7 @@ namespace Back.Controller
                     s.Description,
                     s.BannerTitle,
                     s.BannerSubtitle,
+                    s.BannerImageUpdatedAt,
                     s.OpeningHours,
                     s.PhoneWa,
                     s.Address,
@@ -73,7 +78,7 @@ namespace Back.Controller
                 {
                     Title = settings.BannerTitle ?? "",
                     Subtitle = settings.BannerSubtitle ?? "",
-                    ImageUrl = "/api/public/banner/image"
+                    ImageUrl = $"/api/public/banner/image?v={(settings.BannerImageUpdatedAt?.Ticks ?? 0)}"
                 },
                 Hours = JsonSerializer.Deserialize<string[]>(settings.OpeningHours ?? "[]") ?? Array.Empty<string>(),
                 Contact = new ContactDto
@@ -107,19 +112,62 @@ namespace Back.Controller
         }
 
         [HttpGet("banner/image")]
-        public IActionResult GetBannerImage()
+        [AllowAnonymous] // si querés que el público lo vea
+        public async Task<IActionResult> GetBannerImage()
         {
-            var bannerPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "banner.webp");
+            // 1) DB (bytea) -> BannerImageWebp
+            var settings = await _context.BusinessSettings.FindAsync((short)1);
 
-            if (!System.IO.File.Exists(bannerPath))
+            if (settings?.BannerImageWebp != null && settings.BannerImageWebp.Length > 0)
             {
-                // Retornar una imagen por defecto o 404
-                return NotFound("Banner image not found");
+                Response.Headers["Cache-Control"] = "public,max-age=3600";
+                return File(settings.BannerImageWebp, "image/webp");
             }
 
-            var imageBytes = System.IO.File.ReadAllBytes(bannerPath);
+            // 2) Fallback al archivo (si todavía no cargaron nada a DB)
+            var bannerPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "banner.webp");
+            if (!System.IO.File.Exists(bannerPath))
+                return NotFound("Banner image not found");
+
+            var imageBytes = await System.IO.File.ReadAllBytesAsync(bannerPath);
+            Response.Headers["Cache-Control"] = "public,max-age=3600";
             return File(imageBytes, "image/webp");
         }
+
+        [HttpPut("banner/image")]
+        public async Task<IActionResult> UpdateBannerImage(IFormFile bannerImage)
+        {
+            if (bannerImage == null || bannerImage.Length == 0)
+                return BadRequest("Missing image");
+
+            if (!bannerImage.ContentType.StartsWith("image/"))
+                return BadRequest("Invalid file type");
+
+            await using var inStream = bannerImage.OpenReadStream();
+            using var image = await SixLabors.ImageSharp.Image.LoadAsync(inStream);
+
+            const int maxWidth = 1600;
+            if (image.Width > maxWidth)
+            {
+                var newHeight = (int)(image.Height * (maxWidth / (double)image.Width));
+                image.Mutate(x => x.Resize(maxWidth, newHeight));
+            }
+
+            var encoder = new SixLabors.ImageSharp.Formats.Webp.WebpEncoder { Quality = 80 };
+            using var outStream = new MemoryStream();
+            await image.SaveAsWebpAsync(outStream, encoder);
+
+            var settings = await _context.BusinessSettings.FindAsync((short)1) ?? new BusinessSettings { Id = 1 };
+            settings.BannerImageWebp = outStream.ToArray();
+            settings.BannerImageUpdatedAt = DateTime.UtcNow;
+
+            if (_context.Entry(settings).State == EntityState.Detached)
+                _context.BusinessSettings.Add(settings);
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
 
         [HttpGet("health")]
         public IActionResult HealthCheck()
