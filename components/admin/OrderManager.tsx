@@ -29,6 +29,8 @@ const OrderManager: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const filteredOrders = orders.filter((order) => {
     // Filtrar por estado
@@ -44,6 +46,22 @@ const OrderManager: React.FC = () => {
 
     return matchesStatus && matchesSearch;
   });
+
+  // Paginación
+  const totalPages = Math.ceil(filteredOrders.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + pageSize);
+
+  // Resetear a página 1 cuando cambian los filtros
+  const handleFilterChange = (status: string) => {
+    setFilterStatus(status);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   const getStatusInfo = (status: string) => {
     return ORDER_STATUSES.find((s) => s.value === status) || ORDER_STATUSES[0];
@@ -711,7 +729,7 @@ const OrderManager: React.FC = () => {
             type="text"
             placeholder="🔍 Buscar por teléfono, ID o nombre del cliente..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
           />
           <span className="absolute left-4 top-3.5 text-gray-400 text-xl">
@@ -719,7 +737,7 @@ const OrderManager: React.FC = () => {
           </span>
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery("")}
+              onClick={() => handleSearchChange("")}
               className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
             >
               ✕
@@ -730,7 +748,7 @@ const OrderManager: React.FC = () => {
         {/* Filtros por estado */}
         <div className="flex flex-wrap gap-1 sm:gap-2">
           <button
-            onClick={() => setFilterStatus("ALL")}
+            onClick={() => handleFilterChange("ALL")}
             className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
               filterStatus === "ALL"
                 ? "bg-gray-800 text-white"
@@ -746,7 +764,7 @@ const OrderManager: React.FC = () => {
             return (
               <button
                 key={status.value}
-                onClick={() => setFilterStatus(status.value)}
+                onClick={() => handleFilterChange(status.value)}
                 className={`px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
                   filterStatus === status.value
                     ? `${status.color} text-white`
@@ -761,11 +779,10 @@ const OrderManager: React.FC = () => {
       </div>
 
       {/* Contador de resultados */}
-      {searchQuery && filteredOrders.length > 0 && (
+      {filteredOrders.length > 0 && (
         <div className="text-sm text-gray-600 px-2">
-          Mostrando {filteredOrders.length} resultado
-          {filteredOrders.length !== 1 ? "s" : ""} de {orders.length} orden
-          {orders.length !== 1 ? "es" : ""}
+          Mostrando {startIndex + 1}-{Math.min(startIndex + pageSize, filteredOrders.length)} de {filteredOrders.length} orden{filteredOrders.length !== 1 ? "es" : ""}
+          {searchQuery && ` (filtrado de ${orders.length} total)`}
         </div>
       )}
 
@@ -780,7 +797,7 @@ const OrderManager: React.FC = () => {
                   No hay resultados para "{searchQuery}"
                 </p>
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => handleSearchChange("")}
                   className="mt-4 text-blue-600 hover:text-blue-800 underline"
                 >
                   Limpiar búsqueda
@@ -826,7 +843,7 @@ const OrderManager: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOrders.map((order) => {
+                {paginatedOrders.map((order) => {
                   const statusInfo = getStatusInfo(order.status);
                   return (
                     <tr key={order.id} className="hover:bg-gray-50">
@@ -897,6 +914,74 @@ const OrderManager: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Controles de paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">
+              Página {currentPage} de {totalPages}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              Primera
+            </button>
+            <button
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 text-sm rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              Anterior
+            </button>
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum: number;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-1 text-sm rounded border ${
+                      currentPage === pageNum
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "border-gray-300 hover:bg-gray-100"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-sm rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              Siguiente
+            </button>
+            <button
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 text-sm rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+            >
+              Última
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal de detalle */}
       {isDetailModalOpen && selectedOrder && (
