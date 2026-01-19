@@ -78,7 +78,7 @@ namespace Back.Controller
                     TakeMode = orderDto.TakeMode,
                     Address = orderDto.Address,
                     Reference = orderDto.Reference,
-                    ScheduledAt = orderDto.ScheduledAt,
+                    ScheduledAt = orderDto.ScheduledAt?.ToUniversalTime(),
                     Note = orderDto.Note,
                     SubtotalCents = orderDto.SubtotalCents,
                     DiscountCents = orderDto.DiscountCents,
