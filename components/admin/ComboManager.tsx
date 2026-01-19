@@ -178,15 +178,15 @@ const ComboManager: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Combos</h2>
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+        <h2 className="text-xl md:text-2xl font-bold">Gestión de Combos</h2>
         <button
           onClick={() => {
             setShowForm(!showForm);
             if (showForm) cancelEdit();
           }}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           {showForm ? "Cancelar" : "Nuevo Combo"}
         </button>
@@ -366,8 +366,73 @@ const ComboManager: React.FC = () => {
         </div>
       )}
 
-      {/* Lista de combos */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Vista móvil - Tarjetas */}
+      <div className="md:hidden space-y-4">
+        {loading && combos.length === 0 ? (
+          <div className="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            Cargando combos...
+          </div>
+        ) : combos.length === 0 ? (
+          <div className="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            No hay combos creados
+          </div>
+        ) : (
+          combos.map((combo) => (
+            <div key={combo.id} className="bg-white rounded-lg shadow-md p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-bold text-lg">{combo.name}</h3>
+                  <span className="text-xl font-semibold text-green-600">
+                    {formatCurrency(combo.priceCents)}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleToggleActive(combo.id)}
+                  className={`px-3 py-1 rounded text-sm ${
+                    combo.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {combo.isActive ? "Activo" : "Inactivo"}
+                </button>
+              </div>
+
+              <div className="mb-3 p-2 bg-gray-50 rounded">
+                <span className="text-sm text-gray-600 block mb-1">Productos incluidos:</span>
+                <div className="text-sm space-y-1">
+                  {combo.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-1">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">
+                        {item.qty}x
+                      </span>
+                      <span>{item.productName}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-3 border-t">
+                <button
+                  onClick={() => handleEdit(combo)}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded text-sm"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(combo.id)}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded text-sm"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Vista desktop - Tabla */}
+      <div className="hidden md:block bg-white rounded-lg shadow-md overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>

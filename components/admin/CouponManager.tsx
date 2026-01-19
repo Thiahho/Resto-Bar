@@ -156,15 +156,15 @@ const CouponManager: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Cupones</h2>
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+        <h2 className="text-xl md:text-2xl font-bold">Gestión de Cupones</h2>
         <button
           onClick={() => {
             setShowForm(!showForm);
             if (showForm) cancelEdit();
           }}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           {showForm ? 'Cancelar' : 'Nuevo Cupón'}
         </button>
@@ -302,7 +302,113 @@ const CouponManager: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Vista móvil - Tarjetas */}
+      <div className="md:hidden space-y-4">
+        {loading && coupons.length === 0 ? (
+          <div className="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            Cargando cupones...
+          </div>
+        ) : coupons.length === 0 ? (
+          <div className="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            No hay cupones creados
+          </div>
+        ) : (
+          coupons.map((coupon) => (
+            <div key={coupon.id} className={`bg-white rounded-lg shadow-md p-4 ${isExpired(coupon.validTo) ? 'bg-gray-50' : ''}`}>
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-bold text-lg">{coupon.code}</h3>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {coupon.type === 'PERCENT' ? (
+                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                        Porcentaje
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                        Monto Fijo
+                      </span>
+                    )}
+                    {isExpired(coupon.validTo) && (
+                      <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">
+                        Expirado
+                      </span>
+                    )}
+                    {coupon.usageLimit && coupon.usageCount >= coupon.usageLimit && (
+                      <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
+                        Agotado
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggleActive(coupon.id)}
+                  className={`px-3 py-1 rounded text-sm ${
+                    coupon.isActive
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {coupon.isActive ? 'Activo' : 'Inactivo'}
+                </button>
+              </div>
+
+              <div className="space-y-2 mb-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Valor:</span>
+                  <span className="font-semibold text-blue-600">
+                    {coupon.type === 'PERCENT'
+                      ? `${coupon.value}%`
+                      : `$${coupon.value.toLocaleString("es-AR")}`}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Mín. Total:</span>
+                  <span>
+                    {coupon.minTotalCents
+                      ? `$${coupon.minTotalCents.toLocaleString("es-AR")}`
+                      : '-'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Usos:</span>
+                  <span>
+                    {coupon.usageCount}
+                    {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ' / ∞'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 mb-3 p-2 bg-gray-50 rounded">
+                <div>Desde: {formatDate(coupon.validFrom)}</div>
+                <div>Hasta: {formatDate(coupon.validTo)}</div>
+              </div>
+
+              <div className="flex gap-3 pt-3 border-t">
+                <button
+                  onClick={() => handleEdit(coupon)}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded text-sm"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(coupon.id)}
+                  disabled={coupon.usageCount > 0}
+                  className={`flex-1 py-2 rounded text-sm ${
+                    coupon.usageCount > 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-red-500 hover:bg-red-600 text-white'
+                  }`}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Vista desktop - Tabla */}
+      <div className="hidden md:block bg-white rounded-lg shadow-md overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>

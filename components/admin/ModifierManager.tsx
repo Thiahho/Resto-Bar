@@ -91,12 +91,12 @@ const ModifierManager: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Gestión de Modificadores</h2>
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+        <h2 className="text-xl md:text-2xl font-bold">Gestión de Modificadores</h2>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           {showForm ? "Cancelar" : "Nuevo Modificador"}
         </button>
@@ -205,7 +205,87 @@ const ModifierManager: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      {/* Vista móvil - Tarjetas */}
+      <div className="md:hidden space-y-4">
+        {loading && modifiers.length === 0 ? (
+          <div className="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            Cargando modificadores...
+          </div>
+        ) : modifiers.length === 0 ? (
+          <div className="bg-white p-4 rounded-lg shadow text-center text-gray-500">
+            No hay modificadores registrados
+          </div>
+        ) : (
+          modifiers.map((modifier) => (
+            <div key={modifier.id} className="bg-white rounded-lg shadow-md p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="font-semibold text-lg">{modifier.name}</h3>
+                  <span className="text-xs text-gray-500">ID: {modifier.id}</span>
+                </div>
+                <button
+                  onClick={() => toggleActive(modifier)}
+                  className={`px-3 py-1 rounded text-sm ${
+                    modifier.isActive
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {modifier.isActive ? "Activo" : "Inactivo"}
+                </button>
+              </div>
+
+              <div className="space-y-2 mb-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Categoría:</span>
+                  <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                    {modifier.category || "Sin categoría"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Precio:</span>
+                  <span className="font-medium">${modifier.priceCentsDelta.toLocaleString("es-AR")}</span>
+                </div>
+              </div>
+
+              {modifier.associatedProducts.length > 0 && (
+                <div className="mb-3">
+                  <span className="text-sm text-gray-600 block mb-1">Productos:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {modifier.associatedProducts.map((product) => (
+                      <span
+                        key={product.id}
+                        className="inline-flex items-center px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded"
+                        title={product.name}
+                      >
+                        {product.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-3 border-t">
+                <button
+                  onClick={() => handleEdit(modifier)}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded text-sm"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDelete(modifier.id)}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded text-sm"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Vista desktop - Tabla */}
+      <div className="hidden md:block bg-white rounded-lg shadow-md overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
