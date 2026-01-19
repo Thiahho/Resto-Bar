@@ -43,27 +43,38 @@ namespace Back.Controller
                 // Validar horario programado
                 if (orderDto.ScheduledAt.HasValue)
                 {
-                    var scheduledLocal = orderDto.ScheduledAt.Value.ToLocalTime();
-                    var nowLocal = DateTimeOffset.Now.ToLocalTime();
+                    // Usar la hora tal como la envió el cliente (con su offset original)
+                    // NO usar ToLocalTime() porque convertiría a la zona horaria del servidor (UTC en Render)
+                    var scheduledValue = orderDto.ScheduledAt.Value;
 
-                    // Validar que la hora esté entre 19:30 y 23:00
-                    var scheduledTime = scheduledLocal.TimeOfDay;
+                    _logger.LogInformation("ScheduledAt recibido: {Value}, Offset: {Offset}, DateTime: {DateTime}",
+                        scheduledValue,
+                        scheduledValue.Offset,
+                        scheduledValue.DateTime);
+
+                    // Extraer la hora del cliente (DateTime tiene la hora en la zona del cliente)
+                    var scheduledTime = scheduledValue.DateTime.TimeOfDay;
                     var openTime = new TimeSpan(19, 30, 0);
                     var closeTime = new TimeSpan(23, 0, 0);
+
+                    _logger.LogInformation("Hora del cliente: {Time}, Rango: {Open} - {Close}",
+                        scheduledTime, openTime, closeTime);
+
                     if (scheduledTime < openTime || scheduledTime >= closeTime)
                     {
                         _logger.LogWarning("Hora fuera del rango permitido: {Time}", scheduledTime);
                         return BadRequest(new { message = "El horario de entrega es de 19:30 a 23:00" });
                     }
 
-                    // Validar que sea en el futuro
-                    if (scheduledLocal <= nowLocal)
+                    // Validar que sea en el futuro (comparar en UTC para ser consistente)
+                    var nowUtc = DateTimeOffset.UtcNow;
+                    if (scheduledValue.ToUniversalTime() <= nowUtc)
                     {
                         _logger.LogWarning("ScheduledAt debe ser en el futuro");
                         return BadRequest(new { message = "La hora programada debe ser posterior a la hora actual" });
                     }
 
-                    _logger.LogInformation("Orden programada para: {ScheduledAt}", scheduledLocal);
+                    _logger.LogInformation("Orden programada para: {ScheduledAt}", scheduledValue);
                 }
 
                 _logger.LogInformation("Creando orden con {ItemCount} items", orderDto.Items.Count);
