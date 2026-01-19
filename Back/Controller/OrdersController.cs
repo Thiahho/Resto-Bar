@@ -47,10 +47,12 @@ namespace Back.Controller
                     var nowLocal = DateTimeOffset.Now.ToLocalTime();
 
                     // Validar que la hora esté entre 19:30 y 23:00
-                    var scheduledHour = scheduledLocal.Hour;
-                    if (scheduledHour < 19.30 || scheduledHour >= 23)
+                    var scheduledTime = scheduledLocal.TimeOfDay;
+                    var openTime = new TimeSpan(19, 30, 0);
+                    var closeTime = new TimeSpan(23, 0, 0);
+                    if (scheduledTime < openTime || scheduledTime >= closeTime)
                     {
-                        _logger.LogWarning("Hora fuera del rango permitido: {Hour}", scheduledHour);
+                        _logger.LogWarning("Hora fuera del rango permitido: {Time}", scheduledTime);
                         return BadRequest(new { message = "El horario de entrega es de 19:30 a 23:00" });
                     }
 

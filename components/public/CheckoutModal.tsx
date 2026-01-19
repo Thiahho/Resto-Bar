@@ -160,7 +160,18 @@ const CheckoutModal: React.FC = () => {
                 const today = new Date();
                 const [hours, minutes] = scheduledTime.split(':').map(Number);
                 today.setHours(hours, minutes, 0, 0);
-                return today.toISOString();
+                // Usar formato ISO con offset de zona horaria local en lugar de UTC
+                const offset = -today.getTimezoneOffset();
+                const sign = offset >= 0 ? '+' : '-';
+                const absOffset = Math.abs(offset);
+                const offsetHours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+                const offsetMinutes = String(absOffset % 60).padStart(2, '0');
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const hour = String(today.getHours()).padStart(2, '0');
+                const minute = String(today.getMinutes()).padStart(2, '0');
+                return `${year}-${month}-${day}T${hour}:${minute}:00${sign}${offsetHours}:${offsetMinutes}`;
               })()
             : undefined,
         subtotalCents: cartTotal,
