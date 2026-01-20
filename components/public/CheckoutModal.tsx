@@ -423,7 +423,7 @@ const CheckoutModal: React.FC = () => {
                   required={showSchedule}
                 />
                 <p className="text-gray-400 text-xs mt-2">
-                  Mínimo 30 min desde ahora. Horario: 19:30 a 23:00
+                  Mínimo 30 min desde ahora. Horario: 19:00 a 23:00
                 </p>
               </div>
             )}
