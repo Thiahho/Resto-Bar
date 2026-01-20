@@ -82,7 +82,7 @@ const CatalogPage: React.FC = () => {
         {combos.length > 0 && !selectedCategoryId && (
           <div className="mb-12">
             <h2 className="text-2xl font-bold text-white mb-2">
-              🎁 Combos Especiales
+              Combos Especiales
             </h2>
             <p className="text-gray-400 text-sm mb-6">
               Ahorra con nuestros combos exclusivos
@@ -91,33 +91,42 @@ const CatalogPage: React.FC = () => {
               {combos.map((combo) => (
                 <div
                   key={combo.id}
-                  className="bg-secondary rounded-lg p-4 border border-gray-800 hover:border-primary transition-all cursor-pointer"
+                  className="bg-gray-900 rounded-2xl overflow-hidden flex flex-col transform hover:scale-105 transition-transform duration-300 border border-gray-800 hover:border-primary"
                 >
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-white font-semibold text-lg">
-                      {combo.name}
-                    </h3>
-                    <span className="text-primary font-bold text-xl">
-                      ${combo.priceCents.toLocaleString("es-AR")}
+                  {/* Header del combo con badge */}
+                  <div className="bg-gradient-to-r from-primary to-red-700 px-4 py-2">
+                    <span className="text-white text-xs font-semibold uppercase tracking-wide">
+                      Combo Especial
                     </span>
                   </div>
-                  <div className="space-y-1 mb-3">
-                    {combo.items.map((item, idx) => (
-                      <div key={idx} className="text-gray-400 text-sm">
-                        • {item.qty}x {item.productName}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-800">
-                    <span className="text-xs text-gray-500">
-                      {combo.items.length} productos
-                    </span>
+
+                  <div className="p-4 flex flex-col flex-grow">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="text-lg font-bold text-white">
+                        {combo.name}
+                      </h3>
+                      <span className="text-xl font-bold text-white">
+                        ${combo.priceCents.toLocaleString("es-AR")}
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5 mb-4 flex-grow">
+                      {combo.items.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-gray-400 text-sm">
+                          <span className="w-5 h-5 bg-gray-800 rounded-full flex items-center justify-center text-xs text-white">
+                            {item.qty}
+                          </span>
+                          <span>{item.productName}</span>
+                        </div>
+                      ))}
+                    </div>
+
                     <button
                       onClick={() => {
                         addComboToCart(combo);
                         showToast(`${combo.name} agregado al carrito`, "success");
                       }}
-                      className="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      className="w-full bg-primary hover:bg-red-700 text-white py-3 rounded-lg font-medium transition-colors"
                     >
                       Agregar al carrito
                     </button>
