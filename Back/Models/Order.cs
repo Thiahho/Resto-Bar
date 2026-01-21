@@ -17,6 +17,7 @@ namespace Back.Models
     [MaxLength(200)] public string? Reference { get; set; }
     public DateTimeOffset? ScheduledAt { get; set; }
     [MaxLength(500)] public string? Note { get; set; }
+    [MaxLength(12)] public string? PublicCode { get; set; }
 
     public int SubtotalCents { get; set; }
     public int DiscountCents { get; set; }
@@ -29,5 +30,6 @@ namespace Back.Models
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
 
     public List<OrderItem> Items { get; set; } = new();
+    public List<OrderStatusHistory> StatusHistory { get; set; } = new();
   }
 }

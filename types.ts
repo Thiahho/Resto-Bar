@@ -135,6 +135,8 @@ export interface OrderResponse {
   reference?: string;
   scheduledAt?: string;
   note?: string;
+  publicCode?: string;
+  trackingUrl?: string;
   subtotalCents: number;
   discountCents: number;
   tipCents: number;
@@ -143,6 +145,30 @@ export interface OrderResponse {
   createdAt: string;
   updatedAt: string;
   items: OrderItemRequest[];
+}
+
+export interface OrderTrackingHistoryEntry {
+  status: string;
+  changedAt: string;
+}
+
+export interface OrderTrackingResponse {
+  orderId: number;
+  publicCode: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  takeMode: string;
+  address?: string;
+  reference?: string;
+  scheduledAt?: string;
+  note?: string;
+  subtotalCents: number;
+  discountCents: number;
+  tipCents: number;
+  totalCents: number;
+  items: OrderItemRequest[];
+  history: OrderTrackingHistoryEntry[];
 }
 
 // Tipos para los modificadores parseados del JSON (modifiersSnapshot)

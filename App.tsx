@@ -6,6 +6,7 @@ import { ToastProvider } from "./contexts/ToastContext";
 import { CartProvider } from "./contexts/CartContext";
 import CatalogPage from "./components/public/CatalogPage";
 import InfoPage from "./components/public/InfoPage";
+import OrderTrackingPage from "./components/public/OrderTrackingPage";
 import LoginPage from "./components/admin/LoginPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./components/admin/Dashboard";
@@ -36,6 +37,7 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<CatalogPage />} />
                 <Route path="/info" element={<InfoPage />} />
+                <Route path="/pedido/:code" element={<OrderTrackingPage />} />
 
                 {/* Admin Routes */}
                 <Route path="/login" element={<LoginPage />} />

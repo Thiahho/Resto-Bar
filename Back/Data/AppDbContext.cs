@@ -26,12 +26,16 @@ namespace Back.Data
     public DbSet<CouponRedemption> CouponRedemptions => Set<CouponRedemption>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<OrderStatusEntity> OrderStatuses => Set<OrderStatusEntity>();
+    public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Configurar el enum OrderStatus para que se guarde como string en la BD
             modelBuilder.Entity<Order>()
                 .Property(o => o.Status)
+                .HasConversion<string>();
+            modelBuilder.Entity<OrderStatusHistory>()
+                .Property(h => h.Status)
                 .HasConversion<string>();
 
             modelBuilder.Entity<Category>().HasIndex(x => x.SortOrder);
@@ -47,7 +51,12 @@ namespace Back.Data
             modelBuilder.Entity<Order>()
                .HasMany(x => x.Items).WithOne(x => x.Order).HasForeignKey(x => x.OrderId)
                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Order>()
+               .HasMany(x => x.StatusHistory).WithOne(x => x.Order).HasForeignKey(x => x.OrderId)
+               .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<OrderStatusEntity>().HasIndex(x => new {x.Id, x.Activo});
+            modelBuilder.Entity<Order>().HasIndex(x => x.PublicCode).IsUnique();
+            modelBuilder.Entity<OrderStatusHistory>().HasIndex(x => x.OrderId);
 
             base.OnModelCreating(modelBuilder);
         }

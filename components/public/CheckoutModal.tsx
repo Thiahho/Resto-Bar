@@ -44,6 +44,8 @@ const CheckoutModal: React.FC = () => {
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingCartItem, setEditingCartItem] = useState<CartItem | null>(null);
+  const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
 
   if (!isCheckoutOpen) return null;
 
@@ -272,8 +274,13 @@ const CheckoutModal: React.FC = () => {
 
       // Éxito!
       showToast(`Pedido #${response.id} creado exitosamente!`, "success");
+      if (response.trackingUrl) {
+        setTrackingUrl(response.trackingUrl);
+        setCreatedOrderId(response.id);
+      } else {
+        closeCheckout();
+      }
       clearCart();
-      closeCheckout();
     } catch (error: any) {
       // console.error("Error al crear orden:", error);
       let errorMessage = "Error al procesar el pedido. Por favor intenta nuevamente.";
@@ -292,6 +299,62 @@ const CheckoutModal: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleCloseSuccess = () => {
+    setTrackingUrl(null);
+    setCreatedOrderId(null);
+    closeCheckout();
+  };
+
+  const handleCopyTracking = async () => {
+    if (!trackingUrl) return;
+    try {
+      await navigator.clipboard.writeText(trackingUrl);
+      showToast("Link de seguimiento copiado", "success");
+    } catch (error: any) {
+      showToast("No se pudo copiar el link", "error");
+    }
+  };
+
+  if (trackingUrl && createdOrderId) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-900 rounded-2xl w-full max-w-lg p-6 text-center space-y-4">
+          <h2 className="text-2xl font-bold text-white">¡Pedido confirmado!</h2>
+          <p className="text-gray-300">
+            Tu pedido #{createdOrderId} ya fue recibido. Guardá este link para
+            seguir el estado en tiempo real.
+          </p>
+          <div className="bg-gray-800 rounded-lg p-3 text-left">
+            <p className="text-sm text-gray-400 mb-2">Link de seguimiento</p>
+            <p className="text-xs text-white break-all">{trackingUrl}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleCopyTracking}
+              className="flex-1 bg-primary text-white py-2 rounded-lg font-semibold"
+            >
+              Copiar link
+            </button>
+            <a
+              href={trackingUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 bg-gray-800 text-white py-2 rounded-lg font-semibold text-center"
+            >
+              Abrir seguimiento
+            </a>
+          </div>
+          <button
+            onClick={handleCloseSuccess}
+            className="text-gray-400 hover:text-white text-sm"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

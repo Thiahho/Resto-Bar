@@ -4,6 +4,12 @@ using Back.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Back.Controller
 {
@@ -12,11 +18,13 @@ namespace Back.Controller
     {
         private readonly AppDbContext _context;
         private readonly ILogger<OrdersController> _logger;
+        private readonly IConfiguration _configuration;
 
-        public OrdersController(AppDbContext context, ILogger<OrdersController> logger)
+        public OrdersController(AppDbContext context, ILogger<OrdersController> logger, IConfiguration configuration)
         {
             _context = context;
             _logger = logger;
+            _configuration = configuration;
         }
 
         // POST /api/orders - Crear nueva orden (público)
@@ -79,6 +87,8 @@ namespace Back.Controller
 
                 _logger.LogInformation("Creando orden con {ItemCount} items", orderDto.Items.Count);
 
+                var publicCode = await GeneratePublicCodeAsync();
+
                 // Crear la orden
                 var order = new Order
                 {
@@ -91,6 +101,7 @@ namespace Back.Controller
                     Reference = orderDto.Reference,
                     ScheduledAt = orderDto.ScheduledAt?.ToUniversalTime(),
                     Note = orderDto.Note,
+                    PublicCode = publicCode,
                     SubtotalCents = orderDto.SubtotalCents,
                     DiscountCents = orderDto.DiscountCents,
                     TipCents = orderDto.TipCents,
@@ -99,6 +110,12 @@ namespace Back.Controller
                     CreatedAt = DateTimeOffset.UtcNow,
                     UpdatedAt = DateTimeOffset.UtcNow
                 };
+
+                order.StatusHistory.Add(new OrderStatusHistory
+                {
+                    Status = OrderStatus.CREATED,
+                    ChangedAt = DateTimeOffset.UtcNow
+                });
 
                 // Agregar los items
                 foreach (var itemDto in orderDto.Items)
@@ -138,7 +155,7 @@ namespace Back.Controller
                     _logger.LogError("ADVERTENCIA: No se pudo recargar la orden con ID {OrderId}", order.Id);
                 }
 
-                var responseDto = MapOrderToDto(createdOrder!);
+                var responseDto = MapOrderToDto(createdOrder!, BuildTrackingUrl(createdOrder!));
                 return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, responseDto);
             }
             catch (Exception ex)
@@ -155,10 +172,12 @@ namespace Back.Controller
         {
             var orders = await _context.Orders
                 .Include(o => o.Items)
+                .Include(o => o.StatusHistory)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
-            var ordersDto = orders.Select(MapOrderToDto).ToList();
+            var baseUrl = BuildTrackingBaseUrl();
+            var ordersDto = orders.Select(order => MapOrderToDto(order, BuildTrackingUrl(order, baseUrl))).ToList();
             return Ok(ordersDto);
         }
 
@@ -169,6 +188,7 @@ namespace Back.Controller
         {
             var order = await _context.Orders
                 .Include(o => o.Items)
+                .Include(o => o.StatusHistory)
                 .FirstOrDefaultAsync(o => o.Id == id);
 
             if (order == null)
@@ -176,7 +196,7 @@ namespace Back.Controller
                 return NotFound();
             }
 
-            return Ok(MapOrderToDto(order));
+            return Ok(MapOrderToDto(order, BuildTrackingUrl(order)));
         }
 
         // PUT /api/admin/orders/{id}/status - Cambiar estado de orden (admin)
@@ -205,6 +225,12 @@ namespace Back.Controller
                 _logger.LogInformation("Estado parseado correctamente: {NewStatus}", newStatus);
                 order.Status = newStatus;
                 order.UpdatedAt = DateTimeOffset.UtcNow;
+                order.StatusHistory.Add(new OrderStatusHistory
+                {
+                    Status = newStatus,
+                    ChangedAt = DateTimeOffset.UtcNow,
+                    ChangedByUserId = GetUserId()
+                });
 
                 _logger.LogInformation("Guardando cambios...");
                 await _context.SaveChangesAsync();
@@ -235,8 +261,73 @@ namespace Back.Controller
             return NoContent();
         }
 
+        // GET /api/tracking/{publicCode}?t=... - Tracking público
+        [HttpGet("api/tracking/{publicCode}")]
+        public async Task<ActionResult<OrderTrackingDto>> GetTracking(string publicCode, [FromQuery] string t)
+        {
+            if (string.IsNullOrWhiteSpace(t))
+            {
+                return BadRequest(new { message = "Token requerido" });
+            }
+
+            var order = await _context.Orders
+                .Include(o => o.Items)
+                .Include(o => o.StatusHistory)
+                .FirstOrDefaultAsync(o => o.PublicCode == publicCode);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            if (!ValidateTrackingToken(t, order.Id, order.PublicCode))
+            {
+                return Unauthorized(new { message = "Token inválido o expirado" });
+            }
+
+            var trackingDto = new OrderTrackingDto
+            {
+                OrderId = order.Id,
+                PublicCode = order.PublicCode,
+                Status = order.Status.ToString(),
+                CreatedAt = order.CreatedAt,
+                UpdatedAt = order.UpdatedAt,
+                TakeMode = order.TakeMode,
+                Address = order.Address,
+                Reference = order.Reference,
+                ScheduledAt = order.ScheduledAt,
+                Note = order.Note,
+                SubtotalCents = order.SubtotalCents,
+                DiscountCents = order.DiscountCents,
+                TipCents = order.TipCents,
+                TotalCents = order.TotalCents,
+                Items = order.Items.Select(i => new OrderItemDto
+                {
+                    Id = i.Id,
+                    OrderId = i.OrderId,
+                    ProductId = i.ProductId,
+                    NameSnapshot = i.NameSnapshot,
+                    Qty = i.Qty,
+                    UnitPriceCents = i.UnitPriceCents,
+                    ModifiersTotalCents = i.ModifiersTotalCents,
+                    LineTotalCents = i.LineTotalCents,
+                    ModifiersSnapshot = i.ModifiersSnapshot
+                }).ToList(),
+                History = order.StatusHistory
+                    .OrderBy(h => h.ChangedAt)
+                    .Select(h => new OrderTrackingHistoryDto
+                    {
+                        Status = h.Status.ToString(),
+                        ChangedAt = h.ChangedAt
+                    })
+                    .ToList()
+            };
+
+            return Ok(trackingDto);
+        }
+
         // Helper method para mapear Order a OrderDto
-        private OrderDto MapOrderToDto(Order order)
+        private OrderDto MapOrderToDto(Order order, string? trackingUrl = null)
         {
             return new OrderDto
             {
@@ -250,6 +341,8 @@ namespace Back.Controller
                 Reference = order.Reference,
                 ScheduledAt = order.ScheduledAt,
                 Note = order.Note,
+                PublicCode = order.PublicCode,
+                TrackingUrl = trackingUrl,
                 SubtotalCents = order.SubtotalCents,
                 DiscountCents = order.DiscountCents,
                 TipCents = order.TipCents,
@@ -270,6 +363,105 @@ namespace Back.Controller
                     ModifiersSnapshot = i.ModifiersSnapshot
                 }).ToList()
             };
+        }
+
+        private string? BuildTrackingUrl(Order order, string? baseUrlOverride = null)
+        {
+            if (string.IsNullOrWhiteSpace(order.PublicCode))
+            {
+                return null;
+            }
+            var baseUrl = baseUrlOverride ?? BuildTrackingBaseUrl();
+            var token = GenerateTrackingToken(order);
+            return $"{baseUrl}/#/pedido/{order.PublicCode}?t={token}";
+        }
+
+        private string BuildTrackingBaseUrl()
+        {
+            return $"{Request.Scheme}://{Request.Host}";
+        }
+
+        private string GenerateTrackingToken(Order order)
+        {
+            if (string.IsNullOrWhiteSpace(order.PublicCode))
+            {
+                throw new InvalidOperationException("La orden no tiene código público para tracking.");
+            }
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var issuer = _configuration["Jwt:Issuer"];
+
+            var claims = new[]
+            {
+                new Claim("orderId", order.Id.ToString()),
+                new Claim("publicCode", order.PublicCode),
+                new Claim("scope", "tracking")
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: "OrderTracking",
+                claims: claims,
+                expires: DateTime.UtcNow.AddDays(3),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private bool ValidateTrackingToken(string token, int orderId, string publicCode)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = securityKey,
+                    ValidateIssuer = false,
+                    ValidateAudience = true,
+                    ValidAudience = "OrderTracking",
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                }, out _);
+
+                var orderIdClaim = principal.FindFirst("orderId")?.Value;
+                var publicCodeClaim = principal.FindFirst("publicCode")?.Value;
+                var scopeClaim = principal.FindFirst("scope")?.Value;
+
+                return scopeClaim == "tracking"
+                       && orderIdClaim == orderId.ToString()
+                       && publicCodeClaim == publicCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private async Task<string> GeneratePublicCodeAsync()
+        {
+            const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            var length = 6;
+
+            while (true)
+            {
+                var bytes = RandomNumberGenerator.GetBytes(length);
+                var chars = bytes.Select(b => alphabet[b % alphabet.Length]).ToArray();
+                var code = new string(chars);
+
+                var exists = await _context.Orders.AnyAsync(o => o.PublicCode == code);
+                if (!exists)
+                {
+                    return code;
+                }
+            }
+        }
+
+        private int? GetUserId()
+        {
+            var userIdClaim = User.FindFirst("userId")?.Value;
+            return int.TryParse(userIdClaim, out var userId) ? userId : null;
         }
     }
 }

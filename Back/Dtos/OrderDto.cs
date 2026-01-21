@@ -14,6 +14,8 @@ namespace Back.Dtos
         public string? Reference { get; set; }
         public DateTimeOffset? ScheduledAt { get; set; }
         public string? Note { get; set; }
+        public string? PublicCode { get; set; }
+        public string? TrackingUrl { get; set; }
         public int SubtotalCents { get; set; }
         public int DiscountCents { get; set; }
         public int TipCents { get; set; }

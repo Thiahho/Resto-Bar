@@ -410,6 +410,11 @@ namespace Back.Migrations
                         .HasColumnType("character varying(40)")
                         .HasColumnName("phone");
 
+                    b.Property<string>("PublicCode")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("public_code");
+
                     b.Property<string>("Reference")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
@@ -447,6 +452,10 @@ namespace Back.Migrations
 
                     b.HasIndex("BranchId")
                         .HasDatabaseName("ix_orders_branch_id");
+
+                    b.HasIndex("PublicCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_orders_public_code");
 
                     b.ToTable("orders", (string)null);
                 });
@@ -523,6 +532,44 @@ namespace Back.Migrations
                         .HasDatabaseName("ix_orderstatus_id_activo");
 
                     b.ToTable("orderstatus", (string)null);
+                });
+
+            modelBuilder.Entity("Back.Models.OrderStatusHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<int?>("ChangedByUserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("changed_by_user_id");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer")
+                        .HasColumnName("order_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_order_status_history");
+
+                    b.HasIndex("ChangedByUserId")
+                        .HasDatabaseName("ix_order_status_history_changed_by_user_id");
+
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("ix_order_status_history_order_id");
+
+                    b.ToTable("order_status_history", (string)null);
                 });
 
             modelBuilder.Entity("Back.Models.Product", b =>
@@ -686,6 +733,25 @@ namespace Back.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("Back.Models.OrderStatusHistory", b =>
+                {
+                    b.HasOne("Back.Models.User", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .HasConstraintName("fk_order_status_history_user_changed_by_user_id");
+
+                    b.HasOne("Back.Models.Order", "Order")
+                        .WithMany("StatusHistory")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_order_status_history_orders_order_id");
+
+                    b.Navigation("ChangedBy");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("Back.Models.Product", b =>
                 {
                     b.HasOne("Back.Models.Category", "Category")
@@ -742,6 +808,8 @@ namespace Back.Migrations
             modelBuilder.Entity("Back.Models.Order", b =>
                 {
                     b.Navigation("Items");
+
+                    b.Navigation("StatusHistory");
                 });
 #pragma warning restore 612, 618
         }

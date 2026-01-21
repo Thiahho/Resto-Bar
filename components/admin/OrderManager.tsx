@@ -121,6 +121,19 @@ const OrderManager: React.FC = () => {
     });
   };
 
+  const handleCopyTracking = async (trackingUrl?: string) => {
+    if (!trackingUrl) {
+      showToast("La orden no tiene link de seguimiento", "error");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(trackingUrl);
+      showToast("Link de seguimiento copiado", "success");
+    } catch (error) {
+      showToast("No se pudo copiar el link", "error");
+    }
+  };
+
   const generateWhatsAppMessage = (order: OrderResponse) => {
     const statusInfo = getStatusInfo(order.status);
     let message = `🍔 *Pedido #${order.id}*\n\n`;
@@ -208,6 +221,9 @@ const OrderManager: React.FC = () => {
     }
 
     message += `\n🕐 *Fecha:* ${formatDate(order.createdAt)}`;
+    if (order.trackingUrl) {
+      message += `\n🔗 *Seguimiento:* ${order.trackingUrl}`;
+    }
 
     return encodeURIComponent(message);
   };
@@ -1082,6 +1098,40 @@ const OrderManager: React.FC = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Link de seguimiento */}
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-800 mb-2">
+                  🔗 Link de seguimiento
+                </h3>
+                {selectedOrder.trackingUrl ? (
+                  <div className="space-y-2 text-sm">
+                    <p className="text-blue-700 break-all">
+                      {selectedOrder.trackingUrl}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => handleCopyTracking(selectedOrder.trackingUrl)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
+                      >
+                        Copiar link
+                      </button>
+                      <a
+                        href={selectedOrder.trackingUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bg-white border border-blue-300 text-blue-700 px-3 py-2 rounded-lg text-xs sm:text-sm"
+                      >
+                        Abrir seguimiento
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-blue-700">
+                    No hay link de seguimiento disponible.
+                  </p>
+                )}
               </div>
 
               {/* Información del cliente */}
