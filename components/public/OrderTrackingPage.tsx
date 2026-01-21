@@ -133,31 +133,92 @@ const OrderTrackingPage: React.FC = () => {
 
               <div className="space-y-3">
                 <p className="text-sm text-gray-400">Estado actual</p>
-                <div className="flex flex-col gap-3">
-                  <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-                    <div
-                      className="bg-primary h-3 rounded-full transition-all"
-                      style={{
-                        width: `${
-                          ((currentStepIndex + 1) / STATUS_STEPS.length) * 100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    {STATUS_STEPS.map((step, index) => (
-                      <span
-                        key={step.key}
-                        className={`px-3 py-1 rounded-full ${
-                          index <= currentStepIndex
-                            ? "bg-primary text-white"
-                            : "bg-gray-800 text-gray-400"
-                        }`}
-                      >
-                        {step.label}
-                      </span>
-                    ))}
-                  </div>
+                <div className="flex flex-col gap-1">
+                  {STATUS_STEPS.filter(step => {
+                    // Si está cancelado, mostrar solo hasta el estado actual + cancelado
+                    if (order.status === "CANCELLED") {
+                      return step.key === "CANCELLED" ||
+                        STATUS_STEPS.findIndex(s => s.key === step.key) < STATUS_STEPS.findIndex(s => s.key === "CANCELLED");
+                    }
+                    // Si no está cancelado, no mostrar la opción de cancelado
+                    return step.key !== "CANCELLED";
+                  }).map((step, index, filteredSteps) => {
+                    const isCancelled = order.status === "CANCELLED";
+                    const isCurrentCancelled = step.key === "CANCELLED" && isCancelled;
+                    const isCompleted = isCancelled
+                      ? step.key === "CANCELLED" || index < filteredSteps.findIndex(s => s.key === "CANCELLED")
+                      : index <= currentStepIndex;
+                    const isCurrent = step.key === order.status;
+                    const isLast = index === filteredSteps.length - 1;
+
+                    return (
+                      <div key={step.key} className="flex items-start gap-3">
+                        {/* Línea vertical y círculo/check */}
+                        <div className="flex flex-col items-center">
+                          <div
+                            className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all ${
+                              isCurrentCancelled
+                                ? "bg-red-500 border-red-500"
+                                : isCompleted
+                                ? "bg-primary border-primary"
+                                : "bg-gray-800 border-gray-600"
+                            }`}
+                          >
+                            {isCompleted ? (
+                              <svg
+                                className="w-4 h-4 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            ) : (
+                              <div className="w-2 h-2 rounded-full bg-gray-600" />
+                            )}
+                          </div>
+                          {/* Línea conectora */}
+                          {!isLast && (
+                            <div
+                              className={`w-0.5 h-8 ${
+                                isCompleted && !isCurrent
+                                  ? isCancelled && step.key !== "CANCELLED"
+                                    ? "bg-red-500"
+                                    : "bg-primary"
+                                  : "bg-gray-700"
+                              }`}
+                            />
+                          )}
+                        </div>
+                        {/* Texto del estado */}
+                        <div className={`pt-1 ${isLast ? "" : "pb-4"}`}>
+                          <p
+                            className={`font-medium ${
+                              isCurrentCancelled
+                                ? "text-red-400"
+                                : isCurrent
+                                ? "text-primary"
+                                : isCompleted
+                                ? "text-white"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {step.label}
+                          </p>
+                          {isCurrent && (
+                            <p className={`text-xs mt-0.5 ${isCurrentCancelled ? "text-red-400/70" : "text-primary/70"}`}>
+                              Estado actual
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </section>

@@ -1085,19 +1085,43 @@ const OrderManager: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Estado de la orden
                 </label>
-                <select
-                  value={selectedOrder.status}
-                  onChange={(e) =>
-                    handleStatusChange(selectedOrder.id, e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {ORDER_STATUSES.map((status) => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
+                {selectedOrder.status === "CANCELLED" ? (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        Cancelada
+                      </span>
+                    </div>
+                    <p className="text-red-600 text-sm mt-2">
+                      Esta orden fue cancelada y no se puede modificar.
+                    </p>
+                  </div>
+                ) : selectedOrder.status === "DELIVERED" ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        Entregada
+                      </span>
+                    </div>
+                    <p className="text-green-600 text-sm mt-2">
+                      Esta orden ya fue entregada y no se puede modificar.
+                    </p>
+                  </div>
+                ) : (
+                  <select
+                    value={selectedOrder.status}
+                    onChange={(e) =>
+                      handleStatusChange(selectedOrder.id, e.target.value)
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {ORDER_STATUSES.map((status) => (
+                      <option key={status.value} value={status.value}>
+                        {status.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {/* Link de seguimiento */}

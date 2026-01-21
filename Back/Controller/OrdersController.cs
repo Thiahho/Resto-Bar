@@ -226,6 +226,19 @@ namespace Back.Controller
                     return BadRequest("Invalid status");
                 }
 
+                // Validar reglas de transición de estados
+                if (order.Status == OrderStatus.CANCELLED)
+                {
+                    _logger.LogWarning("No se puede modificar una orden cancelada");
+                    return BadRequest(new { message = "No se puede modificar una orden cancelada" });
+                }
+
+                if (order.Status == OrderStatus.DELIVERED)
+                {
+                    _logger.LogWarning("No se puede modificar una orden entregada");
+                    return BadRequest(new { message = "No se puede modificar una orden ya entregada" });
+                }
+
                 // Generar PublicCode si no existe (para órdenes antiguas)
                 if (string.IsNullOrWhiteSpace(order.PublicCode))
                 {
