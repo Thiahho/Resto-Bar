@@ -68,14 +68,14 @@ const OrderManager: React.FC = () => {
   };
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
-    const success = await updateOrderStatus(orderId, newStatus);
-    if (success) {
+    const updatedOrder = await updateOrderStatus(orderId, newStatus);
+    if (updatedOrder) {
       showToast(
         `Estado actualizado a ${getStatusInfo(newStatus).label}`,
         "success"
       );
       if (selectedOrder?.id === orderId) {
-        setSelectedOrder({ ...selectedOrder, status: newStatus });
+        setSelectedOrder(updatedOrder);
       }
     } else {
       showToast("Error al actualizar el estado", "error");

@@ -42,6 +42,9 @@ const OrderTrackingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+    let isFirstLoad = true;
+
     const fetchTracking = async () => {
       if (!code || !token) {
         setError("El link de seguimiento es inválido.");
@@ -50,28 +53,39 @@ const OrderTrackingPage: React.FC = () => {
       }
 
       try {
-        if (!order) {
+        if (isFirstLoad) {
           setLoading(true);
         }
         const response = await apiClient.get<OrderTrackingResponse>(
           `/api/tracking/${code}?t=${encodeURIComponent(token)}`
         );
-        setOrder(response.data);
-        setError(null);
+        if (isMounted) {
+          setOrder(response.data);
+          setError(null);
+          isFirstLoad = false;
+        }
       } catch (err: any) {
-        setError(
-          err.response?.data?.message ||
-            "No pudimos cargar el seguimiento. Verificá el link."
-        );
+        if (isMounted) {
+          setError(
+            err.response?.data?.message ||
+              "No pudimos cargar el seguimiento. Verificá el link."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchTracking();
-    const interval = setInterval(fetchTracking, 15000);
-    return () => clearInterval(interval);
-  }, [code, token, order]);
+    const interval = setInterval(fetchTracking, 30000); // Cada 30 segundos
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [code, token]);
 
   const currentStepIndex = order
     ? Math.max(

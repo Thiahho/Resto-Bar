@@ -33,19 +33,20 @@ export const useOrders = () => {
     }
   };
 
-  const updateOrderStatus = async (id: number, status: string): Promise<boolean> => {
+  const updateOrderStatus = async (id: number, status: string): Promise<OrderResponse | null> => {
     try {
-      await apiClient.put(`/api/admin/orders/${id}/status`, { status });
-      // Actualizar el estado local
+      const response = await apiClient.put<OrderResponse>(`/api/admin/orders/${id}/status`, { status });
+      const updatedOrder = response.data;
+      // Actualizar el estado local con la orden completa (incluye trackingUrl)
       setOrders((prev) =>
         prev.map((order) =>
-          order.id === id ? { ...order, status, updatedAt: new Date().toISOString() } : order
+          order.id === id ? updatedOrder : order
         )
       );
-      return true;
+      return updatedOrder;
     } catch (err: any) {
       // console.error("Error updating order status:", err);
-      return false;
+      return null;
     }
   };
 

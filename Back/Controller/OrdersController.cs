@@ -202,13 +202,17 @@ namespace Back.Controller
         // PUT /api/admin/orders/{id}/status - Cambiar estado de orden (admin)
         [Authorize]
         [HttpPut("api/admin/orders/{id}/status")]
-        public async Task<ActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusDto dto)
+        public async Task<ActionResult<OrderDto>> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusDto dto)
         {
             try
             {
                 _logger.LogInformation("Actualizando estado de orden {OrderId} a {Status}", id, dto.Status);
 
-                var order = await _context.Orders.FindAsync(id);
+                var order = await _context.Orders
+                    .Include(o => o.Items)
+                    .Include(o => o.StatusHistory)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
                 if (order == null)
                 {
                     _logger.LogWarning("Orden {OrderId} no encontrada", id);
@@ -220,6 +224,13 @@ namespace Back.Controller
                 {
                     _logger.LogWarning("Estado inválido: {Status}", dto.Status);
                     return BadRequest("Invalid status");
+                }
+
+                // Generar PublicCode si no existe (para órdenes antiguas)
+                if (string.IsNullOrWhiteSpace(order.PublicCode))
+                {
+                    order.PublicCode = await GeneratePublicCodeAsync();
+                    _logger.LogInformation("PublicCode generado para orden {OrderId}: {PublicCode}", id, order.PublicCode);
                 }
 
                 _logger.LogInformation("Estado parseado correctamente: {NewStatus}", newStatus);
@@ -236,7 +247,8 @@ namespace Back.Controller
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Estado actualizado exitosamente");
 
-                return NoContent();
+                // Retornar la orden actualizada con trackingUrl
+                return Ok(MapOrderToDto(order, BuildTrackingUrl(order)));
             }
             catch (Exception ex)
             {
@@ -378,6 +390,12 @@ namespace Back.Controller
 
         private string BuildTrackingBaseUrl()
         {
+            // Usar la URL del frontend configurada, o fallback a Request.Host
+            var frontendUrl = _configuration["Frontend:BaseUrl"];
+            if (!string.IsNullOrWhiteSpace(frontendUrl))
+            {
+                return frontendUrl.TrimEnd('/');
+            }
             return $"{Request.Scheme}://{Request.Host}";
         }
 
