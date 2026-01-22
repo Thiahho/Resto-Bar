@@ -1299,28 +1299,37 @@ const OrderManager: React.FC = () => {
               {/* Link de seguimiento */}
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-800 mb-2">
-                  🔗 Link de seguimiento
+                  🔗 Seguimiento del pedido
                 </h3>
                 {selectedOrder.trackingUrl ? (
-                  <div className="space-y-2 text-sm">
-                    <p className="text-blue-700 break-all">
-                      {selectedOrder.trackingUrl}
-                    </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-blue-600">Código:</span>
+                      <span className="text-xl font-mono font-bold text-blue-800 tracking-wider">
+                        {selectedOrder.publicCode || `#${selectedOrder.id}`}
+                      </span>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       <button
                         onClick={() =>
                           handleCopyTracking(selectedOrder.trackingUrl)
                         }
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm flex items-center gap-1"
                       >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
                         Copiar link
                       </button>
                       <a
                         href={selectedOrder.trackingUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="bg-white border border-blue-300 text-blue-700 px-3 py-2 rounded-lg text-xs sm:text-sm"
+                        className="bg-white border border-blue-300 text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-lg text-xs sm:text-sm flex items-center gap-1"
                       >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
                         Abrir seguimiento
                       </a>
                     </div>
