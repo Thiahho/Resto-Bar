@@ -39,50 +39,45 @@ const OrderTrackingPage: React.FC = () => {
   const token = query.get("t");
   const [order, setOrder] = useState<OrderTrackingResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchTracking = async (isManualRefresh = false) => {
+    if (!code || !token) {
+      setError("El link de seguimiento es inválido.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (isManualRefresh) {
+        setRefreshing(true);
+      }
+      const response = await apiClient.get<OrderTrackingResponse>(
+        `/api/tracking/${code}?t=${encodeURIComponent(token)}`
+      );
+      setOrder(response.data);
+      setError(null);
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message ||
+          "No pudimos cargar el seguimiento. Verificá el link."
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchTracking(true);
+  };
+
   useEffect(() => {
-    let isMounted = true;
-    let isFirstLoad = true;
-
-    const fetchTracking = async () => {
-      if (!code || !token) {
-        setError("El link de seguimiento es inválido.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        if (isFirstLoad) {
-          setLoading(true);
-        }
-        const response = await apiClient.get<OrderTrackingResponse>(
-          `/api/tracking/${code}?t=${encodeURIComponent(token)}`
-        );
-        if (isMounted) {
-          setOrder(response.data);
-          setError(null);
-          isFirstLoad = false;
-        }
-      } catch (err: any) {
-        if (isMounted) {
-          setError(
-            err.response?.data?.message ||
-              "No pudimos cargar el seguimiento. Verificá el link."
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
     fetchTracking();
-    const interval = setInterval(fetchTracking, 30000); // Cada 30 segundos
+    const interval = setInterval(() => fetchTracking(), 30000); // Cada 30 segundos
 
     return () => {
-      isMounted = false;
       clearInterval(interval);
     };
   }, [code, token]);
@@ -102,6 +97,26 @@ const OrderTrackingPage: React.FC = () => {
           <p className="text-gray-400">
             Consultá el estado actual y el historial de tu pedido.
           </p>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing || loading}
+            className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-all mt-2"
+          >
+            <svg
+              className={`w-5 h-5 ${refreshing ? "animate-spin" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {refreshing ? "Actualizando..." : "Actualizar estado"}
+          </button>
         </header>
 
         {loading && (
