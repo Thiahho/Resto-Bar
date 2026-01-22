@@ -34,7 +34,7 @@ const OrderManager: React.FC = () => {
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(
     new Set(),
   );
-  const [bulkStatus, setBulkStatus] = useState<string>("");
+  // const [bulkStatus, setBulkStatus] = useState<string>("");
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -102,7 +102,7 @@ const OrderManager: React.FC = () => {
 
   const clearSelection = () => {
     setSelectedOrderIds(new Set());
-    setBulkStatus("");
+    //setBulkStatus("");
   };
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
