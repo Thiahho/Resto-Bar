@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { useOrders } from "../../hooks/useOrders";
 import { useToast } from "../../contexts/ToastContext";
-import { OrderResponse, ParsedModifiers, ParsedComboItem, ParsedModifierItem } from "../../types";
+import {
+  OrderResponse,
+  ParsedModifiers,
+  ParsedComboItem,
+  ParsedModifierItem,
+} from "../../types";
 import jsPDF from "jspdf";
 
 const ORDER_STATUSES = [
@@ -24,8 +29,13 @@ const OrderManager: React.FC = () => {
   } = useOrders();
   const { showToast, showConfirm } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(
-    null
+    null,
   );
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(
+    new Set(),
+  );
+  const [bulkStatus, setBulkStatus] = useState<string>("");
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -50,14 +60,50 @@ const OrderManager: React.FC = () => {
   // Paginación
   const totalPages = Math.ceil(filteredOrders.length / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + pageSize);
-
+  const paginatedOrders = filteredOrders.slice(
+    startIndex,
+    startIndex + pageSize,
+  );
+  const selectedOrders = orders.filter((order) =>
+    selectedOrderIds.has(order.id),
+  );
+  const allPageSelected =
+    paginatedOrders.length > 0 &&
+    paginatedOrders.every((order) => selectedOrderIds.has(order.id));
+  const selectedCount = selectedOrderIds.size;
   // Resetear a página 1 cuando cambian los filtros
   const handleFilterChange = (status: string) => {
     setFilterStatus(status);
     setCurrentPage(1);
   };
+  const toggleOrderSelection = (orderId: number) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  };
 
+  const toggleSelectAllPage = () => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) {
+        paginatedOrders.forEach((order) => next.delete(order.id));
+      } else {
+        paginatedOrders.forEach((order) => next.add(order.id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedOrderIds(new Set());
+    setBulkStatus("");
+  };
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -72,7 +118,7 @@ const OrderManager: React.FC = () => {
     if (updatedOrder) {
       showToast(
         `Estado actualizado a ${getStatusInfo(newStatus).label}`,
-        "success"
+        "success",
       );
       if (selectedOrder?.id === orderId) {
         setSelectedOrder(updatedOrder);
@@ -80,6 +126,65 @@ const OrderManager: React.FC = () => {
     } else {
       showToast("Error al actualizar el estado", "error");
     }
+  };
+  const handleBulkStatusChange = async (newStatus: string) => {
+    if (selectedOrders.length === 0) {
+      showToast("No hay órdenes seleccionadas", "error");
+      return;
+    }
+
+    const eligibleOrders = selectedOrders.filter(
+      (order) =>
+        !["CANCELLED", "DELIVERED"].includes(order.status) &&
+        order.status !== newStatus,
+    );
+
+    if (eligibleOrders.length === 0) {
+      showToast(
+        "Las órdenes seleccionadas no pueden actualizarse con ese estado",
+        "error",
+      );
+      return;
+    }
+
+    showConfirm(
+      `¿Cambiar el estado de ${eligibleOrders.length} orden${
+        eligibleOrders.length !== 1 ? "es" : ""
+      } a ${getStatusInfo(newStatus).label}?`,
+      async () => {
+        setIsBulkUpdating(true);
+        try {
+          const results = await Promise.all(
+            eligibleOrders.map((order) =>
+              updateOrderStatus(order.id, newStatus),
+            ),
+          );
+          const successCount = results.filter(Boolean).length;
+          const failureCount = results.length - successCount;
+
+          if (successCount > 0) {
+            showToast(
+              `${successCount} orden${
+                successCount !== 1 ? "es" : ""
+              } actualizada${successCount !== 1 ? "s" : ""}`,
+              "success",
+            );
+          }
+          if (failureCount > 0) {
+            showToast(
+              `${failureCount} orden${
+                failureCount !== 1 ? "es" : ""
+              } no se pudieron actualizar`,
+              "error",
+            );
+          }
+
+          clearSelection();
+        } finally {
+          setIsBulkUpdating(false);
+        }
+      },
+    );
   };
 
   const handleDelete = (order: OrderResponse) => {
@@ -275,13 +380,17 @@ const OrderManager: React.FC = () => {
           // Agregar modificadores si existen
           try {
             if (item.modifiersSnapshot) {
-              const modifiers: ParsedModifiers = JSON.parse(item.modifiersSnapshot);
+              const modifiers: ParsedModifiers = JSON.parse(
+                item.modifiersSnapshot,
+              );
 
               // Si es un combo
               if (modifiers.isCombo) {
                 const comboItems =
                   modifiers.items
-                    ?.map((ci: ParsedComboItem) => `${ci.qty}x ${ci.productName}`)
+                    ?.map(
+                      (ci: ParsedComboItem) => `${ci.qty}x ${ci.productName}`,
+                    )
                     .join(", ") || "";
                 itemStr += ` [COMBO: ${comboItems}]`;
               } else {
@@ -292,19 +401,19 @@ const OrderManager: React.FC = () => {
                   mods.push(
                     `Complementos: ${modifiers.complementos
                       .map((c: ParsedModifierItem) => c.name)
-                      .join(", ")}`
+                      .join(", ")}`,
                   );
                 if (modifiers.aderezos?.length)
                   mods.push(
                     `Aderezos: ${modifiers.aderezos
                       .map((a: ParsedModifierItem) => a.name)
-                      .join(", ")}`
+                      .join(", ")}`,
                   );
                 if (modifiers.extras?.length)
                   mods.push(
                     `Extras: ${modifiers.extras
                       .map((e: ParsedModifierItem) => e.name)
-                      .join(", ")}`
+                      .join(", ")}`,
                   );
                 if (modifiers.bebidas)
                   mods.push(`Bebida: ${modifiers.bebidas.name}`);
@@ -362,7 +471,7 @@ const OrderManager: React.FC = () => {
             }
             return cellStr;
           })
-          .join(",")
+          .join(","),
       ),
     ].join("\n");
 
@@ -402,7 +511,7 @@ const OrderManager: React.FC = () => {
       text: string,
       y: number,
       fontSize: number = 10,
-      isBold: boolean = false
+      isBold: boolean = false,
     ) => {
       doc.setFontSize(fontSize);
       if (isBold) doc.setFont("helvetica", "bold");
@@ -451,7 +560,7 @@ const OrderManager: React.FC = () => {
     doc.text(
       `Tipo: ${order.takeMode === "DELIVERY" ? "Delivery" : "Retiro"}`,
       leftMargin,
-      yPos
+      yPos,
     );
     yPos += 4;
 
@@ -499,14 +608,14 @@ const OrderManager: React.FC = () => {
       doc.text(
         `   ${item.qty} x ${formatCurrency(item.unitPriceCents)}`,
         leftMargin,
-        yPos
+        yPos,
       );
       doc.text(
         formatCurrency(item.lineTotalCents),
         pageWidth -
           leftMargin -
           doc.getTextWidth(formatCurrency(item.lineTotalCents)),
-        yPos
+        yPos,
       );
       yPos += 4;
 
@@ -528,7 +637,7 @@ const OrderManager: React.FC = () => {
                 doc.text(
                   `   - ${comboItem.qty}x ${comboItem.productName}`,
                   leftMargin + 4,
-                  yPos
+                  yPos,
                 );
                 yPos += 3;
               });
@@ -545,7 +654,7 @@ const OrderManager: React.FC = () => {
                 .join(", ");
               const lines = doc.splitTextToSize(
                 `   - ${complementosText}`,
-                contentWidth - 2
+                contentWidth - 2,
               );
               doc.text(lines, leftMargin + 2, yPos);
               yPos += lines.length * 3;
@@ -556,7 +665,7 @@ const OrderManager: React.FC = () => {
                 .join(", ");
               const lines = doc.splitTextToSize(
                 `   - ${aderezosText}`,
-                contentWidth - 2
+                contentWidth - 2,
               );
               doc.text(lines, leftMargin + 2, yPos);
               yPos += lines.length * 3;
@@ -567,7 +676,7 @@ const OrderManager: React.FC = () => {
                 .join(", ");
               const lines = doc.splitTextToSize(
                 `   - ${extrasText}`,
-                contentWidth - 2
+                contentWidth - 2,
               );
               doc.text(lines, leftMargin + 2, yPos);
               yPos += lines.length * 3;
@@ -576,7 +685,7 @@ const OrderManager: React.FC = () => {
               doc.text(
                 `   - Bebida: ${modifiers.bebidas.name}`,
                 leftMargin + 2,
-                yPos
+                yPos,
               );
               yPos += 3;
             }
@@ -584,7 +693,7 @@ const OrderManager: React.FC = () => {
               doc.setFont("helvetica", "italic");
               const notesLines = doc.splitTextToSize(
                 `   Nota: ${modifiers.notes}`,
-                contentWidth - 2
+                contentWidth - 2,
               );
               doc.text(notesLines, leftMargin + 2, yPos);
               yPos += notesLines.length * 3;
@@ -613,7 +722,7 @@ const OrderManager: React.FC = () => {
       pageWidth -
         leftMargin -
         doc.getTextWidth(formatCurrency(order.subtotalCents)),
-      yPos
+      yPos,
     );
     yPos += 5;
 
@@ -624,7 +733,7 @@ const OrderManager: React.FC = () => {
         pageWidth -
           leftMargin -
           doc.getTextWidth(`-${formatCurrency(order.discountCents)}`),
-        yPos
+        yPos,
       );
       yPos += 5;
     }
@@ -636,7 +745,7 @@ const OrderManager: React.FC = () => {
         pageWidth -
           leftMargin -
           doc.getTextWidth(formatCurrency(order.tipCents)),
-        yPos
+        yPos,
       );
       yPos += 5;
     }
@@ -649,7 +758,7 @@ const OrderManager: React.FC = () => {
       pageWidth -
         leftMargin -
         doc.getTextWidth(formatCurrency(order.totalCents)),
-      yPos
+      yPos,
     );
     yPos += 7;
 
@@ -678,14 +787,14 @@ const OrderManager: React.FC = () => {
     addCenteredText("Gracias por su compra!", yPos);
 
     // Crear blob y descargar con nombre correcto
-    const pdfBlob = doc.output('blob');
+    const pdfBlob = doc.output("blob");
     const pdfUrl = URL.createObjectURL(pdfBlob);
 
     // Crear link temporal para descarga
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = pdfUrl;
     link.download = `Ticket_Orden_${order.id}.pdf`;
-    link.target = '_blank';
+    link.target = "_blank";
 
     // Agregar al DOM, hacer clic y remover
     document.body.appendChild(link);
@@ -718,7 +827,9 @@ const OrderManager: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Gestión de Órdenes</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+          Gestión de Órdenes
+        </h1>
         <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={() => exportToCSV()}
@@ -775,7 +886,7 @@ const OrderManager: React.FC = () => {
           </button>
           {ORDER_STATUSES.map((status) => {
             const count = orders.filter(
-              (o) => o.status === status.value
+              (o) => o.status === status.value,
             ).length;
             return (
               <button
@@ -794,10 +905,53 @@ const OrderManager: React.FC = () => {
         </div>
       </div>
 
+      {/* Acciones masivas */}
+      <div className="bg-white rounded-lg shadow p-4 space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div className="text-sm text-gray-700">
+            {selectedCount > 0 ? (
+              <span>
+                {selectedCount} orden{selectedCount !== 1 ? "es" : ""}{" "}
+                seleccionada{selectedCount !== 1 ? "s" : ""}
+              </span>
+            ) : (
+              <span>Seleccioná órdenes para acciones masivas</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2 sm:items-center">
+            {ORDER_STATUSES.map((status) => (
+              <button
+                key={status.value}
+                onClick={() => handleBulkStatusChange(status.value)}
+                disabled={selectedCount === 0 || isBulkUpdating}
+                className={`px-3 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${status.color} hover:brightness-95`}
+              >
+                {status.label}
+              </button>
+            ))}
+            <button
+              onClick={clearSelection}
+              disabled={selectedCount === 0 || isBulkUpdating}
+              className="border border-gray-300 hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Limpiar selección
+            </button>
+          </div>
+        </div>
+        {selectedCount > 0 && (
+          <p className="text-xs text-gray-500">
+            Las órdenes entregadas o canceladas no se pueden modificar en
+            bloque.
+          </p>
+        )}
+      </div>
+
       {/* Contador de resultados */}
       {filteredOrders.length > 0 && (
         <div className="text-sm text-gray-600 px-2">
-          Mostrando {startIndex + 1}-{Math.min(startIndex + pageSize, filteredOrders.length)} de {filteredOrders.length} orden{filteredOrders.length !== 1 ? "es" : ""}
+          Mostrando {startIndex + 1}-
+          {Math.min(startIndex + pageSize, filteredOrders.length)} de{" "}
+          {filteredOrders.length} orden{filteredOrders.length !== 1 ? "es" : ""}
           {searchQuery && ` (filtrado de ${orders.length} total)`}
         </div>
       )}
@@ -833,6 +987,15 @@ const OrderManager: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                      checked={allPageSelected}
+                      onChange={toggleSelectAllPage}
+                      aria-label="Seleccionar todas las órdenes de la página"
+                    />
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     #
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -863,6 +1026,15 @@ const OrderManager: React.FC = () => {
                   const statusInfo = getStatusInfo(order.status);
                   return (
                     <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                          checked={selectedOrderIds.has(order.id)}
+                          onChange={() => toggleOrderSelection(order.id)}
+                          aria-label={`Seleccionar orden #${order.id}`}
+                        />
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         #{order.id}
                       </td>
@@ -872,7 +1044,7 @@ const OrderManager: React.FC = () => {
                           <span
                             className="ml-2 text-xs text-blue-600"
                             title={`Programada para: ${formatDate(
-                              order.scheduledAt
+                              order.scheduledAt,
                             )}`}
                           >
                             📅
@@ -1136,7 +1308,9 @@ const OrderManager: React.FC = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <button
-                        onClick={() => handleCopyTracking(selectedOrder.trackingUrl)}
+                        onClick={() =>
+                          handleCopyTracking(selectedOrder.trackingUrl)
+                        }
                         className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs sm:text-sm"
                       >
                         Copiar link
@@ -1258,7 +1432,10 @@ const OrderManager: React.FC = () => {
                                   </p>
                                   <div className="space-y-1">
                                     {modifiersData.items?.map(
-                                      (comboItem: ParsedComboItem, idx: number) => (
+                                      (
+                                        comboItem: ParsedComboItem,
+                                        idx: number,
+                                      ) => (
                                         <p
                                           key={idx}
                                           className="ml-2 text-xs text-gray-700"
@@ -1266,7 +1443,7 @@ const OrderManager: React.FC = () => {
                                           • {comboItem.qty}x{" "}
                                           {comboItem.productName}
                                         </p>
-                                      )
+                                      ),
                                     )}
                                   </div>
                                 </div>
@@ -1276,14 +1453,16 @@ const OrderManager: React.FC = () => {
                             {/* Detalles de modificadores */}
                             {modifiersData &&
                               !modifiersData.isCombo &&
-                              (
-                                (modifiersData.size && modifiersData.size !== "simple") ||
-                                (modifiersData.complementos && modifiersData.complementos.length > 0) ||
-                                (modifiersData.aderezos && modifiersData.aderezos.length > 0) ||
-                                (modifiersData.extras && modifiersData.extras.length > 0) ||
+                              ((modifiersData.size &&
+                                modifiersData.size !== "simple") ||
+                                (modifiersData.complementos &&
+                                  modifiersData.complementos.length > 0) ||
+                                (modifiersData.aderezos &&
+                                  modifiersData.aderezos.length > 0) ||
+                                (modifiersData.extras &&
+                                  modifiersData.extras.length > 0) ||
                                 modifiersData.bebidas ||
-                                modifiersData.notes
-                              ) && (
+                                modifiersData.notes) && (
                                 <div className="mt-2 space-y-1 text-sm text-gray-600">
                                   {modifiersData.size &&
                                     modifiersData.size !== "simple" && (
@@ -1320,7 +1499,7 @@ const OrderManager: React.FC = () => {
                                                 };
                                               }
                                               counts[m.name].count += 1;
-                                            }
+                                            },
                                           );
                                           return Object.values(counts).map(
                                             (item, idx) => (
@@ -1332,7 +1511,7 @@ const OrderManager: React.FC = () => {
                                                 {item.price > 0 &&
                                                   `(+$${item.price.toLocaleString("es-AR")})`}
                                               </p>
-                                            )
+                                            ),
                                           );
                                         })()}
                                       </div>
@@ -1362,7 +1541,7 @@ const OrderManager: React.FC = () => {
                                                 };
                                               }
                                               counts[m.name].count += 1;
-                                            }
+                                            },
                                           );
                                           return Object.values(counts).map(
                                             (item, idx) => (
@@ -1374,7 +1553,7 @@ const OrderManager: React.FC = () => {
                                                 {item.price > 0 &&
                                                   `(+$${item.price.toLocaleString("es-AR")})`}
                                               </p>
-                                            )
+                                            ),
                                           );
                                         })()}
                                       </div>
@@ -1404,7 +1583,7 @@ const OrderManager: React.FC = () => {
                                                 };
                                               }
                                               counts[m.name].count += 1;
-                                            }
+                                            },
                                           );
                                           return Object.values(counts).map(
                                             (item, idx) => (
@@ -1416,7 +1595,7 @@ const OrderManager: React.FC = () => {
                                                 {item.price > 0 &&
                                                   `(+$${item.price.toLocaleString("es-AR")})`}
                                               </p>
-                                            )
+                                            ),
                                           );
                                         })()}
                                       </div>
