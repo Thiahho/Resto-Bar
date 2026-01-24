@@ -21,7 +21,7 @@ const BusinessProfile: React.FC<BusinessProfileProps> = ({ businessInfo }) => {
         <div className="absolute -top-8 left-0">
           <div className="w-16 h-16 rounded-full bg-zinc-900 border-4 border-black shadow-lg overflow-hidden flex items-center justify-center">
             <img
-              src="/images/logolxlb.webp"
+              src="/images/logo.webp"
               alt="Logo"
               className="w-full h-full object-cover"
               loading="lazy"
