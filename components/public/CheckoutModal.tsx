@@ -494,7 +494,7 @@ const CheckoutModal: React.FC = () => {
                   onChange={(e) => setScheduledTime(e.target.value)}
                   min={(() => {
                     const minTime = new Date(Date.now() + 30 * 60 * 1000);
-                    const businessOpen = "19:00";
+                    const businessOpen = "10:00";
                     const minHour = minTime.getHours().toString().padStart(2, '0');
                     const minMinute = minTime.getMinutes().toString().padStart(2, '0');
                     const calculatedMin = `${minHour}:${minMinute}`;
@@ -505,7 +505,7 @@ const CheckoutModal: React.FC = () => {
                   required={showSchedule}
                 />
                 <p className="text-gray-400 text-xs mt-2">
-                  Mínimo 30 min desde ahora. Horario: 19:00 a 23:00
+                  Mínimo 30 min desde ahora. Horario: 10:00 a 23:00
                 </p>
               </div>
             )}
