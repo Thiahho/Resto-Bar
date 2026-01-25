@@ -62,7 +62,7 @@ namespace Back.Controller
 
                     // Extraer la hora del cliente (DateTime tiene la hora en la zona del cliente)
                     var scheduledTime = scheduledValue.DateTime.TimeOfDay;
-                    var openTime = new TimeSpan(19, 30, 0);
+                    var openTime = new TimeSpan(10, 0, 0);
                     var closeTime = new TimeSpan(23, 0, 0);
 
                     _logger.LogInformation("Hora del cliente: {Time}, Rango: {Open} - {Close}",
@@ -71,7 +71,7 @@ namespace Back.Controller
                     if (scheduledTime < openTime || scheduledTime >= closeTime)
                     {
                         _logger.LogWarning("Hora fuera del rango permitido: {Time}", scheduledTime);
-                        return BadRequest(new { message = "El horario de entrega es de 19:30 a 23:00" });
+                        return BadRequest(new { message = "El horario de entrega es de 10:00 a 23:00" });
                     }
 
                     // Validar que sea en el futuro (comparar en UTC para ser consistente)
