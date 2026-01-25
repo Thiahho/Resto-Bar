@@ -47,12 +47,13 @@ const OrderManager: React.FC = () => {
     const matchesStatus =
       filterStatus === "ALL" || order.status === filterStatus;
 
-    // Filtrar por búsqueda (teléfono o ID)
+    // Filtrar por búsqueda (teléfono, ID, nombre o código)
     const matchesSearch =
       searchQuery === "" ||
       order.phone.includes(searchQuery) ||
       order.id.toString().includes(searchQuery) ||
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+      order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.publicCode && order.publicCode.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return matchesStatus && matchesSearch;
   });
@@ -854,7 +855,7 @@ const OrderManager: React.FC = () => {
         <div className="relative">
           <input
             type="text"
-            placeholder="🔍 Buscar por teléfono, ID o nombre del cliente..."
+            placeholder="🔍 Buscar por teléfono, ID, nombre o código..."
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
