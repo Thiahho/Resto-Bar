@@ -26,16 +26,20 @@ const ReportsManager: React.FC = () => {
   const [dailySalesSort, setDailySalesSort] = useState<"date-asc" | "date-desc" | "total-asc" | "total-desc">("date-desc");
   const ITEMS_PER_PAGE = 10;
 
-  // Inicializar fechas (último mes por defecto)
+  // Inicializar fechas (último mes por defecto) - solo al montar
   useEffect(() => {
-    setDailySalesPage(1);
     const today = new Date();
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
 
     setDateTo(today.toISOString().split("T")[0]);
     setDateFrom(lastMonth.toISOString().split("T")[0]);
-  }, [dateFrom, dateTo,dailySalesSort]);
+  }, []);
+
+  // Resetear paginación cuando cambien los filtros
+  useEffect(() => {
+    setDailySalesPage(1);
+  }, [dateFrom, dateTo, dailySalesSort]);
 
   // Filtrar órdenes por fecha
   const filteredOrders = useMemo(() => {
