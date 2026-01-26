@@ -55,11 +55,11 @@ const ReportsManager: React.FC = () => {
 
   // Calcular métricas generales (solo órdenes entregadas)
   const generalMetrics = useMemo(() => {
-    console.log("Estados de órdenes:", filteredOrders.map(o => ({ id: o.id, status: o.status })));
+    //console.log("Estados de órdenes:", filteredOrders.map(o => ({ id: o.id, status: o.status })));
     const completedOrders = filteredOrders.filter(
       (o) => o.status === "DELIVERED"
     );
-    console.log("Órdenes DELIVERED:", completedOrders.length);
+    //console.log("Órdenes DELIVERED:", completedOrders.length);
 
     const totalSalesCents = completedOrders.reduce(
       (sum, order) => sum + order.totalCents,
