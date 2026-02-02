@@ -18,6 +18,7 @@ import ModifierManager from "./components/admin/ModifierManager";
 import CouponManager from "./components/admin/CouponManager";
 import ComboManager from "./components/admin/ComboManager";
 import ReportsManager from "./components/admin/ReportsManager";
+import GrowthManager from "./components/admin/GrowthManager";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -55,6 +56,7 @@ function App() {
                   <Route path="modifiers" element={<ModifierManager />} />
                   <Route path="coupons" element={<CouponManager />} />
                   <Route path="combos" element={<ComboManager />} />
+                  <Route path="growth" element={<GrowthManager />} />
                   <Route path="orders" element={<OrderManager />} />
                   <Route path="reports" element={<ReportsManager />} />
                   <Route path="settings" element={<SiteSettings />} />

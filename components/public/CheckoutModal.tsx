@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useCart } from "../../contexts/CartContext";
 import { OrderType, OrderRequest, CartItem } from "../../types";
 import {
@@ -8,6 +8,7 @@ import {
 } from "../../services/api/apiClient";
 import { useToast } from "../../contexts/ToastContext";
 import ProductDetailModal from "./ProductDetailModal";
+import { useCatalog } from "../../hooks/useCatalog";
 
 const CheckoutModal: React.FC = () => {
   const {
@@ -17,8 +18,10 @@ const CheckoutModal: React.FC = () => {
     closeCheckout,
     updateQuantity,
     clearCart,
+    addToCart,
   } = useCart();
   const { showToast } = useToast();
+  const { products, categories } = useCatalog();
   const [orderType, setOrderType] = useState<OrderType>("delivery");
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduledTime, setScheduledTime] = useState("");
@@ -46,6 +49,108 @@ const CheckoutModal: React.FC = () => {
   const [editingCartItem, setEditingCartItem] = useState<CartItem | null>(null);
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const upsellDiscount = 0.15;
+
+  const normalizeText = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "");
+
+  const findCategoryByKeywords = (keywords: string[]) =>
+    categories.find((category) =>
+      keywords.some((keyword) =>
+        normalizeText(category.name).includes(normalizeText(keyword))
+      )
+    );
+
+  const findCheapestProductByCategory = (categoryId?: string) => {
+    if (!categoryId) return undefined;
+    const candidates = products.filter((product) => product.categoryId === categoryId);
+    if (candidates.length === 0) return undefined;
+    return [...candidates].sort((a, b) => a.priceCents - b.priceCents)[0];
+  };
+
+  const upsellSuggestion = useMemo(() => {
+    const hasCartItems = cart.length > 0;
+    if (!hasCartItems) return null;
+
+    const friesCategory = findCategoryByKeywords(["papas", "fritas", "fries"]);
+    const drinksCategory = findCategoryByKeywords(["bebida", "gaseosa", "refresco", "soda"]);
+
+    const friesProduct = findCheapestProductByCategory(friesCategory?.id);
+    const drinksProduct = findCheapestProductByCategory(drinksCategory?.id);
+
+    const hasFriesInCart = friesCategory
+      ? cart.some((item) => item.product?.categoryId === friesCategory.id)
+      : false;
+    const hasDrinksInCart = drinksCategory
+      ? cart.some((item) => item.product?.categoryId === drinksCategory.id)
+      : false;
+
+    return {
+      friesCategory,
+      drinksCategory,
+      friesProduct,
+      drinksProduct,
+      hasFriesInCart,
+      hasDrinksInCart,
+    };
+  }, [cart, categories, products]);
+
+  const showUpsell =
+    !!upsellSuggestion &&
+    ((upsellSuggestion.friesProduct && !upsellSuggestion.hasFriesInCart) ||
+      (upsellSuggestion.drinksProduct && !upsellSuggestion.hasDrinksInCart));
+
+  const addUpsellProduct = (product: (typeof products)[number]) => {
+    const discountedPrice = Math.round(product.priceCents * (1 - upsellDiscount));
+    const cartItem: CartItem = {
+      id: `${product.id}-upsell-${Date.now()}`,
+      product,
+      quantity: 1,
+      size: "simple",
+      modifiers: {},
+      notes: `Upsell automático ${Math.round(upsellDiscount * 100)}% OFF`,
+      subtotal: discountedPrice,
+    };
+    addToCart(cartItem);
+    showToast(`${product.name} agregado con ${Math.round(upsellDiscount * 100)}% OFF`, "success");
+  };
+
+  const renderUpsellCard = (product: (typeof products)[number], label: string) => {
+    const discountedPrice = Math.round(product.priceCents * (1 - upsellDiscount));
+    return (
+      <div
+        key={product.id}
+        className="bg-gray-800 border border-gray-700 rounded-lg p-3 flex gap-3 items-center"
+      >
+        <img
+          src={product.hasImage ? getProductsImageUrl(product.id) : "/placeholder.png"}
+          alt={product.name}
+          className="w-14 h-14 rounded-lg object-cover"
+        />
+        <div className="flex-1">
+          <p className="text-white font-medium text-sm">{product.name}</p>
+          <p className="text-xs text-gray-400">{label}</p>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-gray-400 line-through">
+              ${product.priceCents.toLocaleString("es-AR")}
+            </span>
+            <span className="text-sm text-green-400 font-semibold">
+              ${discountedPrice.toLocaleString("es-AR")}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={() => addUpsellProduct(product)}
+          className="bg-primary hover:bg-opacity-90 text-white text-xs font-semibold px-3 py-2 rounded-lg"
+        >
+          Agregar
+        </button>
+      </div>
+    );
+  };
 
   if (!isCheckoutOpen) return null;
 
@@ -527,7 +632,9 @@ const CheckoutModal: React.FC = () => {
                 </button>
               </div>
               <div className="space-y-2 md:space-y-3">
-                {cart.map((item) => (
+                {cart.map((item) => {
+                  const isUpsellItem = item.notes?.includes("Upsell automático");
+                  return (
                   <div key={item.id} className="bg-gray-800 rounded-lg p-3">
                     {item.type === "combo" && item.combo ? (
                       // Mostrar Combo
@@ -623,13 +730,20 @@ const CheckoutModal: React.FC = () => {
                             <h4 className="text-white font-medium">
                               {item.product.name}
                             </h4>
-                            <button
-                              onClick={() => setEditingCartItem(item)}
-                              className="text-primary hover:text-opacity-80 text-sm font-medium"
-                            >
-                              Editar
-                            </button>
+                            {!isUpsellItem && (
+                              <button
+                                onClick={() => setEditingCartItem(item)}
+                                className="text-primary hover:text-opacity-80 text-sm font-medium"
+                              >
+                                Editar
+                              </button>
+                            )}
                           </div>
+                          {isUpsellItem && (
+                            <p className="text-green-400 text-xs font-semibold mt-1">
+                              Upsell automático aplicado
+                            </p>
+                          )}
                           <p className="text-gray-400 text-sm capitalize">
                             {item.size}
                           </p>
@@ -725,11 +839,34 @@ const CheckoutModal: React.FC = () => {
                       </div>
                     ) : null}
                   </div>
-                ))}
+                );
+                })}
               </div>
               <p className="text-right text-white font-bold mt-3">
                 Subtotal: $ {cartTotal.toLocaleString()}
               </p>
+            </div>
+          )}
+
+          {cart.length > 0 && showUpsell && upsellSuggestion && (
+            <div className="mb-4 md:mb-6 bg-gray-900 border border-gray-800 rounded-lg p-3 md:p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">🚀</span>
+                <h3 className="text-white font-semibold text-sm md:text-base">
+                  Upsell automático (15% OFF)
+                </h3>
+              </div>
+              <p className="text-gray-400 text-xs md:text-sm mb-3">
+                Aumenta tu ticket con sugerencias rápidas de papas + bebida.
+              </p>
+              <div className="space-y-2">
+                {upsellSuggestion.friesProduct &&
+                  !upsellSuggestion.hasFriesInCart &&
+                  renderUpsellCard(upsellSuggestion.friesProduct, "Papas recomendadas")}
+                {upsellSuggestion.drinksProduct &&
+                  !upsellSuggestion.hasDrinksInCart &&
+                  renderUpsellCard(upsellSuggestion.drinksProduct, "Bebida recomendada")}
+              </div>
             </div>
           )}
 
