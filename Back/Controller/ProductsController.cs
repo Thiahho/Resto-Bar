@@ -113,6 +113,8 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
         }
     };
 
+    var twoForOneConfig = ResolveTwoForOneConfig(growthSettings);
+
     var catalog = new CatalogDto
     {
         Products = products,
@@ -131,7 +133,8 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
                 DiscountPercent = growthSettings.UpsellDiscount,
                 Message = growthSettings.UpsellMessage
             }
-            : null
+            : null,
+        TwoForOneConfig = twoForOneConfig
     };
 
     return Ok(catalog);
@@ -197,6 +200,45 @@ private static (int discountPercent, string type, string message) ResolveActiveP
 
     return (0, "", "");
 }
+
+private static TwoForOneConfigDto? ResolveTwoForOneConfig(GrowthSettings? settings)
+{
+    if (settings == null || !settings.TwoForOneEnabled)
+    {
+        return null;
+    }
+
+    var now = DateTime.Now;
+    var today = GetSpanishDay(now.DayOfWeek);
+    var twoForOneDays = ParseDays(settings.TwoForOneDaysJson);
+
+    // Si no hay días configurados o hoy no es uno de los días, no está activo
+    if (twoForOneDays.Count == 0 || !twoForOneDays.Contains(today))
+    {
+        return null;
+    }
+
+    // Parsear los IDs de productos
+    var productIds = new List<int>();
+    if (!string.IsNullOrWhiteSpace(settings.TwoForOneProductIdsJson))
+    {
+        try
+        {
+            productIds = JsonSerializer.Deserialize<List<int>>(settings.TwoForOneProductIdsJson) ?? new List<int>();
+        }
+        catch
+        {
+            productIds = new List<int>();
+        }
+    }
+
+    return new TwoForOneConfigDto
+    {
+        Active = true,
+        ProductIds = productIds
+    };
+}
+
         [HttpGet("products/{id}/image")]
         public async Task<IActionResult> GetProductsImage(int id)
         {

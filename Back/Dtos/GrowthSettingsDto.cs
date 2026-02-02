@@ -26,6 +26,7 @@ namespace Back.Dtos
         public int WinbackDays { get; set; }
         public bool TwoForOneEnabled { get; set; }
         public List<string>? TwoForOneDays { get; set; }
+        public List<int>? TwoForOneProductIds { get; set; }
         public bool HappyHourEnabled { get; set; }
         public List<string>? HappyHourDays { get; set; }
         public string? HappyHourStart { get; set; }

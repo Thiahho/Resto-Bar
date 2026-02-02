@@ -281,6 +281,10 @@ namespace Back.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("two_for_one_days_json");
 
+                    b.Property<string>("TwoForOneProductIdsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("two_for_one_product_ids_json");
+
                     b.Property<int>("UpsellDiscount")
                         .HasColumnType("integer")
                         .HasColumnName("upsell_discount");

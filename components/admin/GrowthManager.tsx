@@ -2,6 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { api } from "../../services/api/apiClient";
 import { useToast } from "../../contexts/ToastContext";
 
+interface SimpleProduct {
+  id: number;
+  name: string;
+  categoryId: number;
+  categoryName?: string;
+}
+
 interface GrowthConfig {
   upsellEnabled: boolean;
   upsellDiscount: number;
@@ -16,6 +23,7 @@ interface GrowthConfig {
     winbackDays: number;
     twoForOneEnabled: boolean;
     twoForOneDays: string[];
+    twoForOneProductIds: number[];
     happyHourEnabled: boolean;
     happyHourDays: string[];
     happyHourStart: string;
@@ -53,6 +61,7 @@ const DEFAULT_CONFIG: GrowthConfig = {
     winbackDays: 0,
     twoForOneEnabled: false,
     twoForOneDays: [],
+    twoForOneProductIds: [],
     happyHourEnabled: false,
     happyHourDays: [],
     happyHourStart: "",
@@ -91,14 +100,25 @@ const GrowthManager: React.FC = () => {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [products, setProducts] = useState<SimpleProduct[]>([]);
   const { showToast } = useToast();
 
   useEffect(() => {
-    const loadConfig = async () => {
+    const loadData = async () => {
       try {
         setIsLoading(true);
-        const data = await api.get<GrowthConfig>("/api/admin/growth-settings");
-        setConfig(data);
+        const [configData, productsData] = await Promise.all([
+          api.get<GrowthConfig>("/api/admin/growth-settings"),
+          api.get<SimpleProduct[]>("/api/admin/products"),
+        ]);
+        setConfig({
+          ...configData,
+          automations: {
+            ...configData.automations,
+            twoForOneProductIds: configData.automations.twoForOneProductIds || [],
+          },
+        });
+        setProducts(productsData);
       } catch (error: any) {
         showToast(
           error?.message || "No se pudo cargar la configuración de crecimiento",
@@ -110,7 +130,7 @@ const GrowthManager: React.FC = () => {
       }
     };
 
-    loadConfig();
+    loadData();
   }, []);
 
   const summary = useMemo(() => {
@@ -141,6 +161,11 @@ const GrowthManager: React.FC = () => {
 
   const toggleDay = (days: string[], day: string) =>
     days.includes(day) ? days.filter((value) => value !== day) : [...days, day];
+
+  const toggleProduct = (productIds: number[], productId: number) =>
+    productIds.includes(productId)
+      ? productIds.filter((id) => id !== productId)
+      : [...productIds, productId];
 
   return (
     <div className="space-y-6">
@@ -336,6 +361,48 @@ const GrowthManager: React.FC = () => {
                   {day.label}
                 </label>
               ))}
+            </div>
+            <div className="mt-4">
+              <label className="text-sm text-gray-600 font-medium">
+                Productos incluidos en 2x1
+                <span className="ml-2 text-xs text-gray-400">
+                  ({config.automations.twoForOneProductIds.length} seleccionados)
+                </span>
+              </label>
+              <p className="text-xs text-gray-400 mb-2">
+                Si no seleccionas ninguno, el 2x1 aplica a todos los productos.
+              </p>
+              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2 space-y-1">
+                {products.length === 0 ? (
+                  <p className="text-sm text-gray-400">Cargando productos...</p>
+                ) : (
+                  products.map((product) => (
+                    <label
+                      key={product.id}
+                      className="flex items-center gap-2 text-sm text-gray-600 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={config.automations.twoForOneProductIds.includes(product.id)}
+                        onChange={() =>
+                          setConfig((prev) => ({
+                            ...prev,
+                            automations: {
+                              ...prev.automations,
+                              twoForOneProductIds: toggleProduct(
+                                prev.automations.twoForOneProductIds,
+                                product.id
+                              ),
+                            },
+                          }))
+                        }
+                        className="rounded"
+                      />
+                      {product.name}
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
             <label className="flex items-center gap-2 text-gray-700">
               <input

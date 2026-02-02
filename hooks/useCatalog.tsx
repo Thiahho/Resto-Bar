@@ -5,7 +5,7 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
-import { Products, Category, BusinessInfo, ActivePromotion, UpsellConfig } from "../types";
+import { Products, Category, BusinessInfo, ActivePromotion, UpsellConfig, TwoForOneConfig } from "../types";
 import apiClient from "../services/api/apiClient";
 
 interface CatalogContextType {
@@ -14,6 +14,7 @@ interface CatalogContextType {
   businessInfo: BusinessInfo | null;
   activePromotion: ActivePromotion | null;
   upsellConfig: UpsellConfig | null;
+  twoForOneConfig: TwoForOneConfig | null;
   isLoading: boolean;
   addProducts: (productData: FormData) => Promise<boolean>;
   updateProducts: (
@@ -38,6 +39,7 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
   const [activePromotion, setActivePromotion] = useState<ActivePromotion | null>(null);
   const [upsellConfig, setUpsellConfig] = useState<UpsellConfig | null>(null);
+  const [twoForOneConfig, setTwoForOneConfig] = useState<TwoForOneConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
@@ -50,6 +52,7 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
         businessInfo: apiBusinessInfo,
         activePromotion: apiActivePromotion,
         upsellConfig: apiUpsellConfig,
+        twoForOneConfig: apiTwoForOneConfig,
       } = response.data;
 
       // El backend devuelve IDs numéricos, pero el frontend usa strings. Hacemos la conversión.
@@ -68,6 +71,7 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
       setBusinessInfo(apiBusinessInfo);
       setActivePromotion(apiActivePromotion || null);
       setUpsellConfig(apiUpsellConfig || null);
+      setTwoForOneConfig(apiTwoForOneConfig || null);
     } catch (error) {
       // console.error("Failed to fetch catalog data", error);
     } finally {
@@ -174,6 +178,7 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
     businessInfo,
     activePromotion,
     upsellConfig,
+    twoForOneConfig,
     isLoading,
     addProducts,
     updateProducts,

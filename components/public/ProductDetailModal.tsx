@@ -12,6 +12,7 @@ interface ProductDetailModalProps {
   onClose: () => void;
   editMode?: boolean;
   existingCartItem?: CartItem;
+  hasTwoForOne?: boolean;
 }
 
 const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -19,6 +20,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   editMode = false,
   existingCartItem,
+  hasTwoForOne,
 }) => {
   const { addToCart, updateCartItem } = useCart();
   const [size, setSize] = useState<"simple" | "doble">(
@@ -261,6 +263,11 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 (e.target as HTMLImageElement).src = "/placeholder.png";
               }}
             />
+            {hasTwoForOne && (
+              <div className="absolute top-3 right-3 md:top-4 md:right-4 bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full">
+                2x1
+              </div>
+            )}
           </div>
 
           <div className="p-4 md:p-6">

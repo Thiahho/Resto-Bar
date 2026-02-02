@@ -11,7 +11,7 @@ import CheckoutModal from "./CheckoutModal";
 import BusinessProfile from "./BusinessProfile";
 
 const CatalogPage: React.FC = () => {
-  const { products, categories, businessInfo, activePromotion, isLoading } = useCatalog();
+  const { products, categories, businessInfo, activePromotion, twoForOneConfig, isLoading } = useCatalog();
   const { addComboToCart } = useCart();
   const { showToast } = useToast();
   const [combos, setCombos] = useState<Combo[]>([]);
@@ -47,7 +47,7 @@ const CatalogPage: React.FC = () => {
       {businessInfo && <BusinessProfile businessInfo={businessInfo} />}
 
       {/* Banner de promoción activa */}
-      {activePromotion && (
+      {/* {activePromotion && (
         <div className="bg-gradient-to-r from-red-600 to-orange-500 py-3 px-4">
           <div className="max-w-2xl mx-auto flex items-center justify-center gap-2">
             <span className="text-white font-bold text-lg animate-pulse">
@@ -55,7 +55,75 @@ const CatalogPage: React.FC = () => {
             </span>
           </div>
         </div>
-      )}
+      )} */}
+      {/* Banner promo (estilo opción A: gradiente + jerarquía + sin emoji) */}
+{activePromotion && (
+  <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-red-600/90 via-orange-500/90 to-amber-400/90">
+    {/* textura sutil */}
+    <div className="pointer-events-none absolute inset-0 opacity-20 [background:radial-gradient(700px_200px_at_50%_-50%,white,transparent)]" />
+
+    <div className="mx-auto flex max-w-6xl items-center justify-center px-4 py-2.5 sm:py-3">
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
+        <span className="inline-flex items-center rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold text-white ring-1 ring-white/20">
+          PROMO
+        </span>
+
+        <p className="text-sm font-medium text-white/95 sm:text-base">
+          {activePromotion.message}
+        </p>
+
+        {/* CTA opcional */}
+        <button
+          type="button"
+          className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20 active:scale-[0.98]"
+          onClick={() => {
+            const el = document.getElementById("promos");
+            el?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        >
+          Ver promo
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+      {/* Banner de 2x1 activo */}
+      {/* {twoForOneConfig?.active && (
+        <div className="bg-gradient-to-r from-green-600 to-emerald-500 py-3 px-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-center gap-2">
+            <span className="text-white font-bold text-lg">
+              🎉 HOY: Promoción 2x1 {twoForOneConfig.productIds.length > 0 ? "en productos seleccionados" : "en todos los productos"}
+            </span>
+          </div>
+        </div>
+      )} */}
+      {/* Banner 2x1 */}
+{/* Banner 2x1 (sin fondo + borde verde “fluorescente”) */}
+{twoForOneConfig?.active && (
+  <div className="relative border-b border-emerald-400/40 bg-transparent">
+    {/* glow */}
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-emerald-400/70 shadow-[0_0_18px_2px_rgba(16,185,129,0.55)]" />
+    <div className="mx-auto flex max-w-6xl items-center justify-center px-4 py-2.5 sm:py-3">
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
+        <span className="inline-flex items-center rounded-full bg-transparent px-2.5 py-1 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.25)]">
+          PROMO ACTIVA
+        </span>
+
+        <p className="text-sm font-medium text-white/90 sm:text-base">
+          <span className="font-bold text-white">2x1</span>{" "}
+          {twoForOneConfig.productIds.length > 0 ? "en productos seleccionados" : "en todos los productos"}
+          <span className="mx-2 text-white/35">•</span>
+          <span className="text-emerald-200/90">Solo por hoy</span>
+        </p>
+
+      </div>
+    </div>
+  </div>
+)}
+
+
 
       {/* Navegación horizontal de categorías - estilo Pedisy */}
       <div className="sticky top-0 bg-black border-b border-gray-800 z-10">
@@ -166,9 +234,19 @@ const CatalogPage: React.FC = () => {
                   Todos los combos incluyen papas.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {categoryProducts.map((product) => (
-                    <ProductsCard key={product.id} product={product} />
-                  ))}
+                  {categoryProducts.map((product) => {
+                    const hasTwoForOne = twoForOneConfig?.active && (
+                      twoForOneConfig.productIds.length === 0 ||
+                      twoForOneConfig.productIds.includes(parseInt(product.id))
+                    );
+                    return (
+                      <ProductsCard
+                        key={product.id}
+                        product={product}
+                        hasTwoForOne={hasTwoForOne}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             );

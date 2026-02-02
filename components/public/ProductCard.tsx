@@ -5,9 +5,10 @@ import ProductDetailModal from "./ProductDetailModal";
 
 interface ProductsCardProps {
   product: Products;
+  hasTwoForOne?: boolean;
 }
 
-const ProductsCard: React.FC<ProductsCardProps> = ({ product }) => {
+const ProductsCard: React.FC<ProductsCardProps> = ({ product, hasTwoForOne }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const imageUrl = product.hasImage
     ? getProductsImageUrl(product.id)
@@ -30,6 +31,11 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product }) => {
               (e.target as HTMLImageElement).src = "/placeholder.png";
             }}
           />
+          {hasTwoForOne && (
+            <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              2x1
+            </div>
+          )}
           {hasDiscount && (
             <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
               OFERTA
@@ -64,6 +70,7 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product }) => {
         <ProductDetailModal
           product={product}
           onClose={() => setIsModalOpen(false)}
+          hasTwoForOne={hasTwoForOne}
         />
       )}
     </>

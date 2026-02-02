@@ -51,6 +51,7 @@
         public BusinessInfoDto BusinessInfo { get; set; }
         public ActivePromotionDto? ActivePromotion { get; set; }
         public UpsellConfigDto? UpsellConfig { get; set; }
+        public TwoForOneConfigDto? TwoForOneConfig { get; set; }
     }
 
     public class ActivePromotionDto
@@ -65,5 +66,11 @@
         public bool Enabled { get; set; }
         public int DiscountPercent { get; set; }
         public string? Message { get; set; }
+    }
+
+    public class TwoForOneConfigDto
+    {
+        public bool Active { get; set; } // Si está activo hoy
+        public List<int> ProductIds { get; set; } = new(); // IDs de productos elegibles (vacío = todos)
     }
 }

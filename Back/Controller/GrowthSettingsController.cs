@@ -56,6 +56,7 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
     settings.WinbackDays = dto.Automations.WinbackDays;
     settings.TwoForOneEnabled = dto.Automations.TwoForOneEnabled;
     settings.TwoForOneDaysJson = SerializeDays(dto.Automations.TwoForOneDays);
+    settings.TwoForOneProductIdsJson = SerializeProductIds(dto.Automations.TwoForOneProductIds);
 
     settings.HappyHourEnabled = dto.Automations.HappyHourEnabled;
     settings.HappyHourDaysJson = SerializeDays(dto.Automations.HappyHourDays);
@@ -119,6 +120,7 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
             WinbackDays = settings.WinbackDays,
             TwoForOneEnabled = settings.TwoForOneEnabled,
             TwoForOneDays = DeserializeDays(settings.TwoForOneDaysJson),
+            TwoForOneProductIds = DeserializeProductIds(settings.TwoForOneProductIdsJson),
             HappyHourEnabled = settings.HappyHourEnabled,
             HappyHourDays = DeserializeDays(settings.HappyHourDaysJson),
             HappyHourStart = settings.HappyHourStart,
@@ -163,6 +165,28 @@ private static List<string> DeserializeDays(string? value)
     catch
     {
         return new List<string>();
+    }
+}
+
+private static string SerializeProductIds(List<int>? ids)
+{
+    return JsonSerializer.Serialize(ids ?? new List<int>());
+}
+
+private static List<int> DeserializeProductIds(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return new List<int>();
+    }
+
+    try
+    {
+        return JsonSerializer.Deserialize<List<int>>(value) ?? new List<int>();
+    }
+    catch
+    {
+        return new List<int>();
     }
 }
 

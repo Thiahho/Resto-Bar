@@ -27,6 +27,7 @@ namespace Back.Models
         // 2x1
         public bool TwoForOneEnabled { get; set; }
         [Column(TypeName = "jsonb")] public string? TwoForOneDaysJson { get; set; }
+        [Column(TypeName = "jsonb")] public string? TwoForOneProductIdsJson { get; set; }
 
         // Happy Hour
         public bool HappyHourEnabled { get; set; }

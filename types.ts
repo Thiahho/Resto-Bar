@@ -49,6 +49,11 @@ export interface UpsellConfig {
   message?: string;
 }
 
+export interface TwoForOneConfig {
+  active: boolean;
+  productIds: number[]; // Vacío significa todos los productos
+}
+
 export interface ComboItem {
   productId: number;
   productName: string;
