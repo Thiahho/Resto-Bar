@@ -61,6 +61,18 @@ const Dashboard: React.FC = () => {
             Actualizar configuración
           </Link>
         </div>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-gray-700">Crecimiento SaaS</h2>
+          <p className="text-gray-600 mt-2">
+            Activa upselling automático, combos inteligentes y pricing dinámico.
+          </p>
+          <Link
+            to="/admin/growth"
+            className="text-sm text-blue-500 hover:underline mt-4 block"
+          >
+            Configurar crecimiento
+          </Link>
+        </div>
       </div>
       <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold text-gray-700">

@@ -22,6 +22,21 @@ interface Product {
   priceCents: number;
 }
 
+interface SmartComboItem {
+  productId: number;
+  productName: string;
+  qty: number;
+  unitPriceCents: number;
+}
+
+interface SmartComboSuggestion {
+  key: string;
+  name: string;
+  description: string;
+  items: SmartComboItem[];
+  estimatedTotalCents: number;
+}
+
 interface ComboFormData {
   name: string;
   priceCents: string;
@@ -32,7 +47,9 @@ interface ComboFormData {
 const ComboManager: React.FC = () => {
   const [combos, setCombos] = useState<Combo[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [smartSuggestions, setSmartSuggestions] = useState<SmartComboSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const { showToast, showConfirm } = useToast();
@@ -53,16 +70,20 @@ const ComboManager: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [combosData, productsData] = await Promise.all([
+      setLoadingSuggestions(true);
+      const [combosData, productsData, suggestionsData] = await Promise.all([
         api.get<Combo[]>("/api/admin/combos"),
         api.get<Product[]>("/api/admin/products"),
+        api.get<SmartComboSuggestion[]>("/api/admin/combos/smart-suggestions"),
       ]);
       setCombos(combosData);
       setProducts(productsData);
+      setSmartSuggestions(suggestionsData);
     } catch (error: any) {
       showToast(error.message || "Error al cargar datos", "error");
     } finally {
       setLoading(false);
+      setLoadingSuggestions(false);
     }
   };
 
@@ -166,6 +187,21 @@ const ComboManager: React.FC = () => {
     setShowForm(false);
   };
 
+  const applySuggestion = (suggestion: SmartComboSuggestion) => {
+    const items = suggestion.items.map((item) => ({
+      productId: item.productId,
+      qty: item.qty,
+    }));
+    setFormData({
+      name: suggestion.name,
+      priceCents: suggestion.estimatedTotalCents.toString(),
+      isActive: true,
+      items,
+    });
+    setEditingId(null);
+    setShowForm(true);
+  };
+
   const formatCurrency = (value: number) => {
     return `$${value.toLocaleString("es-AR")}`;
   };
@@ -190,6 +226,61 @@ const ComboManager: React.FC = () => {
         >
           {showForm ? "Cancelar" : "Nuevo Combo"}
         </button>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold">Combos inteligentes sugeridos</h3>
+            <p className="text-sm text-gray-500">
+              Recomendaciones automáticas basadas en las ventas registradas.
+            </p>
+          </div>
+        </div>
+        {loadingSuggestions ? (
+          <div className="text-gray-500 text-sm mt-4">Cargando sugerencias...</div>
+        ) : smartSuggestions.length === 0 ? (
+          <div className="text-gray-500 text-sm mt-4">
+            No hay suficientes ventas para generar sugerencias todavía.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+            {smartSuggestions.map((suggestion) => (
+              <div
+                key={suggestion.key}
+                className="border border-gray-200 rounded-lg p-4 flex flex-col gap-3"
+              >
+                <div>
+                  <h4 className="font-semibold text-gray-800">{suggestion.name}</h4>
+                  <p className="text-xs text-gray-500">{suggestion.description}</p>
+                </div>
+                <div className="space-y-1 text-sm">
+                  {suggestion.items.map((item) => (
+                    <div key={item.productId} className="flex justify-between">
+                      <span>
+                        {item.qty}x {item.productName}
+                      </span>
+                      <span className="text-gray-600">
+                        {formatCurrency(item.unitPriceCents * item.qty)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between text-sm font-semibold text-gray-700 pt-2 border-t">
+                  <span>Total sugerido</span>
+                  <span>{formatCurrency(suggestion.estimatedTotalCents)}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => applySuggestion(suggestion)}
+                  className="mt-2 bg-primary text-white px-3 py-2 rounded text-sm hover:bg-opacity-90"
+                >
+                  Usar sugerencia
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {showForm && (

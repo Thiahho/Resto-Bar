@@ -97,6 +97,9 @@ const AdminLayout: React.FC = () => {
             <NavLink to="/admin/combos" className={navLinkClasses} onClick={closeMobileMenu}>
               📦 Combos
             </NavLink>
+            <NavLink to="/admin/growth" className={navLinkClasses} onClick={closeMobileMenu}>
+              🚀 Crecimiento SaaS
+            </NavLink>
             <NavLink to="/admin/reports" className={navLinkClasses} onClick={closeMobileMenu}>
               📊 Reportes
             </NavLink>
