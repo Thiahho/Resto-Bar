@@ -13,6 +13,7 @@ namespace Back.Data
     public DbSet<Product> Products => Set<Product>();
     // public DbSet<ProductImage> ProductImages => Set<ProductImage>(); // TODO: Descomentar cuando exista la tabla
     public DbSet<BusinessSettings> BusinessSettings => Set<BusinessSettings>();
+    public DbSet<GrowthSettings> GrowthSettings => Set<GrowthSettings>();
 
     // TODO: Descomentar cuando existan estas tablas en la BD
     public DbSet<Branch> Branches => Set<Branch>();

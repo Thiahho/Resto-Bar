@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { api } from "../../services/api/apiClient";
+import { useToast } from "../../contexts/ToastContext";
 
 interface GrowthConfig {
   upsellEnabled: boolean;
@@ -10,15 +12,23 @@ interface GrowthConfig {
     comboForTwo: boolean;
   };
   automations: {
-    winback15Days: boolean;
-    tuesdayTwoForOne: boolean;
-    happyHourDigital: boolean;
+    winbackEnabled: boolean;
+    winbackDays: number;
+    twoForOneEnabled: boolean;
+    twoForOneDays: string[];
+    happyHourEnabled: boolean;
+    happyHourDays: string[];
+    happyHourStart: string;
+    happyHourEnd: string;
+    happyHourDiscount: number;
   };
   peakHourMode: {
     enabled: boolean;
     hideSlowProducts: boolean;
     boostFastProducts: boolean;
     thresholdOrders: number;
+    peakStart: string;
+    peakEnd: string;
   };
   dynamicPricing: {
     enabled: boolean;
@@ -39,15 +49,23 @@ const DEFAULT_CONFIG: GrowthConfig = {
     comboForTwo: true,
   },
   automations: {
-    winback15Days: true,
-    tuesdayTwoForOne: false,
-    happyHourDigital: true,
+    winbackEnabled: true,
+    winbackDays: 15,
+    twoForOneEnabled: false,
+    twoForOneDays: ["martes"],
+    happyHourEnabled: true,
+    happyHourDays: ["viernes", "sabado"],
+    happyHourStart: "18:00",
+    happyHourEnd: "20:00",
+    happyHourDiscount: 10,
   },
   peakHourMode: {
     enabled: false,
     hideSlowProducts: true,
     boostFastProducts: true,
     thresholdOrders: 18,
+    peakStart: "12:00",
+    peakEnd: "14:00",
   },
   dynamicPricing: {
     enabled: false,
@@ -58,26 +76,42 @@ const DEFAULT_CONFIG: GrowthConfig = {
   },
 };
 
-const STORAGE_KEY = "saas-growth-config";
+const DAYS_OF_WEEK = [
+  { value: "lunes", label: "Lunes" },
+  { value: "martes", label: "Martes" },
+  { value: "miercoles", label: "Miércoles" },
+  { value: "jueves", label: "Jueves" },
+  { value: "viernes", label: "Viernes" },
+  { value: "sabado", label: "Sábado" },
+  { value: "domingo", label: "Domingo" },
+];
 
 const GrowthManager: React.FC = () => {
   const [config, setConfig] = useState<GrowthConfig>(DEFAULT_CONFIG);
   const [savedAt, setSavedAt] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    const loadConfig = async () => {
       try {
-        setConfig(JSON.parse(stored));
-      } catch {
+        setIsLoading(true);
+        const data = await api.get<GrowthConfig>("/api/admin/growth-settings");
+        setConfig(data);
+      } catch (error: any) {
+        showToast(
+          error?.message || "No se pudo cargar la configuración de crecimiento",
+          "error"
+        );
         setConfig(DEFAULT_CONFIG);
+      } finally {
+        setIsLoading(false);
       }
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-  }, [config]);
+    loadConfig();
+  }, []);
 
   const summary = useMemo(() => {
     const enabledBlocks = [
@@ -91,9 +125,22 @@ const GrowthManager: React.FC = () => {
     return `${enabledBlocks} módulos activos`;
   }, [config]);
 
-  const handleSave = () => {
-    setSavedAt(new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }));
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const saved = await api.put<GrowthConfig>("/api/admin/growth-settings", config);
+      setConfig(saved);
+      setSavedAt(new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }));
+      showToast("Configuración guardada correctamente", "success");
+    } catch (error: any) {
+      showToast(error?.message || "No se pudo guardar la configuración", "error");
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const toggleDay = (days: string[], day: string) =>
+    days.includes(day) ? days.filter((value) => value !== day) : [...days, day];
 
   return (
     <div className="space-y-6">
@@ -108,7 +155,8 @@ const GrowthManager: React.FC = () => {
             </p>
           </div>
           <div className="text-sm text-gray-500">
-            <span className="font-semibold text-gray-700">Estado:</span> {summary}
+            <span className="font-semibold text-gray-700">Estado:</span>{" "}
+            {isLoading ? "Cargando..." : summary}
           </div>
         </div>
       </div>
@@ -224,42 +272,162 @@ const GrowthManager: React.FC = () => {
             <label className="flex items-center gap-2 text-gray-700">
               <input
                 type="checkbox"
-                checked={config.automations.winback15Days}
+                checked={config.automations.winbackEnabled}
                 onChange={(event) =>
                   setConfig((prev) => ({
                     ...prev,
-                    automations: { ...prev.automations, winback15Days: event.target.checked },
+                    automations: { ...prev.automations, winbackEnabled: event.target.checked },
                   }))
                 }
               />
               Hace 15 días que no pedís → cupón automático
             </label>
-            <label className="flex items-center gap-2 text-gray-700">
+            <div>
+              <label className="text-sm text-gray-600">Días sin compra para activar cupón</label>
               <input
-                type="checkbox"
-                checked={config.automations.tuesdayTwoForOne}
+                type="number"
+                min={1}
+                max={90}
+                value={config.automations.winbackDays}
                 onChange={(event) =>
                   setConfig((prev) => ({
                     ...prev,
-                    automations: { ...prev.automations, tuesdayTwoForOne: event.target.checked },
+                    automations: {
+                      ...prev.automations,
+                      winbackDays: Number(event.target.value),
+                    },
+                  }))
+                }
+                className="mt-1 w-full border border-gray-300 rounded-md p-2"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-gray-700">
+              <input
+                type="checkbox"
+                checked={config.automations.twoForOneEnabled}
+                onChange={(event) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    automations: {
+                      ...prev.automations,
+                      twoForOneEnabled: event.target.checked,
+                    },
                   }))
                 }
               />
-              Martes 2x1
+              Promoción 2x1
             </label>
+            <div className="grid grid-cols-2 gap-2">
+              {DAYS_OF_WEEK.map((day) => (
+                <label key={day.value} className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={config.automations.twoForOneDays.includes(day.value)}
+                    onChange={() =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        automations: {
+                          ...prev.automations,
+                          twoForOneDays: toggleDay(prev.automations.twoForOneDays, day.value),
+                        },
+                      }))
+                    }
+                  />
+                  {day.label}
+                </label>
+              ))}
+            </div>
             <label className="flex items-center gap-2 text-gray-700">
               <input
                 type="checkbox"
-                checked={config.automations.happyHourDigital}
+                checked={config.automations.happyHourEnabled}
                 onChange={(event) =>
                   setConfig((prev) => ({
                     ...prev,
-                    automations: { ...prev.automations, happyHourDigital: event.target.checked },
+                    automations: {
+                      ...prev.automations,
+                      happyHourEnabled: event.target.checked,
+                    },
                   }))
                 }
               />
               Happy hour digital
             </label>
+            <div className="grid grid-cols-2 gap-2">
+              {DAYS_OF_WEEK.map((day) => (
+                <label key={day.value} className="flex items-center gap-2 text-sm text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={config.automations.happyHourDays.includes(day.value)}
+                    onChange={() =>
+                      setConfig((prev) => ({
+                        ...prev,
+                        automations: {
+                          ...prev.automations,
+                          happyHourDays: toggleDay(prev.automations.happyHourDays, day.value),
+                        },
+                      }))
+                    }
+                  />
+                  {day.label}
+                </label>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-sm text-gray-600">Inicio happy hour</label>
+                <input
+                  type="time"
+                  value={config.automations.happyHourStart}
+                  onChange={(event) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      automations: {
+                        ...prev.automations,
+                        happyHourStart: event.target.value,
+                      },
+                    }))
+                  }
+                  className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Fin happy hour</label>
+                <input
+                  type="time"
+                  value={config.automations.happyHourEnd}
+                  onChange={(event) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      automations: {
+                        ...prev.automations,
+                        happyHourEnd: event.target.value,
+                      },
+                    }))
+                  }
+                  className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Descuento (%)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={config.automations.happyHourDiscount}
+                  onChange={(event) =>
+                    setConfig((prev) => ({
+                      ...prev,
+                      automations: {
+                        ...prev.automations,
+                        happyHourDiscount: Number(event.target.value),
+                      },
+                    }))
+                  }
+                  className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -327,6 +495,40 @@ const GrowthManager: React.FC = () => {
                     peakHourMode: {
                       ...prev.peakHourMode,
                       thresholdOrders: Number(event.target.value),
+                    },
+                  }))
+                }
+                className="mt-1 w-full border border-gray-300 rounded-md p-2"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Inicio hora pico</label>
+              <input
+                type="time"
+                value={config.peakHourMode.peakStart}
+                onChange={(event) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    peakHourMode: {
+                      ...prev.peakHourMode,
+                      peakStart: event.target.value,
+                    },
+                  }))
+                }
+                className="mt-1 w-full border border-gray-300 rounded-md p-2"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-gray-600">Fin hora pico</label>
+              <input
+                type="time"
+                value={config.peakHourMode.peakEnd}
+                onChange={(event) =>
+                  setConfig((prev) => ({
+                    ...prev,
+                    peakHourMode: {
+                      ...prev.peakHourMode,
+                      peakEnd: event.target.value,
                     },
                   }))
                 }
@@ -426,9 +628,10 @@ const GrowthManager: React.FC = () => {
         </div>
         <button
           onClick={handleSave}
-          className="bg-primary text-white px-6 py-2 rounded-md font-semibold hover:bg-opacity-90"
+          disabled={isSaving}
+          className="bg-primary text-white px-6 py-2 rounded-md font-semibold hover:bg-opacity-90 disabled:opacity-60"
         >
-          Guardar configuración
+          {isSaving ? "Guardando..." : "Guardar configuración"}
         </button>
       </div>
     </div>

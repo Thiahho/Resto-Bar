@@ -174,6 +174,141 @@ namespace Back.Migrations
                     b.ToTable("business_settings", (string)null);
                 });
 
+            modelBuilder.Entity("Back.Models.GrowthSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedNever()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<int>("DynamicPricingOffPeakDiscount")
+                        .HasColumnType("integer")
+                        .HasColumnName("dynamic_pricing_off_peak_discount");
+
+                    b.Property<string>("DynamicPricingOffPeakEnd")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("dynamic_pricing_off_peak_end");
+
+                    b.Property<string>("DynamicPricingOffPeakStart")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("dynamic_pricing_off_peak_start");
+
+                    b.Property<bool>("DynamicPricingEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("dynamic_pricing_enabled");
+
+                    b.Property<string>("DynamicPricingPeakMessage")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("dynamic_pricing_peak_message");
+
+                    b.Property<int>("HappyHourDiscount")
+                        .HasColumnType("integer")
+                        .HasColumnName("happy_hour_discount");
+
+                    b.Property<string>("HappyHourDaysJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("happy_hour_days_json");
+
+                    b.Property<bool>("HappyHourEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("happy_hour_enabled");
+
+                    b.Property<string>("HappyHourEnd")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("happy_hour_end");
+
+                    b.Property<string>("HappyHourStart")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("happy_hour_start");
+
+                    b.Property<bool>("PeakHourBoostFastProducts")
+                        .HasColumnType("boolean")
+                        .HasColumnName("peak_hour_boost_fast_products");
+
+                    b.Property<bool>("PeakHourEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("peak_hour_enabled");
+
+                    b.Property<string>("PeakHourEnd")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("peak_hour_end");
+
+                    b.Property<bool>("PeakHourHideSlowProducts")
+                        .HasColumnType("boolean")
+                        .HasColumnName("peak_hour_hide_slow_products");
+
+                    b.Property<string>("PeakHourStart")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)")
+                        .HasColumnName("peak_hour_start");
+
+                    b.Property<int>("PeakHourThresholdOrders")
+                        .HasColumnType("integer")
+                        .HasColumnName("peak_hour_threshold_orders");
+
+                    b.Property<bool>("SmartCombosComboForTwo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("smart_combos_combo_for_two");
+
+                    b.Property<bool>("SmartCombosMostRequested")
+                        .HasColumnType("boolean")
+                        .HasColumnName("smart_combos_most_requested");
+
+                    b.Property<bool>("SmartCombosNightCombo")
+                        .HasColumnType("boolean")
+                        .HasColumnName("smart_combos_night_combo");
+
+                    b.Property<bool>("TwoForOneEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("two_for_one_enabled");
+
+                    b.Property<string>("TwoForOneDaysJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("two_for_one_days_json");
+
+                    b.Property<int>("UpsellDiscount")
+                        .HasColumnType("integer")
+                        .HasColumnName("upsell_discount");
+
+                    b.Property<bool>("UpsellEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("upsell_enabled");
+
+                    b.Property<string>("UpsellMessage")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("upsell_message");
+
+                    b.Property<bool>("WinbackEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("winback_enabled");
+
+                    b.Property<int>("WinbackDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("winback_days");
+
+                    b.HasKey("Id")
+                        .HasName("pk_growth_settings");
+
+                    b.ToTable("growth_settings", (string)null);
+                });
+
             modelBuilder.Entity("Back.Models.Category", b =>
                 {
                     b.Property<int>("Id")
