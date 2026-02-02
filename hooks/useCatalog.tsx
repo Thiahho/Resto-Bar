@@ -5,13 +5,15 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
-import { Products, Category, BusinessInfo } from "../types";
+import { Products, Category, BusinessInfo, ActivePromotion, UpsellConfig } from "../types";
 import apiClient from "../services/api/apiClient";
 
 interface CatalogContextType {
   products: Products[];
   categories: Category[];
   businessInfo: BusinessInfo | null;
+  activePromotion: ActivePromotion | null;
+  upsellConfig: UpsellConfig | null;
   isLoading: boolean;
   addProducts: (productData: FormData) => Promise<boolean>;
   updateProducts: (
@@ -34,6 +36,8 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
   const [products, setProducts] = useState<Products[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo | null>(null);
+  const [activePromotion, setActivePromotion] = useState<ActivePromotion | null>(null);
+  const [upsellConfig, setUpsellConfig] = useState<UpsellConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = async () => {
@@ -44,6 +48,8 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
         products: apiProducts,
         categories: apiCategories,
         businessInfo: apiBusinessInfo,
+        activePromotion: apiActivePromotion,
+        upsellConfig: apiUpsellConfig,
       } = response.data;
 
       // El backend devuelve IDs numéricos, pero el frontend usa strings. Hacemos la conversión.
@@ -60,6 +66,8 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
       setProducts(transformedProducts);
       setCategories(transformedCategories);
       setBusinessInfo(apiBusinessInfo);
+      setActivePromotion(apiActivePromotion || null);
+      setUpsellConfig(apiUpsellConfig || null);
     } catch (error) {
       // console.error("Failed to fetch catalog data", error);
     } finally {
@@ -164,6 +172,8 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
     products,
     categories,
     businessInfo,
+    activePromotion,
+    upsellConfig,
     isLoading,
     addProducts,
     updateProducts,

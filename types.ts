@@ -29,10 +29,24 @@ export interface Products {
   name: string;
   description: string;
   priceCents: number;
+  originalPriceCents?: number; // Precio original sin descuento (null si no hay descuento)
   doublePriceCents: number; // Precio para versión doble (opcional)
+  originalDoublePriceCents?: number; // Precio doble original sin descuento
   hasImage: boolean;
   categoryId: string;
   displayOrder: number;
+}
+
+export interface ActivePromotion {
+  type: "happy_hour" | "dynamic_pricing";
+  message: string;
+  discountPercent: number;
+}
+
+export interface UpsellConfig {
+  enabled: boolean;
+  discountPercent: number;
+  message?: string;
 }
 
 export interface ComboItem {

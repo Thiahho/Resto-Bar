@@ -49,5 +49,21 @@
         public IEnumerable<ProductDto> Products { get; set; }
         public IEnumerable<CategoryDto> Categories { get; set; }
         public BusinessInfoDto BusinessInfo { get; set; }
+        public ActivePromotionDto? ActivePromotion { get; set; }
+        public UpsellConfigDto? UpsellConfig { get; set; }
+    }
+
+    public class ActivePromotionDto
+    {
+        public string Type { get; set; } // "happy_hour" o "dynamic_pricing"
+        public string Message { get; set; } // Mensaje a mostrar
+        public int DiscountPercent { get; set; } // Porcentaje de descuento
+    }
+
+    public class UpsellConfigDto
+    {
+        public bool Enabled { get; set; }
+        public int DiscountPercent { get; set; }
+        public string? Message { get; set; }
     }
 }

@@ -13,6 +13,8 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product }) => {
     ? getProductsImageUrl(product.id)
     : "/placeholder.png";
 
+  const hasDiscount = product.originalPriceCents && product.originalPriceCents > product.priceCents;
+
   return (
     <>
       <button
@@ -28,6 +30,11 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product }) => {
               (e.target as HTMLImageElement).src = "/placeholder.png";
             }}
           />
+          {hasDiscount && (
+            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+              OFERTA
+            </div>
+          )}
         </div>
         <div className="p-4 flex flex-col flex-grow">
           <h3 className="text-lg font-bold text-white">{product.name}</h3>
@@ -35,9 +42,20 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product }) => {
             {product.description}
           </p>
           <div className="mt-3 flex justify-between items-center">
-            <p className="text-xl font-bold text-white">
-              ${product.priceCents.toLocaleString("es-AR")}
-            </p>
+            {hasDiscount ? (
+              <div className="flex flex-col">
+                <span className="text-sm text-gray-500 line-through">
+                  ${product.originalPriceCents!.toLocaleString("es-AR")}
+                </span>
+                <span className="text-xl font-bold text-green-400">
+                  ${product.priceCents.toLocaleString("es-AR")}
+                </span>
+              </div>
+            ) : (
+              <p className="text-xl font-bold text-white">
+                ${product.priceCents.toLocaleString("es-AR")}
+              </p>
+            )}
           </div>
         </div>
       </button>

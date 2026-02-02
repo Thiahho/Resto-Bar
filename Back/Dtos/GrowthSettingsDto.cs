@@ -6,7 +6,7 @@ namespace Back.Dtos
     {
         public bool UpsellEnabled { get; set; }
         public int UpsellDiscount { get; set; }
-        public string UpsellMessage { get; set; } = string.Empty;
+        public string? UpsellMessage { get; set; }
         public SmartCombosDto SmartCombos { get; set; } = new();
         public AutomationsDto Automations { get; set; } = new();
         public PeakHourModeDto PeakHourMode { get; set; } = new();
@@ -25,11 +25,11 @@ namespace Back.Dtos
         public bool WinbackEnabled { get; set; }
         public int WinbackDays { get; set; }
         public bool TwoForOneEnabled { get; set; }
-        public List<string> TwoForOneDays { get; set; } = new();
+        public List<string>? TwoForOneDays { get; set; }
         public bool HappyHourEnabled { get; set; }
-        public List<string> HappyHourDays { get; set; } = new();
-        public string HappyHourStart { get; set; } = "18:00";
-        public string HappyHourEnd { get; set; } = "20:00";
+        public List<string>? HappyHourDays { get; set; }
+        public string? HappyHourStart { get; set; }
+        public string? HappyHourEnd { get; set; }
         public int HappyHourDiscount { get; set; }
     }
 
@@ -39,16 +39,16 @@ namespace Back.Dtos
         public bool HideSlowProducts { get; set; }
         public bool BoostFastProducts { get; set; }
         public int ThresholdOrders { get; set; }
-        public string PeakStart { get; set; } = "12:00";
-        public string PeakEnd { get; set; } = "14:00";
+        public string? PeakStart { get; set; }
+        public string? PeakEnd { get; set; }
     }
 
     public class DynamicPricingDto
     {
         public bool Enabled { get; set; }
         public int OffPeakDiscount { get; set; }
-        public string OffPeakStart { get; set; } = "18:00";
-        public string OffPeakEnd { get; set; } = "20:00";
-        public string PeakMessage { get; set; } = string.Empty;
+        public string? OffPeakStart { get; set; }
+        public string? OffPeakEnd { get; set; }
+        public string? PeakMessage { get; set; }
     }
 }

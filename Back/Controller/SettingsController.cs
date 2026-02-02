@@ -45,129 +45,152 @@ namespace Back.Controller
                 .ToListAsync();
         }
 
-        [HttpPost]
-        public async Task<ActionResult<ProductDto>> PostProduct([FromForm] CreateProductDto productDto)
+          [HttpPost]
+    public async Task<ActionResult<ProductDto>> PostProduct([FromForm] CreateProductDto productDto)
+    {
+        try
         {
-            try
+            _logger.LogInformation("Creando producto: {Name}", productDto.Name);
+            _logger.LogInformation("Imagen recibida: {HasImage}, Tamaño: {Size} bytes",
+                productDto.ImageData != null,
+                productDto.ImageData?.Length ?? 0);
+
+            var product = new Product
             {
-                _logger.LogInformation("Creando producto: {Name}", productDto.Name);
-                _logger.LogInformation("Imagen recibida: {HasImage}, Tamaño: {Size} bytes",
-                    productDto.ImageData != null,
-                    productDto.ImageData?.Length ?? 0);
+                Name = productDto.Name,
+                Description = productDto.Description,
+                PriceCents = productDto.PriceCents,
+                DoublePriceCents=productDto.DoublePriceCents,
+                CategoryId = productDto.CategoryId
+            };
 
-                var product = new Product
-                {
-                    Name = productDto.Name,
-                    Description = productDto.Description,
-                    PriceCents = productDto.PriceCents,
-                    DoublePriceCents=productDto.DoublePriceCents,
-                    CategoryId = productDto.CategoryId
-                };
+            await ApplyDiscountToProduct(product);
 
-                // Guardar imagen si se proporcionó
-                if (productDto.ImageData != null)
-                {
-                    _logger.LogInformation("Procesando imagen...");
-                    product.ImageData = await _imageService.ProcessImageAsync(productDto.ImageData);
-                    _logger.LogInformation("Imagen procesada. Tamaño final: {Size} bytes", product.ImageData?.Length ?? 0);
-                }
-                else
-                {
-                    _logger.LogWarning("No se recibió imagen");
-                }
-
-                _context.Products.Add(product);
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Producto guardado con ID: {Id}, HasImage: {HasImage}",
-                    product.Id,
-                    product.ImageData != null && product.ImageData.Length > 0);
-
-                await _context.Entry(product).Reference(p => p.Category).LoadAsync();
-
-                return CreatedAtAction(nameof(GetProducts), new { id = product.Id }, new ProductDto
-                {
-                    Id = product.Id,
-                    Name = product.Name,
-                    Description = product.Description,
-                    PriceCents = product.PriceCents,
-                    DoublePriceCents= product.DoublePriceCents,
-                    HasImage = product.ImageData != null && product.ImageData.Length > 0,
-                    CategoryId = product.CategoryId,
-                    CategoryName = product.Category.Name,
-                    DisplayOrder = product.DisplayOrder
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al crear producto");
-                return StatusCode(500, new { error = "Error al crear el producto", details = ex.Message });
-            }
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, [FromForm] UpdateProductDto productDto)
-        {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            product.Name = productDto.Name;
-            product.Description = productDto.Description;
-            product.PriceCents = productDto.PriceCents;
-            product.DoublePriceCents= productDto.DoublePriceCents;
-            product.CategoryId = productDto.CategoryId;
-
-            // Actualizar imagen si se proporcionó una nueva
+            // Guardar imagen si se proporcionó
             if (productDto.ImageData != null)
             {
+                _logger.LogInformation("Procesando imagen...");
                 product.ImageData = await _imageService.ProcessImageAsync(productDto.ImageData);
+                _logger.LogInformation("Imagen procesada. Tamaño final: {Size} bytes", product.ImageData?.Length ?? 0);
+            }
+            else
+            {
+                _logger.LogWarning("No se recibió imagen");
             }
 
+            _context.Products.Add(product);
             await _context.SaveChangesAsync();
+            _logger.LogInformation("Producto guardado con ID: {Id}, HasImage: {HasImage}",
+                product.Id,
+                product.ImageData != null && product.ImageData.Length > 0);
 
-            return NoContent();
+            await _context.Entry(product).Reference(p => p.Category).LoadAsync();
+
+            return CreatedAtAction(nameof(GetProducts), new { id = product.Id }, new ProductDto
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                PriceCents = product.PriceCents,
+                DoublePriceCents= product.DoublePriceCents,
+                HasImage = product.ImageData != null && product.ImageData.Length > 0,
+                CategoryId = product.CategoryId,
+                CategoryName = product.Category.Name,
+                DisplayOrder = product.DisplayOrder
+            });
         }
-
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        catch (Exception ex)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        [HttpPut("reorder")]
-        public async Task<IActionResult> ReorderProducts([FromBody] List<ReorderProductDto> reorderList)
-        {
-            try
-            {
-                foreach (var item in reorderList)
-                {
-                    var product = await _context.Products.FindAsync(item.ProductId);
-                    if (product != null)
-                    {
-                        product.DisplayOrder = item.DisplayOrder;
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al reordenar productos");
-                return StatusCode(500, new { error = "Error al reordenar productos", details = ex.Message });
-            }
+            _logger.LogError(ex, "Error al crear producto");
+            return StatusCode(500, new { error = "Error al crear el producto", details = ex.Message });
         }
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutProduct(int id, [FromForm] UpdateProductDto productDto)
+    {
+        var product = await _context.Products.FindAsync(id);
+        if (product == null)
+        {
+            return NotFound();
+        }
+
+        product.Name = productDto.Name;
+        product.Description = productDto.Description;
+        product.PriceCents = productDto.PriceCents;
+        product.DoublePriceCents= productDto.DoublePriceCents;
+        product.CategoryId = productDto.CategoryId;
+
+        await ApplyDiscountToProduct(product);
+
+        // Actualizar imagen si se proporcionó una nueva
+        if (productDto.ImageData != null)
+        {
+            product.ImageData = await _imageService.ProcessImageAsync(productDto.ImageData);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteProduct(int id)
+    {
+        var product = await _context.Products.FindAsync(id);
+        if (product == null)
+        {
+            return NotFound();
+        }
+
+        _context.Products.Remove(product);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpPut("reorder")]
+    public async Task<IActionResult> ReorderProducts([FromBody] List<ReorderProductDto> reorderList)
+    {
+        try
+        {
+            foreach (var item in reorderList)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                if (product != null)
+                {
+                    product.DisplayOrder = item.DisplayOrder;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al reordenar productos");
+            return StatusCode(500, new { error = "Error al reordenar productos", details = ex.Message });
+        }
+    }
+
+    private async Task ApplyDiscountToProduct(Product product)
+    {
+        var settings = await _context.GrowthSettings.FindAsync(1);
+        var discountPercent = DiscountPricingService.GetMaxDiscountPercent(settings);
+
+        if (discountPercent > 0)
+        {
+            product.DiscountPriceCents = DiscountPricingService.ApplyDiscount(product.PriceCents, discountPercent);
+            product.DiscountDoublePriceCents = product.DoublePriceCents.HasValue
+                ? DiscountPricingService.ApplyDiscount(product.DoublePriceCents.Value, discountPercent)
+                : null;
+        }
+        else
+        {
+            product.DiscountPriceCents = null;
+            product.DiscountDoublePriceCents = null;
+        }
+    }
+}
 }

@@ -287,7 +287,14 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 >
                   <div className="font-semibold text-sm md:text-base">Simple</div>
                   <div className="text-xs md:text-sm">
-                    ${product.priceCents.toLocaleString("es-AR")}
+                    {product.originalPriceCents ? (
+                      <div className="flex flex-col">
+                        <span className="line-through text-gray-500">${product.originalPriceCents.toLocaleString("es-AR")}</span>
+                        <span className="text-green-400">${product.priceCents.toLocaleString("es-AR")}</span>
+                      </div>
+                    ) : (
+                      <span>${product.priceCents.toLocaleString("es-AR")}</span>
+                    )}
                   </div>
                 </button>
                 <button
@@ -300,16 +307,34 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 >
                   <div className="font-semibold text-sm md:text-base">Doble</div>
                   <div className="text-xs md:text-sm">
-                    ${product.doublePriceCents!.toLocaleString("es-AR")}
+                    {product.originalDoublePriceCents ? (
+                      <div className="flex flex-col">
+                        <span className="line-through text-gray-500">${product.originalDoublePriceCents.toLocaleString("es-AR")}</span>
+                        <span className="text-green-400">${product.doublePriceCents!.toLocaleString("es-AR")}</span>
+                      </div>
+                    ) : (
+                      <span>${product.doublePriceCents!.toLocaleString("es-AR")}</span>
+                    )}
                   </div>
                 </button>
               </div>
             </div>
           ) : (
             <div className="mb-4 md:mb-6">
-              <div className="text-xl md:text-2xl font-bold text-primary">
-                ${product.priceCents.toLocaleString("es-AR")}
-              </div>
+              {product.originalPriceCents ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-lg md:text-xl line-through text-gray-500">
+                    ${product.originalPriceCents.toLocaleString("es-AR")}
+                  </span>
+                  <span className="text-xl md:text-2xl font-bold text-green-400">
+                    ${product.priceCents.toLocaleString("es-AR")}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-xl md:text-2xl font-bold text-primary">
+                  ${product.priceCents.toLocaleString("es-AR")}
+                </div>
+              )}
             </div>
           )}
 

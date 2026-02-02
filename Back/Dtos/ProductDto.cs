@@ -8,11 +8,13 @@ namespace Back.Dtos
         public string Name { get; set; }
         public string Description { get; set; }
         public int PriceCents { get; set; }
+        public int? OriginalPriceCents { get; set; } // Precio original sin descuento (null si no hay descuento)
         public bool HasImage { get; set; } // Indica si el producto tiene imagen
         public int CategoryId { get; set; }
         public string CategoryName { get; set; }
         public int DisplayOrder { get; set; }
-        public int? DoublePriceCents {get;set;}
+        public int? DoublePriceCents { get; set; }
+        public int? OriginalDoublePriceCents { get; set; } // Precio doble original sin descuento
 
     }
 

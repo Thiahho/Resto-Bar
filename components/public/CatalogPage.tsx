@@ -11,7 +11,7 @@ import CheckoutModal from "./CheckoutModal";
 import BusinessProfile from "./BusinessProfile";
 
 const CatalogPage: React.FC = () => {
-  const { products, categories, businessInfo, isLoading } = useCatalog();
+  const { products, categories, businessInfo, activePromotion, isLoading } = useCatalog();
   const { addComboToCart } = useCart();
   const { showToast } = useToast();
   const [combos, setCombos] = useState<Combo[]>([]);
@@ -45,6 +45,17 @@ const CatalogPage: React.FC = () => {
 
       {/* Perfil del negocio */}
       {businessInfo && <BusinessProfile businessInfo={businessInfo} />}
+
+      {/* Banner de promoción activa */}
+      {activePromotion && (
+        <div className="bg-gradient-to-r from-red-600 to-orange-500 py-3 px-4">
+          <div className="max-w-2xl mx-auto flex items-center justify-center gap-2">
+            <span className="text-white font-bold text-lg animate-pulse">
+              {activePromotion.message}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Navegación horizontal de categorías - estilo Pedisy */}
       <div className="sticky top-0 bg-black border-b border-gray-800 z-10">

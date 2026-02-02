@@ -21,7 +21,7 @@ const CheckoutModal: React.FC = () => {
     addToCart,
   } = useCart();
   const { showToast } = useToast();
-  const { products, categories } = useCatalog();
+  const { products, categories, upsellConfig } = useCatalog();
   const [orderType, setOrderType] = useState<OrderType>("delivery");
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduledTime, setScheduledTime] = useState("");
@@ -49,7 +49,11 @@ const CheckoutModal: React.FC = () => {
   const [editingCartItem, setEditingCartItem] = useState<CartItem | null>(null);
   const [trackingUrl, setTrackingUrl] = useState<string | null>(null);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
-  const upsellDiscount = 0.15;
+
+  // Upsell - usar configuración del backend
+  const upsellEnabled = upsellConfig?.enabled ?? false;
+  const upsellDiscountPercent = upsellConfig?.discountPercent ?? 0;
+  const upsellDiscount = upsellDiscountPercent / 100; // Convertir a decimal
 
   const normalizeText = (value: string) =>
     value
@@ -99,6 +103,8 @@ const CheckoutModal: React.FC = () => {
   }, [cart, categories, products]);
 
   const showUpsell =
+    upsellEnabled &&
+    upsellDiscountPercent > 0 &&
     !!upsellSuggestion &&
     ((upsellSuggestion.friesProduct && !upsellSuggestion.hasFriesInCart) ||
       (upsellSuggestion.drinksProduct && !upsellSuggestion.hasDrinksInCart));
@@ -853,11 +859,11 @@ const CheckoutModal: React.FC = () => {
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xl">🚀</span>
                 <h3 className="text-white font-semibold text-sm md:text-base">
-                  Upsell automático (15% OFF)
+                  Upsell automático ({upsellDiscountPercent}% OFF)
                 </h3>
               </div>
               <p className="text-gray-400 text-xs md:text-sm mb-3">
-                Aumenta tu ticket con sugerencias rápidas de papas + bebida.
+                {upsellConfig?.message || "Aumenta tu ticket con sugerencias rápidas de papas + bebida."}
               </p>
               <div className="space-y-2">
                 {upsellSuggestion.friesProduct &&
