@@ -40,7 +40,7 @@ const CatalogPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-black min-h-screen flex flex-col">
+    <div className="bg-background min-h-screen flex flex-col">
       <Header />
 
       {/* Perfil del negocio */}
@@ -126,7 +126,7 @@ const CatalogPage: React.FC = () => {
 
 
       {/* Navegación horizontal de categorías - estilo Pedisy */}
-      <div className="sticky top-0 bg-black border-b border-gray-800 z-10">
+      <div className="sticky top-0 bg-background border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex overflow-x-auto scrollbar-hide py-4 px-4 gap-4">
             <button
@@ -170,7 +170,7 @@ const CatalogPage: React.FC = () => {
               {combos.map((combo) => (
                 <div
                   key={combo.id}
-                  className="bg-gray-900 rounded-2xl overflow-hidden flex flex-col transform hover:scale-105 transition-transform duration-300 border border-gray-800 hover:border-primary"
+                  className="bg-secondary/60 rounded-2xl overflow-hidden flex flex-col transform hover:scale-105 transition-transform duration-300 border border-white/10 hover:border-primary"
                 >
                   {/* Header del combo con badge */}
                   <div className="bg-gradient-to-r from-primary to-red-700 px-4 py-2">

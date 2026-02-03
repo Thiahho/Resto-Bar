@@ -222,7 +222,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
-        <div className="bg-gray-900 rounded-2xl p-4 md:p-8">
+        <div className="bg-secondary/70 rounded-2xl p-4 md:p-8">
           <p className="text-white">Cargando opciones...</p>
         </div>
       </div>
@@ -231,7 +231,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 bottom-16 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 md:p-4">
-      <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-full flex flex-col">
+      <div className="bg-secondary/70 rounded-2xl max-w-2xl w-full max-h-full flex flex-col">
         {/* Contenido scrolleable */}
         <div className="flex-1 overflow-y-auto">
           {/* Header con imagen */}
@@ -481,7 +481,7 @@ const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
 
         {/* Footer fijo con cantidad y botón agregar */}
-        <div className="flex-shrink-0 p-4 md:p-6 pt-3 md:pt-4 border-t border-gray-800 bg-gray-900 rounded-b-2xl">
+        <div className="flex-shrink-0 p-4 md:p-6 pt-3 md:pt-4 border-t border-white/10 bg-secondary/70 rounded-b-2xl">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4">
             <div className="flex items-center justify-center gap-3 bg-gray-800 rounded-lg px-4 py-2">
               <button

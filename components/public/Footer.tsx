@@ -37,9 +37,9 @@ const Footer: React.FC = () => {
   return (
     <footer className="sticky bottom-0 w-full z-50">
       {/* Efecto de degradado para que el contenido de arriba no choque bruscamente */}
-      <div className="h-6 bg-gradient-to-t from-zinc-950 to-transparent"></div>
+      <div className="h-6 bg-gradient-to-t from-secondary to-transparent"></div>
       
-      <div className="bg-zinc-950/80 backdrop-blur-lg border-t border-white/10 pb-safe">
+      <div className="bg-background/80 backdrop-blur-lg border-t border-white/10 pb-safe">
         <div className="container mx-auto max-w-md px-6">
           <div className="flex justify-around items-center py-3">
             {navItems.map((item) => {

@@ -400,7 +400,7 @@ const CheckoutModal: React.FC = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-        <div className="bg-gray-900 rounded-2xl w-full max-w-lg p-6 text-center space-y-4">
+        <div className="bg-secondary/70 rounded-2xl w-full max-w-lg p-6 text-center space-y-4">
           <div className="text-5xl mb-2">✅</div>
           <h2 className="text-2xl font-bold text-white">¡Pedido confirmado!</h2>
           <p className="text-gray-300">
@@ -459,12 +459,12 @@ const CheckoutModal: React.FC = () => {
       } justify-center z-50`}
     >
       <div
-        className={`bg-gray-900 ${
+        className={`bg-secondary/70 ${
           cart.length === 0 ? "rounded-lg" : "rounded-t-3xl"
         } w-full max-w-2xl max-h-[95vh] overflow-y-auto animate-slide-in-right`}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-800 p-3 md:p-4 z-10">
+        <div className="sticky top-0 bg-secondary/70 border-b border-white/10 p-3 md:p-4 z-10">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <button
               onClick={closeCheckout}
@@ -578,7 +578,7 @@ const CheckoutModal: React.FC = () => {
                     return calculatedMin > businessOpen ? calculatedMin : businessOpen;
                   })()}
                   max="23:00"
-                  className="w-full bg-gray-900 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none text-sm md:text-base"
+                  className="w-full bg-secondary/70 text-white rounded-lg p-2.5 md:p-3 border border-white/10 focus:border-primary outline-none text-sm md:text-base"
                   required={showSchedule}
                 />
                 <p className="text-gray-400 text-xs mt-2">
@@ -837,7 +837,7 @@ const CheckoutModal: React.FC = () => {
           )}
 
           {cart.length > 0 && showUpsell && (
-            <div className="mb-4 md:mb-6 bg-gray-900 border border-gray-800 rounded-lg p-3 md:p-4">
+            <div className="mb-4 md:mb-6 bg-secondary/70 border border-white/10 rounded-lg p-3 md:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xl">🚀</span>
                 <h3 className="text-white font-semibold text-sm md:text-base">
@@ -1038,7 +1038,7 @@ const CheckoutModal: React.FC = () => {
                             onChange={(e) =>
                               setPromoCode(e.target.value.toUpperCase())
                             }
-                            className="flex-1 bg-gray-900 text-white rounded-lg p-2.5 md:p-3 border border-gray-700 focus:border-primary outline-none uppercase text-sm md:text-base"
+                            className="flex-1 bg-secondary/70 text-white rounded-lg p-2.5 md:p-3 border border-white/10 focus:border-primary outline-none uppercase text-sm md:text-base"
                           />
                           <button
                             onClick={handleValidateCoupon}

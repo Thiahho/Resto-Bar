@@ -12,7 +12,7 @@ const Header: React.FC = () => {
 
   if (!businessInfo) {
     return (
-      <div className="relative w-full h-56 bg-zinc-900 animate-pulse rounded-b-3xl"></div>
+      <div className="relative w-full h-56 bg-secondary/70 animate-pulse rounded-b-3xl"></div>
     );
   }
 
@@ -24,7 +24,7 @@ const Header: React.FC = () => {
     : "/images/banner2.webp";
 
   return (
-    <header className="relative w-full flex justify-center bg-zinc-950">
+    <header className="relative w-full flex justify-center bg-background">
       <div className="relative w-full max-w-4xl h-56 md:h-64 overflow-hidden shadow-2xl">
 
         {/* IMAGEN DE FONDO (BANNER) */}
@@ -39,7 +39,7 @@ const Header: React.FC = () => {
         />
 
         {/* OVERLAY GRADIENTE PROFESIONAL */}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/40 to-transparent flex flex-col items-center justify-center text-center p-6">
+        <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-transparent flex flex-col items-center justify-center text-center p-6">
           <h1 className="text-white text-3xl md:text-4xl font-black uppercase tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
             {banner.title || businessInfo.name}
           </h1>
@@ -53,7 +53,7 @@ const Header: React.FC = () => {
         <div className="absolute top-4 left-4">
           <Link
             to="/info"
-            className="flex items-center gap-2 bg-black/30 backdrop-blur-md border border-white/10 text-white p-2 px-3 rounded-full hover:bg-white/20 transition-all"
+            className="flex items-center gap-2 bg-secondary/50 backdrop-blur-md border border-white/10 text-white p-2 px-3 rounded-full hover:bg-secondary/70 transition-all"
           >
             <Info size={18} />
             <span className="text-xs font-bold uppercase tracking-wider hidden md:block">Info</span>
@@ -70,7 +70,7 @@ const Header: React.FC = () => {
           >
             <ShoppingCart size={22} className="group-hover:scale-110 transition-transform" />
             {cartItemsCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-zinc-950 animate-bounce">
+              <span className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] font-black rounded-full h-5 w-5 flex items-center justify-center border-2 border-secondary/80 animate-bounce">
                 {cartItemsCount}
               </span>
             )}

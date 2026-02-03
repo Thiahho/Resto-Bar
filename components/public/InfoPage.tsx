@@ -30,7 +30,7 @@ const InfoPage: React.FC = () => {
 
   if (!businessInfo) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-zinc-950">
+      <div className="flex justify-center items-center min-h-screen bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
@@ -41,11 +41,11 @@ const InfoPage: React.FC = () => {
     : "/images/banner2.webp";
 
   return (
-    <div className="bg-zinc-950 min-h-screen flex flex-col font-sans">
+    <div className="bg-background min-h-screen flex flex-col font-sans">
       {/* --- HERO SECTION --- */}
 
       {/* --- HERO SECTION CORREGIDO --- */}
-      <div className="relative w-full h-72 md:h-96 bg-zinc-900 overflow-hidden">
+      <div className="relative w-full h-72 md:h-96 bg-secondary overflow-hidden">
         {/* Imagen de fondo con fallback */}
         <div className="absolute inset-0">
           <img
@@ -58,20 +58,20 @@ const InfoPage: React.FC = () => {
             }}
           />
           {/* Overlay oscuro mejorado para leer el texto */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-transparent" />
         </div>
 
         {/* Botón Volver con mejor zona táctil */}
         <button
           onClick={() => navigate("/")}
-          className="absolute top-4 left-4 p-2 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-all z-20 border border-white/10"
+          className="absolute top-4 left-4 p-2 bg-secondary/60 backdrop-blur-md rounded-full text-white hover:bg-secondary/80 transition-all z-20 border border-white/10"
         >
           <ChevronLeft size={24} />
         </button>
 
         {/* Info Principal sobre el banner */}
         <div className="absolute bottom-0 left-0 w-full p-6 text-center z-10 flex flex-col items-center">
-          <div className="w-24 h-24 bg-zinc-900 border-4 border-zinc-950 rounded-full shadow-2xl mb-3 overflow-hidden flex items-center justify-center">
+          <div className="w-24 h-24 bg-secondary border-4 border-background rounded-full shadow-2xl mb-3 overflow-hidden flex items-center justify-center">
             <img
               src="/images/logo.webp"
               alt="Logo"
@@ -110,7 +110,7 @@ const InfoPage: React.FC = () => {
               href={businessInfo.contact.social.instagram}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-zinc-800 transition-colors text-white"
+              className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary/70 hover:bg-secondary/90 rounded-xl border border-white/10 transition-colors text-white"
             >
               <Instagram size={20} className="text-pink-500" />
               <span className="font-medium">Instagram</span>
@@ -121,7 +121,7 @@ const InfoPage: React.FC = () => {
             href={`https://wa.me/${businessInfo.contact.phone.replace(/\D/g, "")}`}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center justify-center gap-2 py-3 px-4 bg-zinc-900 hover:bg-zinc-800 rounded-xl border border-zinc-800 transition-colors text-white"
+            className="flex items-center justify-center gap-2 py-3 px-4 bg-secondary/70 hover:bg-secondary/90 rounded-xl border border-white/10 transition-colors text-white"
           >
             <Phone size={20} className="text-green-500" />
             <span className="font-medium">WhatsApp</span>
@@ -129,7 +129,7 @@ const InfoPage: React.FC = () => {
         </div>
 
         {/* Tarjeta: Ubicación */}
-        <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800/50 backdrop-blur-sm">
+        <div className="bg-secondary/40 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
           <div className="flex items-start gap-4">
             <div className="p-3 bg-blue-500/10 rounded-xl">
               <MapPin className="text-blue-500" size={24} />
@@ -152,7 +152,7 @@ const InfoPage: React.FC = () => {
         </div>
 
         {/* Tarjeta: Horarios */}
-        <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800/50 backdrop-blur-sm">
+        <div className="bg-secondary/40 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
           <div className="flex items-start gap-4 mb-4">
             <div className="p-3 bg-orange-500/10 rounded-xl">
               <Clock className="text-orange-500" size={24} />
@@ -178,7 +178,7 @@ const InfoPage: React.FC = () => {
         </div>
 
         {/* Tarjeta: Pagos */}
-        <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800/50 backdrop-blur-sm">
+        <div className="bg-secondary/40 rounded-2xl p-5 border border-white/10 backdrop-blur-sm">
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-purple-500/10 rounded-xl">
               <CreditCard className="text-purple-500" size={24} />
@@ -198,7 +198,7 @@ const InfoPage: React.FC = () => {
 
             {businessInfo.contact.transferAlias && (
               <div
-                className="mt-4 p-3 bg-zinc-950 rounded-xl border border-zinc-800 flex items-center justify-between group cursor-pointer hover:border-zinc-700 transition-colors"
+                className="mt-4 p-3 bg-background/60 rounded-xl border border-white/10 flex items-center justify-between group cursor-pointer hover:border-white/20 transition-colors"
                 onClick={handleCopyAlias}
               >
                 <div className="overflow-hidden">
