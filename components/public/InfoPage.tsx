@@ -73,7 +73,7 @@ const InfoPage: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-full p-6 text-center z-10 flex flex-col items-center">
           <div className="w-24 h-24 bg-secondary border-4 border-background rounded-full shadow-2xl mb-3 overflow-hidden flex items-center justify-center">
             <img
-              src="/images/logobob.webp"
+              src="/images/cartelito.webp"
               alt="Logo"
               className="w-full h-full object-cover"
             />
