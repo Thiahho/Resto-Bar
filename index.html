@@ -12,12 +12,12 @@
         theme: {
           extend: {
             colors: {
-              primary: "#1B7FA6", // Ocean blue
-              secondary: "#0B1F2A", // Deep sea
-              accent: "#5AD2FF", // Aqua accent
-              background: "#061923", // Night ocean
-              "text-main": "#E6F6FF", // Sea foam
-              "text-light": "#9FC9DD", // Mist blue
+              primary: "#FF5A1F", // Neon orange
+              secondary: "#2A1D1D", // Deep charcoal
+              accent: "#FFC46B", // Warm glow
+              background: "#120C0B", // Night asphalt
+              "text-main": "#F5E9DC", // Warm cream
+              "text-light": "#D7C2AA", // Soft sand
             },
             fontFamily: {
               sans: ["Montserrat", "Nunito", "sans-serif"],
@@ -71,10 +71,10 @@
       @keyframes glow-pulse {
         0%,
         100% {
-          box-shadow: 0 0 0 rgba(27, 127, 166, 0);
+          box-shadow: 0 0 0 rgba(255, 90, 31, 0);
         }
         50% {
-          box-shadow: 0 0 18px rgba(27, 127, 166, 0.35);
+          box-shadow: 0 0 18px rgba(255, 90, 31, 0.45);
         }
       }
       @keyframes pop-in {
@@ -118,7 +118,7 @@
       }
     </style>
   </head>
-  <body class="text-text-main font-sans" style="background-image: url('/img/FondoBOB.png'); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat; background-color: #061923;">
+  <body class="text-text-main font-sans" style="background-image: radial-gradient(900px 420px at 10% -10%, rgba(255, 106, 0, 0.35), transparent 60%), radial-gradient(700px 400px at 90% 10%, rgba(255, 90, 31, 0.2), transparent 65%), linear-gradient(180deg, #1a1210 0%, #120c0b 55%, #0b0807 100%); background-size: cover; background-position: center; background-attachment: fixed; background-repeat: no-repeat; background-color: #120c0b;">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

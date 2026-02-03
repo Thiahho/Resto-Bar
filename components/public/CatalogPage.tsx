@@ -58,7 +58,7 @@ const CatalogPage: React.FC = () => {
       )} */}
       {/* Banner promo (estilo opción A: gradiente + jerarquía + sin emoji) */}
 {activePromotion && (
- <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-blue-900 via-blue-600 to-cyan-400">
+ <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-[#3a1a12] via-primary/60 to-accent">
     {/* textura sutil */}
     <div className="pointer-events-none absolute inset-0 opacity-20 [background:radial-gradient(700px_200px_at_50%_-50%,white,transparent)]" />
 
@@ -102,12 +102,12 @@ const CatalogPage: React.FC = () => {
       {/* Banner 2x1 */}
 {/* Banner 2x1 (sin fondo + borde verde “fluorescente”) */}
 {twoForOneConfig?.active && (
-  <div className="relative border-b border-emerald-400/40 bg-transparent">
+  <div className="relative border-b border-accent/40 bg-transparent">
     {/* glow */}
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-emerald-400/70 shadow-[0_0_18px_2px_rgba(16,185,129,0.55)]" />
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-accent/70 shadow-[0_0_18px_2px_rgba(255,196,107,0.55)]" />
     <div className="mx-auto flex max-w-6xl items-center justify-center px-4 py-2.5 sm:py-3">
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
-        <span className="inline-flex items-center rounded-full bg-transparent px-2.5 py-1 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-400/60 shadow-[0_0_16px_rgba(16,185,129,0.25)]">
+        <span className="inline-flex items-center rounded-full bg-transparent px-2.5 py-1 text-xs font-semibold text-accent ring-1 ring-accent/60 shadow-[0_0_16px_rgba(255,196,107,0.25)]">
           PROMO ACTIVA
         </span>
 
@@ -115,7 +115,7 @@ const CatalogPage: React.FC = () => {
           <span className="font-bold text-white">2x1</span>{" "}
           {twoForOneConfig.productIds.length > 0 ? "en productos seleccionados" : "en todos los productos"}
           <span className="mx-2 text-white/35">•</span>
-          <span className="text-emerald-200/90">Solo por hoy</span>
+          <span className="text-accent/90">Solo por hoy</span>
         </p>
 
       </div>
