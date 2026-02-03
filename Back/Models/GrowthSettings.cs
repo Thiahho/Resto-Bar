@@ -14,6 +14,7 @@ namespace Back.Models
         public bool UpsellEnabled { get; set; }
         public int UpsellDiscount { get; set; }
         [MaxLength(200)] public string? UpsellMessage { get; set; }
+        [Column(TypeName = "jsonb")] public string? UpsellProductIdsJson { get; set; }
 
         // Smart Combos
         public bool SmartCombosMostRequested { get; set; }
@@ -35,6 +36,7 @@ namespace Back.Models
         [MaxLength(5)] public string? HappyHourStart { get; set; }
         [MaxLength(5)] public string? HappyHourEnd { get; set; }
         public int HappyHourDiscount { get; set; }
+        [Column(TypeName = "jsonb")] public string? HappyHourProductIdsJson { get; set; }
 
         // Peak Hour Mode
         public bool PeakHourEnabled { get; set; }
@@ -50,5 +52,6 @@ namespace Back.Models
         [MaxLength(5)] public string? DynamicPricingOffPeakStart { get; set; }
         [MaxLength(5)] public string? DynamicPricingOffPeakEnd { get; set; }
         [MaxLength(200)] public string? DynamicPricingPeakMessage { get; set; }
+        [Column(TypeName = "jsonb")] public string? DynamicPricingProductIdsJson { get; set; }
     }
 }

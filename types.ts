@@ -47,6 +47,7 @@ export interface UpsellConfig {
   enabled: boolean;
   discountPercent: number;
   message?: string;
+  productIds: number[];
 }
 
 export interface TwoForOneConfig {
@@ -164,6 +165,9 @@ export interface OrderResponse {
   createdAt: string;
   updatedAt: string;
   items: OrderItemRequest[];
+  couponCode?: string;
+  couponType?: string;
+  couponValue?: number;
 }
 
 export interface OrderTrackingHistoryEntry {

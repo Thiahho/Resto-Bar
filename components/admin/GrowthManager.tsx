@@ -13,6 +13,7 @@ interface GrowthConfig {
   upsellEnabled: boolean;
   upsellDiscount: number;
   upsellMessage: string;
+  upsellProductIds: number[];
   smartCombos: {
     mostRequested: boolean;
     nightCombo: boolean;
@@ -29,6 +30,7 @@ interface GrowthConfig {
     happyHourStart: string;
     happyHourEnd: string;
     happyHourDiscount: number;
+    happyHourProductIds: number[];
   };
   peakHourMode: {
     enabled: boolean;
@@ -44,6 +46,7 @@ interface GrowthConfig {
     offPeakStart: string;
     offPeakEnd: string;
     peakMessage: string;
+    productIds: number[];
   };
 }
 
@@ -51,6 +54,7 @@ const DEFAULT_CONFIG: GrowthConfig = {
   upsellEnabled: false,
   upsellDiscount: 0,
   upsellMessage: "",
+  upsellProductIds: [],
   smartCombos: {
     mostRequested: false,
     nightCombo: false,
@@ -67,6 +71,7 @@ const DEFAULT_CONFIG: GrowthConfig = {
     happyHourStart: "",
     happyHourEnd: "",
     happyHourDiscount: 0,
+    happyHourProductIds: [],
   },
   peakHourMode: {
     enabled: false,
@@ -82,6 +87,7 @@ const DEFAULT_CONFIG: GrowthConfig = {
     offPeakStart: "",
     offPeakEnd: "",
     peakMessage: "",
+    productIds: [],
   },
 };
 
@@ -113,9 +119,15 @@ const GrowthManager: React.FC = () => {
         ]);
         setConfig({
           ...configData,
+          upsellProductIds: configData.upsellProductIds || [],
           automations: {
             ...configData.automations,
             twoForOneProductIds: configData.automations.twoForOneProductIds || [],
+            happyHourProductIds: configData.automations.happyHourProductIds || [],
+          },
+          dynamicPricing: {
+            ...configData.dynamicPricing,
+            productIds: configData.dynamicPricing.productIds || [],
           },
         });
         setProducts(productsData);
@@ -237,6 +249,39 @@ const GrowthManager: React.FC = () => {
                 className="mt-1 w-full border border-gray-300 rounded-md p-2"
               />
             </div>
+          </div>
+          <div>
+            <label className="text-sm text-gray-600 block mb-2">
+              Productos para upsell (selecciona los que quieras ofrecer)
+            </label>
+            <div className="border border-gray-300 rounded-md p-2 max-h-48 overflow-y-auto">
+              {products.length === 0 ? (
+                <p className="text-gray-400 text-sm">Cargando productos...</p>
+              ) : (
+                products.map((product) => (
+                  <label
+                    key={product.id}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={config.upsellProductIds.includes(product.id)}
+                      onChange={() =>
+                        setConfig((prev) => ({
+                          ...prev,
+                          upsellProductIds: toggleProduct(prev.upsellProductIds, product.id),
+                        }))
+                      }
+                      className="rounded"
+                    />
+                    {product.name}
+                  </label>
+                ))
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Si no seleccionas ninguno, no se mostrará el upsell.
+            </p>
           </div>
         </section>
 
@@ -495,6 +540,42 @@ const GrowthManager: React.FC = () => {
                 />
               </div>
             </div>
+            <div>
+              <label className="text-sm text-gray-600 block mb-2">
+                Productos con descuento (vacío = todos)
+              </label>
+              <div className="border border-gray-300 rounded-md p-2 max-h-40 overflow-y-auto">
+                {products.length === 0 ? (
+                  <p className="text-gray-400 text-sm">Cargando productos...</p>
+                ) : (
+                  products.map((product) => (
+                    <label
+                      key={product.id}
+                      className="flex items-center gap-2 text-sm text-gray-600 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={config.automations.happyHourProductIds.includes(product.id)}
+                        onChange={() =>
+                          setConfig((prev) => ({
+                            ...prev,
+                            automations: {
+                              ...prev.automations,
+                              happyHourProductIds: toggleProduct(
+                                prev.automations.happyHourProductIds,
+                                product.id
+                              ),
+                            },
+                          }))
+                        }
+                        className="rounded"
+                      />
+                      {product.name}
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
@@ -684,6 +765,42 @@ const GrowthManager: React.FC = () => {
                 }
                 className="mt-1 w-full border border-gray-300 rounded-md p-2"
               />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-gray-600 block mb-2">
+              Productos con descuento (vacío = todos)
+            </label>
+            <div className="border border-gray-300 rounded-md p-2 max-h-40 overflow-y-auto">
+              {products.length === 0 ? (
+                <p className="text-gray-400 text-sm">Cargando productos...</p>
+              ) : (
+                products.map((product) => (
+                  <label
+                    key={product.id}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={config.dynamicPricing.productIds.includes(product.id)}
+                      onChange={() =>
+                        setConfig((prev) => ({
+                          ...prev,
+                          dynamicPricing: {
+                            ...prev.dynamicPricing,
+                            productIds: toggleProduct(
+                              prev.dynamicPricing.productIds,
+                              product.id
+                            ),
+                          },
+                        }))
+                      }
+                      className="rounded"
+                    />
+                    {product.name}
+                  </label>
+                ))
+              )}
             </div>
           </div>
         </section>

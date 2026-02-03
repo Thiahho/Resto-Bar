@@ -66,6 +66,7 @@
         public bool Enabled { get; set; }
         public int DiscountPercent { get; set; }
         public string? Message { get; set; }
+        public List<int> ProductIds { get; set; } = new();
     }
 
     public class TwoForOneConfigDto

@@ -21,7 +21,7 @@ const CheckoutModal: React.FC = () => {
     addToCart,
   } = useCart();
   const { showToast } = useToast();
-  const { products, categories, upsellConfig } = useCatalog();
+  const { products, categories, upsellConfig, twoForOneConfig } = useCatalog();
   const [orderType, setOrderType] = useState<OrderType>("delivery");
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduledTime, setScheduledTime] = useState("");
@@ -55,59 +55,25 @@ const CheckoutModal: React.FC = () => {
   const upsellDiscountPercent = upsellConfig?.discountPercent ?? 0;
   const upsellDiscount = upsellDiscountPercent / 100; // Convertir a decimal
 
-  const normalizeText = (value: string) =>
-    value
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/\p{Diacritic}/gu, "");
+  // Obtener productos configurados para upsell
+  const upsellProducts = useMemo(() => {
+    if (!upsellConfig?.productIds || upsellConfig.productIds.length === 0) return [];
+    return products.filter((p) => upsellConfig.productIds.includes(parseInt(p.id)));
+  }, [products, upsellConfig]);
 
-  const findCategoryByKeywords = (keywords: string[]) =>
-    categories.find((category) =>
-      keywords.some((keyword) =>
-        normalizeText(category.name).includes(normalizeText(keyword))
-      )
-    );
-
-  const findCheapestProductByCategory = (categoryId?: string) => {
-    if (!categoryId) return undefined;
-    const candidates = products.filter((product) => product.categoryId === categoryId);
-    if (candidates.length === 0) return undefined;
-    return [...candidates].sort((a, b) => a.priceCents - b.priceCents)[0];
-  };
-
-  const upsellSuggestion = useMemo(() => {
-    const hasCartItems = cart.length > 0;
-    if (!hasCartItems) return null;
-
-    const friesCategory = findCategoryByKeywords(["papas", "fritas", "fries"]);
-    const drinksCategory = findCategoryByKeywords(["bebida", "gaseosa", "refresco", "soda"]);
-
-    const friesProduct = findCheapestProductByCategory(friesCategory?.id);
-    const drinksProduct = findCheapestProductByCategory(drinksCategory?.id);
-
-    const hasFriesInCart = friesCategory
-      ? cart.some((item) => item.product?.categoryId === friesCategory.id)
-      : false;
-    const hasDrinksInCart = drinksCategory
-      ? cart.some((item) => item.product?.categoryId === drinksCategory.id)
-      : false;
-
-    return {
-      friesCategory,
-      drinksCategory,
-      friesProduct,
-      drinksProduct,
-      hasFriesInCart,
-      hasDrinksInCart,
-    };
-  }, [cart, categories, products]);
+  // Filtrar productos de upsell que no están en el carrito
+  const availableUpsellProducts = useMemo(() => {
+    const cartProductIds = cart
+      .filter((item) => item.product)
+      .map((item) => item.product!.id);
+    return upsellProducts.filter((p) => !cartProductIds.includes(p.id));
+  }, [upsellProducts, cart]);
 
   const showUpsell =
     upsellEnabled &&
     upsellDiscountPercent > 0 &&
-    !!upsellSuggestion &&
-    ((upsellSuggestion.friesProduct && !upsellSuggestion.hasFriesInCart) ||
-      (upsellSuggestion.drinksProduct && !upsellSuggestion.hasDrinksInCart));
+    cart.length > 0 &&
+    availableUpsellProducts.length > 0;
 
   const addUpsellProduct = (product: (typeof products)[number]) => {
     const discountedPrice = Math.round(product.priceCents * (1 - upsellDiscount));
@@ -733,9 +699,25 @@ const CheckoutModal: React.FC = () => {
                         />
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-white font-medium">
-                              {item.product.name}
-                            </h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-white font-medium">
+                                {item.product.name}
+                              </h4>
+                              {/* Badges de ofertas */}
+                              {twoForOneConfig?.active && (
+                                twoForOneConfig.productIds.length === 0 ||
+                                twoForOneConfig.productIds.includes(parseInt(item.product.id))
+                              ) && (
+                                <span className="bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                                  2x1
+                                </span>
+                              )}
+                              {item.product.originalPriceCents && item.product.originalPriceCents > item.product.priceCents && (
+                                <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                                  OFERTA
+                                </span>
+                              )}
+                            </div>
                             {!isUpsellItem && (
                               <button
                                 onClick={() => setEditingCartItem(item)}
@@ -854,24 +836,21 @@ const CheckoutModal: React.FC = () => {
             </div>
           )}
 
-          {cart.length > 0 && showUpsell && upsellSuggestion && (
+          {cart.length > 0 && showUpsell && (
             <div className="mb-4 md:mb-6 bg-gray-900 border border-gray-800 rounded-lg p-3 md:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xl">🚀</span>
                 <h3 className="text-white font-semibold text-sm md:text-base">
-                  Upsell automático ({upsellDiscountPercent}% OFF)
+                  Agregá a tu pedido ({upsellDiscountPercent}% OFF)
                 </h3>
               </div>
               <p className="text-gray-400 text-xs md:text-sm mb-3">
-                {upsellConfig?.message || "Aumenta tu ticket con sugerencias rápidas de papas + bebida."}
+                {upsellConfig?.message || "Aprovechá el descuento en estos productos."}
               </p>
               <div className="space-y-2">
-                {upsellSuggestion.friesProduct &&
-                  !upsellSuggestion.hasFriesInCart &&
-                  renderUpsellCard(upsellSuggestion.friesProduct, "Papas recomendadas")}
-                {upsellSuggestion.drinksProduct &&
-                  !upsellSuggestion.hasDrinksInCart &&
-                  renderUpsellCard(upsellSuggestion.drinksProduct, "Bebida recomendada")}
+                {availableUpsellProducts.map((product) =>
+                  renderUpsellCard(product, "Con descuento")
+                )}
               </div>
             </div>
           )}

@@ -47,6 +47,7 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
     settings.UpsellEnabled = dto.UpsellEnabled;
     settings.UpsellDiscount = dto.UpsellDiscount;
     settings.UpsellMessage = dto.UpsellMessage;
+    settings.UpsellProductIdsJson = SerializeProductIds(dto.UpsellProductIds);
 
     settings.SmartCombosMostRequested = dto.SmartCombos.MostRequested;
     settings.SmartCombosNightCombo = dto.SmartCombos.NightCombo;
@@ -63,6 +64,7 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
     settings.HappyHourStart = dto.Automations.HappyHourStart;
     settings.HappyHourEnd = dto.Automations.HappyHourEnd;
     settings.HappyHourDiscount = dto.Automations.HappyHourDiscount;
+    settings.HappyHourProductIdsJson = SerializeProductIds(dto.Automations.HappyHourProductIds);
 
     settings.PeakHourEnabled = dto.PeakHourMode.Enabled;
     settings.PeakHourHideSlowProducts = dto.PeakHourMode.HideSlowProducts;
@@ -76,12 +78,33 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
     settings.DynamicPricingOffPeakStart = dto.DynamicPricing.OffPeakStart;
     settings.DynamicPricingOffPeakEnd = dto.DynamicPricing.OffPeakEnd;
     settings.DynamicPricingPeakMessage = dto.DynamicPricing.PeakMessage;
+    settings.DynamicPricingProductIdsJson = SerializeProductIds(dto.DynamicPricing.ProductIds);
 
     var discountPercent = ResolveDiscountPercent(dto);
+    var happyHourProductIds = dto.Automations.HappyHourProductIds ?? new List<int>();
+    var dynamicPricingProductIds = dto.DynamicPricing.ProductIds ?? new List<int>();
+
+    // Combinar IDs: si ambos están vacíos = todos, sino usar la unión de los seleccionados
+    var allSelectedIds = new HashSet<int>();
+    var applyToAll = true;
+
+    if (dto.Automations.HappyHourEnabled && happyHourProductIds.Count > 0)
+    {
+        foreach (var id in happyHourProductIds) allSelectedIds.Add(id);
+        applyToAll = false;
+    }
+    if (dto.DynamicPricing.Enabled && dynamicPricingProductIds.Count > 0)
+    {
+        foreach (var id in dynamicPricingProductIds) allSelectedIds.Add(id);
+        applyToAll = false;
+    }
+
     var products = await _context.Products.ToListAsync();
     foreach (var product in products)
     {
-        if (discountPercent > 0)
+        var shouldApplyDiscount = discountPercent > 0 && (applyToAll || allSelectedIds.Contains(product.Id));
+
+        if (shouldApplyDiscount)
         {
             product.DiscountPriceCents = DiscountPricingService.ApplyDiscount(product.PriceCents, discountPercent);
             product.DiscountDoublePriceCents = product.DoublePriceCents.HasValue
@@ -108,6 +131,7 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
         UpsellEnabled = settings.UpsellEnabled,
         UpsellDiscount = settings.UpsellDiscount,
         UpsellMessage = settings.UpsellMessage,
+        UpsellProductIds = DeserializeProductIds(settings.UpsellProductIdsJson),
         SmartCombos = new SmartCombosDto
         {
             MostRequested = settings.SmartCombosMostRequested,
@@ -125,7 +149,8 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
             HappyHourDays = DeserializeDays(settings.HappyHourDaysJson),
             HappyHourStart = settings.HappyHourStart,
             HappyHourEnd = settings.HappyHourEnd,
-            HappyHourDiscount = settings.HappyHourDiscount
+            HappyHourDiscount = settings.HappyHourDiscount,
+            HappyHourProductIds = DeserializeProductIds(settings.HappyHourProductIdsJson)
         },
         PeakHourMode = new PeakHourModeDto
         {
@@ -142,7 +167,8 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
             OffPeakDiscount = settings.DynamicPricingOffPeakDiscount,
             OffPeakStart = settings.DynamicPricingOffPeakStart,
             OffPeakEnd = settings.DynamicPricingOffPeakEnd,
-            PeakMessage = settings.DynamicPricingPeakMessage
+            PeakMessage = settings.DynamicPricingPeakMessage,
+            ProductIds = DeserializeProductIds(settings.DynamicPricingProductIdsJson)
         }
     };
 }

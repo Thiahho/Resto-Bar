@@ -131,7 +131,8 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
             {
                 Enabled = true,
                 DiscountPercent = growthSettings.UpsellDiscount,
-                Message = growthSettings.UpsellMessage
+                Message = growthSettings.UpsellMessage,
+                ProductIds = ParseProductIds(growthSettings.UpsellProductIdsJson)
             }
             : null,
         TwoForOneConfig = twoForOneConfig
@@ -389,6 +390,23 @@ private static TwoForOneConfigDto? ResolveTwoForOneConfig(GrowthSettings? settin
             catch
             {
                 return new List<string>();
+            }
+        }
+
+        private static List<int> ParseProductIds(string? json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return new List<int>();
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<int>>(json) ?? new List<int>();
+            }
+            catch
+            {
+                return new List<int>();
             }
         }
 

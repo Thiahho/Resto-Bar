@@ -24,6 +24,9 @@ namespace Back.Dtos
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
         public List<OrderItemDto> Items { get; set; } = new();
+        public string? CouponCode { get; set; }
+        public string? CouponType { get; set; }
+        public int? CouponValue { get; set; }
     }
 
 }

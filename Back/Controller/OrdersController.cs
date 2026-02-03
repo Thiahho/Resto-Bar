@@ -176,8 +176,24 @@ namespace Back.Controller
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
+            // Obtener cupones usados por orden
+            var orderIds = orders.Select(o => o.Id).ToList();
+            var redemptions = await _context.CouponRedemptions
+                .Include(r => r.Coupon)
+                .Where(r => orderIds.Contains(r.OrderId))
+                .ToDictionaryAsync(r => r.OrderId, r => r.Coupon);
+
             var baseUrl = BuildTrackingBaseUrl();
-            var ordersDto = orders.Select(order => MapOrderToDto(order, BuildTrackingUrl(order, baseUrl))).ToList();
+            var ordersDto = orders.Select(order => {
+                var dto = MapOrderToDto(order, BuildTrackingUrl(order, baseUrl));
+                if (redemptions.TryGetValue(order.Id, out var coupon) && coupon != null)
+                {
+                    dto.CouponCode = coupon.Code;
+                    dto.CouponType = coupon.Type;
+                    dto.CouponValue = coupon.Value;
+                }
+                return dto;
+            }).ToList();
             return Ok(ordersDto);
         }
 

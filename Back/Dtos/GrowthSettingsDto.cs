@@ -7,6 +7,7 @@ namespace Back.Dtos
         public bool UpsellEnabled { get; set; }
         public int UpsellDiscount { get; set; }
         public string? UpsellMessage { get; set; }
+        public List<int>? UpsellProductIds { get; set; }
         public SmartCombosDto SmartCombos { get; set; } = new();
         public AutomationsDto Automations { get; set; } = new();
         public PeakHourModeDto PeakHourMode { get; set; } = new();
@@ -32,6 +33,7 @@ namespace Back.Dtos
         public string? HappyHourStart { get; set; }
         public string? HappyHourEnd { get; set; }
         public int HappyHourDiscount { get; set; }
+        public List<int>? HappyHourProductIds { get; set; }
     }
 
     public class PeakHourModeDto
@@ -51,5 +53,6 @@ namespace Back.Dtos
         public string? OffPeakStart { get; set; }
         public string? OffPeakEnd { get; set; }
         public string? PeakMessage { get; set; }
+        public List<int>? ProductIds { get; set; }
     }
 }

@@ -207,6 +207,10 @@ namespace Back.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("dynamic_pricing_peak_message");
 
+                    b.Property<string>("DynamicPricingProductIdsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("dynamic_pricing_product_ids_json");
+
                     b.Property<int>("HappyHourDiscount")
                         .HasColumnType("integer")
                         .HasColumnName("happy_hour_discount");
@@ -231,6 +235,10 @@ namespace Back.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)")
                         .HasColumnName("happy_hour_start");
+
+                    b.Property<string>("HappyHourProductIdsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("happy_hour_product_ids_json");
 
                     b.Property<bool>("PeakHourBoostFastProducts")
                         .HasColumnType("boolean")
@@ -298,6 +306,10 @@ namespace Back.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)")
                         .HasColumnName("upsell_message");
+
+                    b.Property<string>("UpsellProductIdsJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("upsell_product_ids_json");
 
                     b.Property<bool>("WinbackEnabled")
                         .HasColumnType("boolean")
