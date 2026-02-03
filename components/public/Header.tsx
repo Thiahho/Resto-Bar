@@ -25,7 +25,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="relative w-full flex justify-center">
-      <div className="relative w-full max-w-4xl h-56 md:h-64 overflow-hidden shadow-2xl">
+       <div className="relative w-full max-w-4xl h-56 md:h-64 overflow-hidden shadow-2xl rounded-3xl border border-white/10 bg-secondary/60">
 
         {/* IMAGEN DE FONDO (BANNER) */}
         <img
@@ -39,7 +39,12 @@ const Header: React.FC = () => {
         />
 
         {/* OVERLAY GRADIENTE PROFESIONAL */}
-        <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-transparent flex flex-col items-center justify-center text-center p-6">
+        {/* OVERLAYS PARA INTEGRAR CON FONDO MARINO */}
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary/80 via-secondary/40 to-secondary/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-transparent"></div>
+
+        {/* CONTENIDO DEL BANNER */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
           <h1 className="text-white text-3xl md:text-4xl font-black uppercase tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
             {banner.title || businessInfo.name}
           </h1>

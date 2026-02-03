@@ -45,7 +45,7 @@ const InfoPage: React.FC = () => {
       {/* --- HERO SECTION --- */}
 
       {/* --- HERO SECTION CORREGIDO --- */}
-      <div className="relative w-full h-72 md:h-96 bg-secondary overflow-hidden">
+       <div className="relative w-full h-72 md:h-96 bg-secondary/80 overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
         {/* Imagen de fondo con fallback */}
         <div className="absolute inset-0">
           <img
@@ -58,7 +58,7 @@ const InfoPage: React.FC = () => {
             }}
           />
           {/* Overlay oscuro mejorado para leer el texto */}
-          <div className="absolute inset-0 bg-gradient-to-t from-secondary via-secondary/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-secondary/80 via-secondary/40 to-secondary/80" />
         </div>
 
         {/* Botón Volver con mejor zona táctil */}
@@ -73,7 +73,7 @@ const InfoPage: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-full p-6 text-center z-10 flex flex-col items-center">
           <div className="w-24 h-24 bg-secondary border-4 border-background rounded-full shadow-2xl mb-3 overflow-hidden flex items-center justify-center">
             <img
-              src="/images/logo.webp"
+              src="/images/logobob.webp"
               alt="Logo"
               className="w-full h-full object-cover"
             />

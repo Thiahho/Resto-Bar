@@ -58,7 +58,7 @@ const CatalogPage: React.FC = () => {
       )} */}
       {/* Banner promo (estilo opción A: gradiente + jerarquía + sin emoji) */}
 {activePromotion && (
-  <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-red-600/90 via-orange-500/90 to-amber-400/90">
+ <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-blue-900 via-blue-600 to-cyan-400">
     {/* textura sutil */}
     <div className="pointer-events-none absolute inset-0 opacity-20 [background:radial-gradient(700px_200px_at_50%_-50%,white,transparent)]" />
 
@@ -72,7 +72,7 @@ const CatalogPage: React.FC = () => {
           {activePromotion.message}
         </p>
 
-        {/* CTA opcional */}
+        {/* CTA opcional 
         <button
           type="button"
           className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/20 active:scale-[0.98]"
@@ -82,7 +82,7 @@ const CatalogPage: React.FC = () => {
           }}
         >
           Ver promo
-        </button>
+        </button>*/}
       </div>
     </div>
   </div>
