@@ -30,7 +30,7 @@ const InfoPage: React.FC = () => {
 
   if (!businessInfo) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-background">
+      <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
@@ -41,7 +41,7 @@ const InfoPage: React.FC = () => {
     : "/images/banner2.webp";
 
   return (
-    <div className="bg-background min-h-screen flex flex-col font-sans">
+    <div className="min-h-screen flex flex-col font-sans">
       {/* --- HERO SECTION --- */}
 
       {/* --- HERO SECTION CORREGIDO --- */}
@@ -198,7 +198,7 @@ const InfoPage: React.FC = () => {
 
             {businessInfo.contact.transferAlias && (
               <div
-                className="mt-4 p-3 bg-background/60 rounded-xl border border-white/10 flex items-center justify-between group cursor-pointer hover:border-white/20 transition-colors"
+                className="mt-4 p-3  rounded-xl border border-white/10 flex items-center justify-between group cursor-pointer hover:border-white/20 transition-colors"
                 onClick={handleCopyAlias}
               >
                 <div className="overflow-hidden">

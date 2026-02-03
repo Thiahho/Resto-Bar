@@ -24,7 +24,7 @@ const Header: React.FC = () => {
     : "/images/banner2.webp";
 
   return (
-    <header className="relative w-full flex justify-center bg-background">
+    <header className="relative w-full flex justify-center">
       <div className="relative w-full max-w-4xl h-56 md:h-64 overflow-hidden shadow-2xl">
 
         {/* IMAGEN DE FONDO (BANNER) */}

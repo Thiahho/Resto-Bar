@@ -15,7 +15,7 @@ const BusinessProfile: React.FC<BusinessProfileProps> = ({ businessInfo }) => {
   };
 
   return (
-    <div className="w-full flex justify-center bg-background">
+    <div className="w-full flex justify-center">
       <div className="w-full max-w-2xl relative">
         {/* Logo superpuesto al banner */}
         <div className="absolute -top-8 left-0">

@@ -40,7 +40,7 @@ const CatalogPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-background min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header />
 
       {/* Perfil del negocio */}
@@ -126,7 +126,7 @@ const CatalogPage: React.FC = () => {
 
 
       {/* Navegación horizontal de categorías - estilo Pedisy */}
-      <div className="sticky top-0 bg-background border-b border-white/10 z-10">
+      <div className="sticky top-0  backdrop-blur-md border-b border-white/10 z-10">
         <div className="max-w-2xl mx-auto">
           <div className="flex overflow-x-auto scrollbar-hide py-4 px-4 gap-4">
             <button
