@@ -21,7 +21,7 @@ const CheckoutModal: React.FC = () => {
     addToCart,
   } = useCart();
   const { showToast } = useToast();
-  const { products, categories, upsellConfig, twoForOneConfig } = useCatalog();
+  const { products, upsellConfig, twoForOneConfig } = useCatalog();
   const [orderType, setOrderType] = useState<OrderType>("delivery");
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduledTime, setScheduledTime] = useState("");
