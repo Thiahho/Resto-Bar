@@ -1,11 +1,22 @@
 import React, { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+import { AdminAlertsProvider, useAdminAlerts } from "../../contexts/AdminAlertsContext";
 
-const AdminLayout: React.FC = () => {
+// Componente interno que tiene acceso al contexto de alertas
+const AdminLayoutContent: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const {
+    isSignalRConnected,
+    pendingAlerts,
+    clearAlerts,
+    soundEnabled,
+    setSoundEnabled,
+    soundUnlocked,
+    testSound,
+  } = useAdminAlerts();
 
   const handleLogout = () => {
     logout();
@@ -122,11 +133,69 @@ const AdminLayout: React.FC = () => {
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 pt-16 md:pt-8 md:p-8">
+        {/* Banner de alertas global - visible en todos los módulos */}
+        <div className={`${
+          isSignalRConnected ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
+        } border-b px-4 py-3 shadow-sm`}>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className={`inline-block w-2 h-2 rounded-full ${
+                  isSignalRConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
+                }`}></span>
+                <span className="font-semibold text-sm">
+                  {isSignalRConnected ? "🟢 Alertas en tiempo real activas" : "🟡 Modo respaldo"}
+                </span>
+              </div>
+              <div className="text-sm">
+                <span className="font-semibold">Alertas pendientes:</span> {pendingAlerts}
+                {!soundUnlocked && (
+                  <span className="ml-2 text-xs text-gray-600">(hacé click en "Probar sonido")</span>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  soundEnabled
+                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                    : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+                }`}
+              >
+                {soundEnabled ? "🔊 Sonido ON" : "🔇 Sonido OFF"}
+              </button>
+              <button
+                onClick={testSound}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                title="Probar sonido y desbloquear audio"
+              >
+                🔔 Probar
+              </button>
+              <button
+                onClick={clearAlerts}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                ✓ Limpiar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 pt-4 md:p-8">
           <Outlet />
         </main>
       </div>
     </div>
+  );
+};
+
+// Componente wrapper que provee el contexto de alertas
+const AdminLayout: React.FC = () => {
+  return (
+    <AdminAlertsProvider>
+      <AdminLayoutContent />
+    </AdminAlertsProvider>
   );
 };
 

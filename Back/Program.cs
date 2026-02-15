@@ -1,4 +1,5 @@
 using Back.Data;
+using Back.Hubs;
 using Back.Middleware;
 using Back.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -31,6 +32,14 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 });
 
 builder.Services.AddControllers();
+
+// Configurar SignalR con opciones para WebSockets
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true; // Habilitar errores detallados para debugging
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c => {
@@ -73,6 +82,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/admin-orders"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -117,16 +141,24 @@ builder.Services.AddRateLimiter(options =>
         opt.QueueLimit = 2;
     });
 
-    // Política por defecto
+    // Política por defecto - EXCLUIR SignalR
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-        RateLimitPartition.GetFixedWindowLimiter(
+    {
+        // Excluir hubs de SignalR del rate limiting
+        if (context.Request.Path.StartsWithSegments("/hubs"))
+        {
+            return RateLimitPartition.GetNoLimiter<string>("signalr");
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.User.Identity?.Name ?? context.Request.Headers.Host.ToString(),
             factory: partition => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
                 PermitLimit = 200,
                 Window = TimeSpan.FromMinutes(1)
-            }));
+            });
+    });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
@@ -173,11 +205,17 @@ app.UseStaticFiles(); // To serve images from wwwroot
 
 app.UseCors("AllowConfiguredOrigins");
 
+// Habilitar WebSockets después de CORS
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(30)
+});
+
 app.UseRateLimiter(); // Rate limiting debe ir antes de Authentication
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.MapHub<AdminOrdersHub>("/hubs/admin-orders");
 app.Run();

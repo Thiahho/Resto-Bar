@@ -6,10 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.SignalR;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Back.Hubs;
 
 namespace Back.Controller
 {
@@ -19,12 +21,14 @@ namespace Back.Controller
         private readonly AppDbContext _context;
         private readonly ILogger<OrdersController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IHubContext<AdminOrdersHub> _hubContext;
 
-        public OrdersController(AppDbContext context, ILogger<OrdersController> logger, IConfiguration configuration)
+        public OrdersController(AppDbContext context, ILogger<OrdersController> logger, IConfiguration configuration, IHubContext<AdminOrdersHub> adminOrdersHub)
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
+            _hubContext= adminOrdersHub;
         }
 
         // POST /api/orders - Crear nueva orden (público)
@@ -156,6 +160,25 @@ namespace Back.Controller
                 }
 
                 var responseDto = MapOrderToDto(createdOrder!, BuildTrackingUrl(createdOrder!));
+
+                var orderCreatedEvent = new AdminOrderCreatedEventDto
+                {
+                    Id = responseDto.Id,
+                    BranchId = responseDto.BranchId,
+                    CustomerName = responseDto.CustomerName,
+                    Phone = responseDto.Phone,
+                    TakeMode = responseDto.TakeMode,
+                    TotalCents = responseDto.TotalCents,
+                    Status = responseDto.Status,
+                    CreatedAt = responseDto.CreatedAt
+                };
+
+                await _hubContext.Clients.Group(AdminOrdersHub.AdminsGroup).SendAsync("OrderCreated", orderCreatedEvent);
+                if (orderCreatedEvent.BranchId.HasValue)
+                {
+                    await _hubContext.Clients.Group(AdminOrdersHub.BranchGroup(orderCreatedEvent.BranchId.Value)).SendAsync("OrderCreatedByBranch", orderCreatedEvent);
+                }
+
                 return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, responseDto);
             }
             catch (Exception ex)

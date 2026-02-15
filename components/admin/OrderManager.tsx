@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useOrders } from "../../hooks/useOrders";
 import { useToast } from "../../contexts/ToastContext";
+import { useAdminAlerts } from "../../contexts/AdminAlertsContext";
 import {
   OrderResponse,
   ParsedModifiers,
@@ -28,32 +29,48 @@ const OrderManager: React.FC = () => {
     fetchOrders,
   } = useOrders();
   const { showToast, showConfirm } = useToast();
+  const { onNewOrderAlert } = useAdminAlerts();
   const [selectedOrder, setSelectedOrder] = useState<OrderResponse | null>(
     null,
   );
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(
     new Set(),
   );
-  // const [bulkStatus, setBulkStatus] = useState<string>("");
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+  const fetchOrdersRef = useRef(fetchOrders);
 
-  const filteredOrders = orders.filter((order) => {
+  // Mantener la referencia actualizada
+  useEffect(() => {
+    fetchOrdersRef.current = fetchOrders;
+  }, [fetchOrders]);
+
+  // Suscribirse a alertas de nuevas órdenes y refrescar la lista (solo una vez al montar)
+  useEffect(() => {
+    onNewOrderAlert((orderEvent) => {
+      // console.log('📦 Refrescando lista de órdenes por nueva alerta:', orderEvent.id);
+      // Usar la referencia actual para evitar dependencias obsoletas
+      fetchOrdersRef.current({ silent: true });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Solo ejecutar una vez al montar
+
+  const filteredOrders = orders.filter((orders) => {
     // Filtrar por estado
     const matchesStatus =
-      filterStatus === "ALL" || order.status === filterStatus;
+      filterStatus === "ALL" || orders.status === filterStatus;
 
     // Filtrar por búsqueda (teléfono, ID, nombre o código)
     const matchesSearch =
       searchQuery === "" ||
-      order.phone.includes(searchQuery) ||
-      order.id.toString().includes(searchQuery) ||
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (order.publicCode && order.publicCode.toLowerCase().includes(searchQuery.toLowerCase()));
+      orders.phone.includes(searchQuery) ||
+      orders.id.toString().includes(searchQuery) ||
+      orders.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (orders.publicCode && orders.publicCode.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return matchesStatus && matchesSearch;
   });

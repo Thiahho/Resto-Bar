@@ -23,9 +23,11 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({
     message: string;
     onConfirm: () => void;
   } | null>(null);
+  const toastCounterRef = React.useRef(0);
 
   const showToast = (message: string, type: Toast["type"]) => {
-    const id = Date.now().toString();
+    // Generar ID único combinando timestamp + contador
+    const id = `${Date.now()}-${toastCounterRef.current++}`;
     const newToast: Toast = { id, message, type };
     setToasts((prev) => [...prev, newToast]);
 
