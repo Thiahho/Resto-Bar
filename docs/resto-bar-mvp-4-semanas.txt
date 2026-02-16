@@ -1,0 +1,199 @@
+# MVP Resto-Bar (4 semanas)
+
+Este plan convierte el sistema actual de **delivery** en un sistema **híbrido** (delivery + salón), priorizando salida rápida a producción con riesgo controlado.
+
+## Objetivo del MVP
+
+Habilitar pedidos en salón con:
+- Asignación de mesa.
+- Pedido desde QR por mesa.
+- Carga de pedido por mozo.
+- Envío de comandas a cocina/barra.
+- Cierre de cuenta de mesa.
+
+Manteniendo compatibilidad con el flujo actual de delivery.
+
+---
+
+## Alcance (sí entra en MVP)
+
+1. **Mesas y estados básicos**
+   - Estado: `Libre`, `Ocupada`, `CuentaSolicitada`, `Cerrada`.
+   - Apertura/cierre de mesa con timestamp.
+
+2. **Pedido por QR**
+   - QR único por mesa (URL con token firmado).
+   - Pedido queda atado a mesa y sesión activa.
+
+3. **Pedido por mozo**
+   - El mozo puede abrir mesa y agregar/modificar ítems.
+   - Misma orden puede recibir ítems desde QR y desde mozo.
+
+4. **Comanda por estación**
+   - Productos enrutan a `Cocina` o `Barra`.
+   - Vista simple de pendientes por estación.
+
+5. **Cuenta y cobro simple**
+   - Total por mesa.
+   - Un pago final (sin división compleja en MVP).
+
+6. **Roles mínimos**
+   - `Admin`, `Mozo`, `Caja`, `Cocina/Barra`.
+
+7. **Métricas mínimas**
+   - Tiempo apertura→cierre por mesa.
+   - Ticket promedio de salón.
+
+---
+
+## Fuera de alcance (fase 2)
+
+- División de cuenta por persona/ítem.
+- Reservas y lista de espera.
+- Promociones avanzadas por franja horaria.
+- Mapa gráfico avanzado del salón (drag & drop).
+- KDS avanzado con priorización inteligente.
+
+---
+
+## Diseño funcional sugerido
+
+### Nuevas entidades (alto nivel)
+
+- `Table` (Mesa): número, sector, capacidad, estado, mozoAsignadoId.
+- `TableSession` (SesiónMesa): tableId, token, openedAt, closedAt, status.
+- `Order` (extensión): agregar `orderChannel` (`Delivery`, `TableQR`, `WaiterPOS`) y `tableSessionId` opcional.
+- `KitchenTicket`: orderId, station, status, createdAt, readyAt.
+
+### Reglas de negocio clave
+
+1. Solo se permite agregar ítems si la `TableSession` está activa.
+2. Cerrar mesa requiere que la orden esté pagada.
+3. Cada ítem nuevo genera ticket en su estación (`Cocina` o `Barra`).
+4. Delivery no depende de entidades de mesa (aislamiento de dominios).
+
+---
+
+## Plan por semanas
+
+## Semana 1 — Modelo de datos + base backend
+
+**Objetivo:** tener entidades de salón y endpoints base.
+
+### Backend
+- Crear modelos: `Table`, `TableSession`, `KitchenTicket`.
+- Extender `Order` con `orderChannel` y `tableSessionId`.
+- Migraciones de base de datos.
+- Endpoints:
+  - `GET /api/tables`
+  - `POST /api/tables/{id}/open-session`
+  - `POST /api/tables/{id}/close-session`
+  - `POST /api/table-sessions/{id}/orders` (crear pedido)
+
+### Criterios de aceptación
+- Se puede abrir y cerrar sesión de mesa desde API.
+- Una orden puede quedar asociada a sesión de mesa.
+- No se rompe flujo de delivery existente.
+
+---
+
+## Semana 2 — QR de mesa + flujo cliente salón
+
+**Objetivo:** que el cliente en mesa escanee y pida.
+
+### Frontend público
+- Página de entrada por QR con validación de token.
+- Catálogo y carrito reutilizando componentes actuales.
+- Checkout de salón (sin dirección/envío).
+
+### Backend
+- Endpoint para validar token de mesa.
+- Endpoint para crear/actualizar pedido de sesión.
+
+### Criterios de aceptación
+- Escaneo QR válido abre sesión y permite pedir.
+- Pedido queda visible en admin con mesa asociada.
+- Si token expira, se bloquea alta de ítems.
+
+---
+
+## Semana 3 — Flujo mozo + cocina/barra
+
+**Objetivo:** operación interna funcional.
+
+### Frontend admin
+- Pantalla “Mesas” con estados básicos.
+- Mozo puede abrir mesa, cargar ítems y enviar comanda.
+- Vista de tickets por estación (`Cocina` / `Barra`).
+
+### Backend
+- Generación de `KitchenTicket` por ítem nuevo.
+- Cambio de estado de ticket: `Pending`, `InProgress`, `Ready`.
+
+### Criterios de aceptación
+- Mozo y cliente pueden sumar ítems al mismo pedido de mesa.
+- Cocina/barra ven pendientes separados por estación.
+- Ítems listos pueden marcarse y quedar auditados.
+
+---
+
+## Semana 4 — Cobro + endurecimiento + salida
+
+**Objetivo:** cerrar operación y desplegar MVP usable.
+
+### Frontend admin/caja
+- Botón “Solicitar cuenta” y “Cerrar mesa”.
+- Cobro simple de total de mesa.
+
+### Backend
+- Validación de cierre (no cerrar sin pago).
+- Auditoría básica de eventos de mesa/pedido.
+
+### QA y release
+- Pruebas end-to-end de 3 escenarios:
+  1. Mesa solo QR.
+  2. Mesa solo mozo.
+  3. Mesa mixta QR + mozo.
+- Checklist de regresión de delivery.
+
+### Criterios de aceptación
+- Mesa no puede cerrarse sin pago.
+- Se completa punta a punta sin intervención técnica.
+- Delivery sigue operativo.
+
+---
+
+## Riesgos y mitigaciones
+
+1. **Conflictos de edición (QR + mozo)**
+   - Mitigar con versionado simple de orden o lock temporal por actualización.
+
+2. **Errores de asignación de mesa**
+   - Token QR firmado + expiración + validación server-side.
+
+3. **Complejidad de cuenta dividida**
+   - Postergar a fase 2 para no demorar salida.
+
+4. **Impacto en flujo actual de delivery**
+   - Feature flag `ENABLE_DINE_IN` y pruebas de regresión por canal.
+
+---
+
+## Métricas para evaluar éxito del MVP
+
+- % de mesas operadas digitalmente.
+- Tiempo promedio de servicio por mesa.
+- Ticket promedio salón vs delivery.
+- Tiempo de preparación por estación.
+- Tasa de errores de asignación de mesa.
+
+---
+
+## Próximo paso recomendado (inmediato)
+
+Antes de codificar:
+1. Validar este alcance con operación (encargado, mozos, cocina, caja).
+2. Definir 2-3 reglas de negocio innegociables por rol.
+3. Partir Semana 1 en tickets técnicos con estimación.
+
+Si quieren, el siguiente entregable puede ser un **backlog técnico ya desglosado en historias + tareas** listo para ejecutar en sprint.
