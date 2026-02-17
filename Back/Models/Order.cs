@@ -9,6 +9,9 @@ namespace Back.Models
     public int? BranchId { get; set; }
     [ForeignKey(nameof(BranchId))] public Branch? Branch { get; set; }
 
+    public int? TableSessionId { get; set; }
+    [ForeignKey(nameof(TableSessionId))] public TableSession? TableSession { get; set; }
+
     [Required, MaxLength(120)] public string CustomerName { get; set; } = null!;
     [Required, MaxLength(40)] public string Phone { get; set; } = null!;
     [Required, MaxLength(20)] public string Channel { get; set; } = "WEB";
@@ -31,5 +34,6 @@ namespace Back.Models
 
     public List<OrderItem> Items { get; set; } = new();
     public List<OrderStatusHistory> StatusHistory { get; set; } = new();
+    public List<KitchenTicket> KitchenTickets { get; set; } = new();
   }
 }

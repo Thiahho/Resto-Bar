@@ -28,6 +28,9 @@ namespace Back.Data
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<OrderStatusEntity> OrderStatuses => Set<OrderStatusEntity>();
     public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
+    public DbSet<Table> Tables => Set<Table>();
+    public DbSet<TableSession> TableSessions => Set<TableSession>();
+    public DbSet<KitchenTicket> KitchenTickets => Set<KitchenTicket>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -58,6 +61,54 @@ namespace Back.Data
             modelBuilder.Entity<OrderStatusEntity>().HasIndex(x => new {x.Id, x.Activo});
             modelBuilder.Entity<Order>().HasIndex(x => x.PublicCode).IsUnique();
             modelBuilder.Entity<OrderStatusHistory>().HasIndex(x => x.OrderId);
+
+            // Dine-in entities configuration
+            // Table
+            modelBuilder.Entity<Table>()
+                .Property(t => t.Status)
+                .HasConversion<string>();
+            modelBuilder.Entity<Table>().HasIndex(t => new { t.BranchId, t.SortOrder });
+            modelBuilder.Entity<Table>().HasIndex(t => t.Status);
+            modelBuilder.Entity<Table>()
+                .HasMany(t => t.Sessions)
+                .WithOne(s => s.Table)
+                .HasForeignKey(s => s.TableId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // TableSession
+            modelBuilder.Entity<TableSession>()
+                .Property(s => s.Status)
+                .HasConversion<string>();
+            modelBuilder.Entity<TableSession>().HasIndex(s => new { s.TableId, s.ClosedAt });
+            modelBuilder.Entity<TableSession>().HasIndex(s => s.Status);
+            // Unique constraint: only one active session per table
+            modelBuilder.Entity<TableSession>()
+                .HasIndex(s => s.TableId)
+                .IsUnique()
+                .HasFilter("closed_at IS NULL");
+            modelBuilder.Entity<TableSession>()
+                .HasMany(s => s.Orders)
+                .WithOne(o => o.TableSession)
+                .HasForeignKey(o => o.TableSessionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // KitchenTicket
+            modelBuilder.Entity<KitchenTicket>()
+                .Property(k => k.Station)
+                .HasConversion<string>();
+            modelBuilder.Entity<KitchenTicket>()
+                .Property(k => k.Status)
+                .HasConversion<string>();
+            modelBuilder.Entity<KitchenTicket>().HasIndex(k => new { k.OrderId, k.Station });
+            modelBuilder.Entity<KitchenTicket>().HasIndex(k => new { k.Status, k.Station });
+            modelBuilder.Entity<KitchenTicket>().HasIndex(k => k.TicketNumber);
+
+            // Order - KitchenTickets relationship
+            modelBuilder.Entity<Order>()
+                .HasMany(o => o.KitchenTickets)
+                .WithOne(k => k.Order)
+                .HasForeignKey(k => k.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
         }

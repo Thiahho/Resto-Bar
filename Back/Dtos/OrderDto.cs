@@ -6,6 +6,7 @@ namespace Back.Dtos
     {
         public int Id { get; set; }
         public int? BranchId { get; set; }
+        public int? TableSessionId { get; set; }
         public string CustomerName { get; set; } = null!;
         public string Phone { get; set; } = null!;
         public string Channel { get; set; } = "WEB";
