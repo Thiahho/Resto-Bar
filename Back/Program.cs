@@ -188,21 +188,18 @@ var app = builder.Build();
 // Middleware global de manejo de excepciones (debe ir primero)
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-// Verificar que la base de datos y tablas existan
+// Aplicar migraciones pendientes al iniciar (necesario en Render y otros entornos cloud)
 using (var scope = app.Services.CreateScope())
 {
     try
     {
-        var services = scope.ServiceProvider;
-        var context = services.GetRequiredService<AppDbContext>();
-
-        // Solo verificar que las tablas existan (no crear ni insertar datos)
-        DbInitializer.Initialize(context);
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        context.Database.Migrate();
     }
     catch (Exception ex)
     {
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Error al conectar con la base de datos. Asegúrate de que la base de datos existe y las tablas están creadas.");
+        logger.LogError(ex, "Error aplicando migraciones de base de datos.");
         throw;
     }
 }
