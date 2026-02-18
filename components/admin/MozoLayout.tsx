@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { AdminAlertsProvider, useAdminAlerts } from "../../contexts/AdminAlertsContext";
 
@@ -19,25 +19,43 @@ const MozoLayoutContent: React.FC = () => {
     navigate("/login");
   };
 
+  const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
+    `px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-secondary text-white"
+        : "text-gray-600 hover:bg-gray-200"
+    }`;
+
   return (
     <div className="flex flex-col h-screen bg-gray-100 font-sans text-gray-800">
       {/* Header */}
       <header className={`${
         isSignalRConnected ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"
       } border-b px-4 py-3 shadow-sm`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Left: title + nav */}
+          <div className="flex items-center gap-4">
             <span className="text-secondary font-bold text-lg">Panel Mozo</span>
-            <div className="flex items-center gap-2">
+            <nav className="flex items-center gap-1">
+              <NavLink to="/mozo" end className={navLinkClasses}>
+                Mesas
+              </NavLink>
+              <NavLink to="/mozo/cocina" className={navLinkClasses}>
+                Cocina
+              </NavLink>
+            </nav>
+          </div>
+
+          {/* Right: connection + sound + logout */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <span className={`inline-block w-2 h-2 rounded-full ${
                 isSignalRConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
               }`}></span>
-              <span className="text-sm font-medium">
+              <span className="text-xs text-gray-500">
                 {isSignalRConnected ? "Conectado" : "Sin conexión"}
               </span>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${

@@ -85,6 +85,7 @@ function App() {
                   }
                 >
                   <Route index element={<TableManager />} />
+                  <Route path="cocina" element={<KitchenProvider><KitchenViewPage /></KitchenProvider>} />
                 </Route>
               </Routes>
             </HashRouter>
