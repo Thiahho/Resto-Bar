@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { useAdminHub, AdminOrderCreatedEvent } from '../hooks/useAdminHub';
 import { useToast } from './ToastContext';
+import { KitchenTicket } from '../types';
 
 interface AdminAlertsContextType {
   isSignalRConnected: boolean;
@@ -243,6 +244,13 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
     }
   }, [showToast, playAlertSound]);
 
+  // Callback cuando un ticket de cocina está listo para servir
+  const handleKitchenTicketReady = useCallback((ticket: KitchenTicket) => {
+    const mesa = ticket.tableName ?? ticket.ticketNumber;
+    showToast(`Pedido listo - ${mesa} (${ticket.station})`, "info");
+    playAlertSound().catch(err => console.error('Error playing sound:', err));
+  }, [showToast, playAlertSound]);
+
   // Función para que los componentes se suscriban a nuevas órdenes
   const onNewOrderAlert = useCallback((callback: (order: AdminOrderCreatedEvent) => void) => {
     onNewOrderCallbackRef.current = callback;
@@ -255,6 +263,7 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
     onOrderCreated: handleNewOrder,
     // No escuchar OrderCreatedByBranch aquí para evitar alertas duplicadas
     onOrderCreatedByBranch: undefined,
+    onKitchenTicketReady: handleKitchenTicketReady,
     onConnected: () => {
       // console.log("🟢 SignalR conectado - Alertas en tiempo real activas");
       setIsSignalRConnected(true);

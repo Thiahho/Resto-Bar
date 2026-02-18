@@ -168,6 +168,13 @@ namespace Back.Controller
                 await _hubContext.Clients.Group($"Kitchen_{ticket.Station}")
                     .SendAsync("KitchenTicketUpdated", ticketDto);
 
+                // Notificar a mozos/admins cuando el ticket está listo para servir
+                if (newStatus == KitchenTicketStatus.READY)
+                {
+                    await _hubContext.Clients.Group(AdminOrdersHub.AdminsGroup)
+                        .SendAsync("KitchenTicketReady", ticketDto);
+                }
+
                 return Ok(ticketDto);
             }
             catch (Exception ex)

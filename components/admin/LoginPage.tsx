@@ -16,7 +16,12 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
     const success = await login(username, password);
     if (success) {
-      navigate("/admin");
+      const role = sessionStorage.getItem("userRole");
+      if (role === "Mozo") {
+        navigate("/mozo");
+      } else {
+        navigate("/admin");
+      }
     } else {
       setError("Invalid credentials. Please try again.");
     }

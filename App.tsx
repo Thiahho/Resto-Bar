@@ -11,6 +11,7 @@ import OrderTrackingPage from "./components/public/OrderTrackingPage";
 import TableOrderPage from "./components/public/TableOrderPage";
 import LoginPage from "./components/admin/LoginPage";
 import AdminLayout from "./components/admin/AdminLayout";
+import MozoLayout from "./components/admin/MozoLayout";
 import Dashboard from "./components/admin/Dashboard";
 import ProductManager from "./components/admin/ProductManager";
 import CategoryManager from "./components/admin/CategoryManager";
@@ -24,11 +25,14 @@ import GrowthManager from "./components/admin/GrowthManager";
 import KitchenViewPage from "./components/admin/KitchenViewPage";
 import TableManager from "./components/admin/TableManager";
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
+const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: string }> = ({
   children,
+  requiredRole,
 }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  const { isAuthenticated, userRole } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (requiredRole && userRole !== requiredRole) return <Navigate to="/login" replace />;
+  return <>{children}</>;
 };
 
 function App() {
@@ -68,6 +72,18 @@ function App() {
                     <Route path="settings" element={<SiteSettings />} />
                     <Route path="tables" element={<TableManager />} />
                     <Route path="kitchen" element={<KitchenViewPage />} />
+                  </Route>
+
+                  {/* Mozo Routes */}
+                  <Route
+                    path="/mozo"
+                    element={
+                      <ProtectedRoute requiredRole="Mozo">
+                        <MozoLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<TableManager />} />
                   </Route>
                 </Routes>
               </HashRouter>

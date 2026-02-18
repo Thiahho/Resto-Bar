@@ -108,10 +108,10 @@ namespace Back.Controller
                 return BadRequest(new { message = "User already exists" });
             }
 
-            // Validar que el rol sea válido (solo Admin o User)
-            if (registerRequest.Rol != "Admin" && registerRequest.Rol != "User")
+            // Validar que el rol sea válido (Admin, User o Mozo)
+            if (registerRequest.Rol != "Admin" && registerRequest.Rol != "User" && registerRequest.Rol != "Mozo")
             {
-                return BadRequest(new { message = "Invalid role. Allowed roles: Admin, User" });
+                return BadRequest(new { message = "Invalid role. Allowed roles: Admin, User, Mozo" });
             }
 
             // Hashear la contraseña con BCrypt

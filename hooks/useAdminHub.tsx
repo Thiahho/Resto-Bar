@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { API_BASE_URL } from '../services/api/apiClient';
+import { KitchenTicket } from '../types';
 
 export interface AdminOrderCreatedEvent {
   id: number;
@@ -16,6 +17,7 @@ export interface AdminOrderCreatedEvent {
 interface UseAdminHubProps {
   onOrderCreated?: (order: AdminOrderCreatedEvent) => void;
   onOrderCreatedByBranch?: (order: AdminOrderCreatedEvent) => void;
+  onKitchenTicketReady?: (ticket: KitchenTicket) => void;
   onConnected?: () => void;
   onDisconnected?: () => void;
   onReconnecting?: () => void;
@@ -25,6 +27,7 @@ interface UseAdminHubProps {
 export const useAdminHub = ({
   onOrderCreated,
   onOrderCreatedByBranch,
+  onKitchenTicketReady,
   onConnected,
   onDisconnected,
   onReconnecting,
@@ -36,6 +39,7 @@ export const useAdminHub = ({
   // Usar refs para los callbacks para evitar recrear la conexión
   const onOrderCreatedRef = useRef(onOrderCreated);
   const onOrderCreatedByBranchRef = useRef(onOrderCreatedByBranch);
+  const onKitchenTicketReadyRef = useRef(onKitchenTicketReady);
   const onConnectedRef = useRef(onConnected);
   const onDisconnectedRef = useRef(onDisconnected);
   const onReconnectingRef = useRef(onReconnecting);
@@ -45,6 +49,7 @@ export const useAdminHub = ({
   useEffect(() => {
     onOrderCreatedRef.current = onOrderCreated;
     onOrderCreatedByBranchRef.current = onOrderCreatedByBranch;
+    onKitchenTicketReadyRef.current = onKitchenTicketReady;
     onConnectedRef.current = onConnected;
     onDisconnectedRef.current = onDisconnected;
     onReconnectingRef.current = onReconnecting;
@@ -85,6 +90,9 @@ export const useAdminHub = ({
     });
     connection.on('OrderCreatedByBranch', (order: AdminOrderCreatedEvent) => {
       onOrderCreatedByBranchRef.current?.(order);
+    });
+    connection.on('KitchenTicketReady', (ticket: KitchenTicket) => {
+      onKitchenTicketReadyRef.current?.(ticket);
     });
 
     // Eventos de conexión

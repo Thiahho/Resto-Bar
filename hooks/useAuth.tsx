@@ -9,6 +9,7 @@ import apiClient from "../services/api/apiClient";
 interface AuthContextType {
   isAuthenticated: boolean;
   token: string | null;
+  userRole: string | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -24,11 +25,19 @@ const getInitialToken = (): string | null => {
   return null;
 };
 
+const getInitialRole = (): string | null => {
+  if (typeof window !== "undefined") {
+    return sessionStorage.getItem("userRole");
+  }
+  return null;
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   // Usar lazy initialization para evitar re-render innecesario
   const [token, setToken] = useState<string | null>(getInitialToken);
+  const [userRole, setUserRole] = useState<string | null>(getInitialRole);
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
@@ -40,7 +49,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (response.data.token) {
         const newToken = response.data.token;
         sessionStorage.setItem("authToken", newToken);
+        sessionStorage.setItem("userRole", response.data.Rol ?? "");
         setToken(newToken);
+        setUserRole(response.data.Rol ?? null);
         return true;
       }
       return false;
@@ -52,12 +63,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = () => {
     sessionStorage.removeItem("authToken");
+    sessionStorage.removeItem("userRole");
     setToken(null);
+    setUserRole(null);
   };
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: !!token, token, login, logout, isLoading: false }}
+      value={{ isAuthenticated: !!token, token, userRole, login, logout, isLoading: false }}
     >
       {children}
     </AuthContext.Provider>

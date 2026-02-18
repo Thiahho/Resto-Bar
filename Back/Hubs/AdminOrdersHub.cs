@@ -5,7 +5,7 @@ using System.Security.Claims;
 
 namespace Back.Hubs
 {
-    [Authorize(Roles="Admin")]
+    [Authorize(Roles="Admin,Mozo")]
     public class AdminOrdersHub : Hub
     {
         private readonly ILogger<AdminOrdersHub> _logger;
