@@ -138,6 +138,43 @@ namespace Back.Controller
             return Ok(new { message = "User registered successfully", userId = newUser.Id });
         }
 
+        [HttpGet("users")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<List<UserDto>>> GetUsers()
+        {
+            var users = await _context.Users
+                .OrderBy(u => u.Rol)
+                .ThenBy(u => u.Usuario)
+                .Select(u => new UserDto { Id = u.Id, Usuario = u.Usuario, Rol = u.Rol })
+                .ToListAsync();
+            return Ok(users);
+        }
+
+        [HttpDelete("users/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var currentUserId = User.FindFirstValue("userId");
+            if (currentUserId != null && int.Parse(currentUserId) == id)
+            {
+                return BadRequest(new { message = "No podés eliminar tu propio usuario" });
+            }
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "Usuario no encontrado" });
+            }
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Usuario eliminado. Id: {Id}, Usuario: {Usuario}, Por: {Admin}",
+                user.Id, user.Usuario, User.Identity?.Name ?? "Unknown");
+
+            return Ok(new { message = "Usuario eliminado correctamente" });
+        }
+
         private string GenerateJwtToken(User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));

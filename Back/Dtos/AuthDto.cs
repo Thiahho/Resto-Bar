@@ -32,4 +32,11 @@ namespace Back.Dtos
         public string Usuario { get; set; }
         public string Rol { get; set; }
     }
+
+    public class UserDto
+    {
+        public int Id { get; set; }
+        public string Usuario { get; set; }
+        public string Rol { get; set; }
+    }
 }

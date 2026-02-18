@@ -24,6 +24,7 @@ import ReportsManager from "./components/admin/ReportsManager";
 import GrowthManager from "./components/admin/GrowthManager";
 import KitchenViewPage from "./components/admin/KitchenViewPage";
 import TableManager from "./components/admin/TableManager";
+import UsersManager from "./components/admin/UsersManager";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: string }> = ({
   children,
@@ -72,6 +73,7 @@ function App() {
                     <Route path="settings" element={<SiteSettings />} />
                     <Route path="tables" element={<TableManager />} />
                     <Route path="kitchen" element={<KitchenViewPage />} />
+                    <Route path="users" element={<UsersManager />} />
                   </Route>
 
                   {/* Mozo Routes */}

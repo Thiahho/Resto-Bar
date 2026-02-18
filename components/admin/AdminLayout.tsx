@@ -123,6 +123,9 @@ const AdminLayoutContent: React.FC = () => {
             <NavLink to="/admin/settings" className={navLinkClasses} onClick={closeMobileMenu}>
               ⚙️ Configuración
             </NavLink>
+            <NavLink to="/admin/users" className={navLinkClasses} onClick={closeMobileMenu}>
+              👥 Usuarios
+            </NavLink>
             <NavLink to="/" className={navLinkClasses} onClick={closeMobileMenu}>
               🏪 Volver a la tienda
             </NavLink>
