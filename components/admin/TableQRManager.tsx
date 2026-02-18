@@ -11,7 +11,7 @@ const TableQRManager: React.FC<TableQRManagerProps> = ({ tableId, tableName, onC
   const { showToast } = useToast();
 
   // Static URL — printed once, works forever
-  const tableUrl = `${window.location.origin}/mesa/${tableId}`;
+  const tableUrl = `${window.location.origin}/#/mesa/${tableId}`;
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(tableUrl)}`;
 
   const handlePrint = () => {
