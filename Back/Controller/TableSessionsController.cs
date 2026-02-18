@@ -2,6 +2,7 @@ using Back.Data;
 using Back.Dtos;
 using Back.Models;
 using Back.Hubs;
+using Back.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -18,17 +19,20 @@ namespace Back.Controller
         private readonly ILogger<TableSessionsController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHubContext<AdminOrdersHub> _hubContext;
+        private readonly PushNotificationService _pushService;
 
         public TableSessionsController(
             AppDbContext context,
             ILogger<TableSessionsController> logger,
             IConfiguration configuration,
-            IHubContext<AdminOrdersHub> hubContext)
+            IHubContext<AdminOrdersHub> hubContext,
+            PushNotificationService pushService)
         {
             _context = context;
             _logger = logger;
             _configuration = configuration;
             _hubContext = hubContext;
+            _pushService = pushService;
         }
 
         // GET /api/admin/table-sessions - List sessions with daily summary
@@ -553,6 +557,13 @@ namespace Back.Controller
 
                 await _hubContext.Clients.Group($"Kitchen_{ticket.Station}")
                     .SendAsync("NewKitchenTicket", ticketDto);
+
+                var itemCount = JsonSerializer.Deserialize<List<object>>(ticket.ItemsSnapshot)?.Count ?? 0;
+                _ = _pushService.SendToKitchenAsync(
+                    ticket.Station.ToString(),
+                    "Nueva comanda",
+                    $"Mesa {order.CustomerName}: {itemCount} item(s)",
+                    "/admin/kitchen");
             }
 
             return tickets;

@@ -3,9 +3,11 @@ import { useKitchen } from '../../contexts/KitchenContext';
 import { KitchenTicketStatus } from '../../types';
 import TicketCard from './TicketCard';
 import StationSelector from './StationSelector';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 
 const KitchenViewPage: React.FC = () => {
   const { tickets, isConnected, currentStation, setCurrentStation, refreshTickets } = useKitchen();
+  const { status: pushStatus, subscribe, unsubscribe } = usePushNotifications(currentStation);
 
   // Group tickets by status
   const ticketsByStatus = useMemo(() => {
@@ -38,7 +40,7 @@ const KitchenViewPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold text-neon-orange">Vista de Cocina</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <div
                 className={`w-3 h-3 rounded-full ${
@@ -49,6 +51,42 @@ const KitchenViewPage: React.FC = () => {
                 {isConnected ? 'Conectado' : 'Desconectado'}
               </span>
             </div>
+
+            {/* Push notification controls */}
+            {pushStatus === 'not-standalone' && (
+              <span
+                title="En iOS las notificaciones solo funcionan si instalás la app desde Safari (Compartir → Agregar a pantalla de inicio)"
+                className="text-xs text-yellow-400 bg-yellow-900/30 border border-yellow-700/40 px-3 py-1.5 rounded-lg cursor-help"
+              >
+                📲 Instalar app para notificaciones
+              </span>
+            )}
+            {pushStatus === 'denied' && (
+              <span className="text-xs text-red-400 bg-red-900/30 border border-red-700/40 px-3 py-1.5 rounded-lg cursor-default">
+                🔕 Notificaciones bloqueadas
+              </span>
+            )}
+            {pushStatus === 'prompt' && (
+              <button
+                onClick={subscribe}
+                className="flex items-center gap-1.5 bg-charcoal-700 hover:bg-neon-orange/20 border border-neon-orange/30 hover:border-neon-orange text-neon-orange px-3 py-1.5 rounded-lg text-sm transition-all"
+              >
+                🔔 Activar notificaciones
+              </button>
+            )}
+            {pushStatus === 'subscribed' && (
+              <button
+                onClick={unsubscribe}
+                title="Notificaciones push activas — clic para desactivar"
+                className="flex items-center gap-1.5 bg-green-900/30 border border-green-700/40 text-green-400 px-3 py-1.5 rounded-lg text-sm hover:bg-red-900/30 hover:border-red-700 hover:text-red-400 transition-all"
+              >
+                🔔 Notificaciones activas
+              </button>
+            )}
+            {pushStatus === 'loading' && (
+              <span className="text-xs text-gray-500 px-2">...</span>
+            )}
+
             <button
               onClick={refreshTickets}
               className="bg-charcoal-700 text-white px-4 py-2 rounded-lg hover:bg-charcoal-600 transition-colors"

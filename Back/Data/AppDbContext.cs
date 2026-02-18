@@ -31,6 +31,7 @@ namespace Back.Data
     public DbSet<Table> Tables => Set<Table>();
     public DbSet<TableSession> TableSessions => Set<TableSession>();
     public DbSet<KitchenTicket> KitchenTickets => Set<KitchenTicket>();
+    public DbSet<UserPushSubscription> UserPushSubscriptions => Set<UserPushSubscription>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
