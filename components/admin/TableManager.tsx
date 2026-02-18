@@ -1195,6 +1195,110 @@ const WaiterOrderModal: React.FC<WaiterOrderModalProps> = ({ table, session, tok
   );
 };
 
+// ─── Modal: Ver Pedidos de Mesa ───────────────────────────────────────────────
+
+interface OrdersViewModalProps {
+  table: Table;
+  session: TableSession;
+  onClose: () => void;
+}
+
+const OrdersViewModal: React.FC<OrdersViewModalProps> = ({ table, session, onClose }) => {
+  const orders = session.orders ?? [];
+  const fmt = (v: number) => `$${Math.round(v).toLocaleString('es-AR')}`;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-t-2xl p-5 text-white flex items-center justify-between shrink-0">
+          <div>
+            <p className="text-orange-100 text-xs font-medium uppercase tracking-wider">Pedidos activos</p>
+            <h2 className="text-xl font-bold mt-0.5">{table.name}</h2>
+            <p className="text-orange-100 text-sm mt-1">
+              {orders.length} pedido{orders.length !== 1 ? 's' : ''} · {session.guestCount} comensal{session.guestCount !== 1 ? 'es' : ''}
+            </p>
+          </div>
+          <button onClick={onClose} className="bg-white/20 hover:bg-white/30 rounded-xl p-2 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 p-4 space-y-4">
+          {orders.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-4xl mb-3">🍽️</div>
+              <p className="text-gray-500">Todavía no hay pedidos para esta mesa</p>
+            </div>
+          ) : (
+            orders.map((order, idx) => (
+              <div key={order.id} className="border border-gray-200 rounded-xl overflow-hidden">
+                {/* Order header */}
+                <div className="bg-gray-50 px-4 py-2.5 flex items-center justify-between border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Pedido #{idx + 1}</span>
+                    {order.note && (
+                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                        {order.note}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-bold text-green-700">{fmt(order.totalCents)}</span>
+                </div>
+                {/* Items */}
+                <div className="divide-y divide-gray-100">
+                  {(order.items ?? []).map((item, iIdx) => (
+                    <div key={iIdx} className="px-4 py-2.5 flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-2 flex-1 min-w-0">
+                        <span className="shrink-0 w-6 h-6 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
+                          {item.qty}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-800 leading-tight">{item.nameSnapshot}</p>
+                          {item.modifiersSnapshot && (() => {
+                            try {
+                              const mods = JSON.parse(item.modifiersSnapshot);
+                              const parts: string[] = [];
+                              if (mods.size) parts.push(mods.size === 'doble' ? 'Doble' : 'Simple');
+                              if (mods.complementos?.length) parts.push(...mods.complementos.map((m: any) => m.name));
+                              if (mods.aderezos?.length) parts.push(...mods.aderezos.map((m: any) => m.name));
+                              if (mods.extras?.length) parts.push(...mods.extras.map((m: any) => m.name));
+                              if (mods.bebidas) parts.push(mods.bebidas.name);
+                              if (mods.notes) parts.push(`"${mods.notes}"`);
+                              return parts.length > 0 ? (
+                                <p className="text-xs text-gray-400 mt-0.5">{parts.join(' · ')}</p>
+                              ) : null;
+                            } catch { return null; }
+                          })()}
+                        </div>
+                      </div>
+                      <span className="text-sm text-gray-600 shrink-0">{fmt(item.lineTotalCents)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Footer: total */}
+        {orders.length > 0 && (
+          <div className="shrink-0 border-t border-gray-200 px-5 py-4 flex items-center justify-between bg-gray-50 rounded-b-2xl">
+            <span className="text-sm font-semibold text-gray-600">Total acumulado</span>
+            <span className="text-xl font-bold text-green-700">{fmt(session.totalCents)}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── Tarjeta de Mesa ──────────────────────────────────────────────────────────
 
 interface TableCardProps {
@@ -1205,13 +1309,14 @@ interface TableCardProps {
   onPayment: (table: Table, session: TableSession) => void;
   onQR: (table: Table) => void;
   onAddOrder: (table: Table, session: TableSession) => void;
+  onViewOrders: (table: Table, session: TableSession) => void;
   onEdit: (table: Table) => void;
   onReserve: (table: Table) => void;
   onRefresh: () => void;
 }
 
 const TableCard: React.FC<TableCardProps> = ({
-  table, session, token, onOpen, onPayment, onQR, onAddOrder, onEdit, onReserve, onRefresh,
+  table, session, token, onOpen, onPayment, onQR, onAddOrder, onViewOrders, onEdit, onReserve, onRefresh,
 }) => {
   const { showToast } = useToast();
   const [elapsed, setElapsed] = useState('');
@@ -1337,6 +1442,17 @@ const TableCard: React.FC<TableCardProps> = ({
                 <span className="text-xs text-gray-500">Total acumulado</span>
                 <span className="font-bold text-green-700 text-sm">${Math.round(session.totalCents).toLocaleString('es-AR')}</span>
               </div>
+            )}
+            {(session.orders?.length ?? 0) > 0 && (
+              <button
+                onClick={() => onViewOrders(table, session)}
+                className="w-full mt-1 py-1.5 rounded-lg bg-white border border-orange-200 text-orange-700 text-xs font-semibold hover:bg-orange-50 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Ver {session.orders!.length} pedido{session.orders!.length !== 1 ? 's' : ''}
+              </button>
             )}
           </div>
         )}
@@ -1686,6 +1802,7 @@ const TableManager: React.FC = () => {
     | { type: 'payment'; table: Table; session: TableSession }
     | { type: 'reserve'; table: Table }
     | { type: 'order'; table: Table; session: TableSession }
+    | { type: 'viewOrders'; table: Table; session: TableSession }
     | { type: 'qr'; table: Table };
 
   const [modal, setModal] = useState<Modal | null>(null);
@@ -1820,6 +1937,7 @@ const TableManager: React.FC = () => {
               onPayment={(t, s) => setModal({ type: 'payment', table: t, session: s })}
               onQR={t => setModal({ type: 'qr', table: t })}
               onAddOrder={(t, s) => setModal({ type: 'order', table: t, session: s })}
+              onViewOrders={(t, s) => setModal({ type: 'viewOrders', table: t, session: s })}
               onEdit={t => setModal({ type: 'edit', table: t })}
               onReserve={t => setModal({ type: 'reserve', table: t })}
               onRefresh={fetchTables}
@@ -1890,6 +2008,14 @@ const TableManager: React.FC = () => {
           token={token}
           onClose={closeModal}
           onSuccess={() => { closeModal(); fetchTables(); }}
+        />
+      )}
+
+      {modal?.type === 'viewOrders' && (
+        <OrdersViewModal
+          table={modal.table}
+          session={modal.session}
+          onClose={closeModal}
         />
       )}
     </div>
