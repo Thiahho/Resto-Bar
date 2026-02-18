@@ -141,7 +141,19 @@ namespace Back.Controller
                         SubtotalCents = o.SubtotalCents,
                         TotalCents = o.TotalCents,
                         Status = o.Status.ToString(),
-                        CreatedAt = o.CreatedAt
+                        CreatedAt = o.CreatedAt,
+                        Items = o.Items.Select(i => new OrderItemDto
+                        {
+                            Id = i.Id,
+                            OrderId = i.OrderId,
+                            ProductId = i.ProductId,
+                            NameSnapshot = i.NameSnapshot,
+                            Qty = i.Qty,
+                            UnitPriceCents = i.UnitPriceCents,
+                            ModifiersTotalCents = i.ModifiersTotalCents,
+                            LineTotalCents = i.LineTotalCents,
+                            ModifiersSnapshot = i.ModifiersSnapshot
+                        }).ToList()
                     }).ToList()
                 };
 
