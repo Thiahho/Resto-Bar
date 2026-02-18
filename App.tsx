@@ -44,12 +44,7 @@ function App() {
                   <Route path="/" element={<CatalogPage />} />
                   <Route path="/info" element={<InfoPage />} />
                   <Route path="/pedido/:code" element={<OrderTrackingPage />} />
-                  <Route path="/mesa/:tableId" element={
-                    {/* CartProvider propio: aísla el carrito de mesa del carrito de delivery */}
-                    <CartProvider>
-                      <TableOrderPage />
-                    </CartProvider>
-                  } />
+                  <Route path="/mesa/:tableId" element={<CartProvider><TableOrderPage /></CartProvider>} />
 
                   {/* Admin Routes */}
                   <Route path="/login" element={<LoginPage />} />
