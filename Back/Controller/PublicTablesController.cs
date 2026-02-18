@@ -176,7 +176,7 @@ namespace Back.Controller
                     "Public order {OrderId} created for table {TableId} session {SessionId} with {TicketCount} kitchen tickets",
                     order.Id, tableId, session.Id, kitchenTickets.Count);
 
-                // Notify via SignalR
+                // Notify via SignalR — TableOrderCreated para cocina/mesas
                 await _hubContext.Clients.All.SendAsync("TableOrderCreated", new
                 {
                     orderId = order.Id,
@@ -184,6 +184,20 @@ namespace Back.Controller
                     tableId = table.Id,
                     tableName = table.Name
                 });
+
+                // OrderCreated al grupo de admins para que aparezca la alerta de pedido nuevo
+                var adminEvent = new AdminOrderCreatedEventDto
+                {
+                    Id = order.Id,
+                    BranchId = order.BranchId,
+                    CustomerName = order.CustomerName,
+                    Phone = order.Phone,
+                    TakeMode = order.TakeMode,
+                    TotalCents = order.TotalCents,
+                    Status = order.Status.ToString(),
+                    CreatedAt = order.CreatedAt
+                };
+                await _hubContext.Clients.Group(AdminOrdersHub.AdminsGroup).SendAsync("OrderCreated", adminEvent);
 
                 var orderDto = new OrderDto
                 {
