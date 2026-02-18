@@ -318,6 +318,20 @@ namespace Back.Controller
                     tableName = session.Table.Name
                 });
 
+                // OrderCreated al grupo de admins para la alerta de pedido nuevo
+                var adminEvent = new AdminOrderCreatedEventDto
+                {
+                    Id = order.Id,
+                    BranchId = order.BranchId,
+                    CustomerName = order.CustomerName,
+                    Phone = order.Phone,
+                    TakeMode = order.TakeMode,
+                    TotalCents = order.TotalCents,
+                    Status = order.Status.ToString(),
+                    CreatedAt = order.CreatedAt
+                };
+                await _hubContext.Clients.Group(AdminOrdersHub.AdminsGroup).SendAsync("OrderCreated", adminEvent);
+
                 var orderDto = new OrderDto
                 {
                     Id = order.Id,
