@@ -42,54 +42,52 @@ function App() {
       <CatalogProvider>
         <CartProvider>
           <AuthProvider>
-            <KitchenProvider>
-              <HashRouter>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<CatalogPage />} />
-                  <Route path="/info" element={<InfoPage />} />
-                  <Route path="/pedido/:code" element={<OrderTrackingPage />} />
-                  <Route path="/mesa/:tableId" element={<CartProvider><TableOrderPage /></CartProvider>} />
+            <HashRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<CatalogPage />} />
+                <Route path="/info" element={<InfoPage />} />
+                <Route path="/pedido/:code" element={<OrderTrackingPage />} />
+                <Route path="/mesa/:tableId" element={<CartProvider><TableOrderPage /></CartProvider>} />
 
-                  {/* Admin Routes */}
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute>
-                        <AdminLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<Dashboard />} />
-                    <Route path="products" element={<ProductManager />} />
-                    <Route path="categories" element={<CategoryManager />} />
-                    <Route path="modifiers" element={<ModifierManager />} />
-                    <Route path="coupons" element={<CouponManager />} />
-                    <Route path="combos" element={<ComboManager />} />
-                    <Route path="growth" element={<GrowthManager />} />
-                    <Route path="orders" element={<OrderManager />} />
-                    <Route path="reports" element={<ReportsManager />} />
-                    <Route path="settings" element={<SiteSettings />} />
-                    <Route path="tables" element={<TableManager />} />
-                    <Route path="kitchen" element={<KitchenViewPage />} />
-                    <Route path="users" element={<UsersManager />} />
-                  </Route>
+                {/* Admin Routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Dashboard />} />
+                  <Route path="products" element={<ProductManager />} />
+                  <Route path="categories" element={<CategoryManager />} />
+                  <Route path="modifiers" element={<ModifierManager />} />
+                  <Route path="coupons" element={<CouponManager />} />
+                  <Route path="combos" element={<ComboManager />} />
+                  <Route path="growth" element={<GrowthManager />} />
+                  <Route path="orders" element={<OrderManager />} />
+                  <Route path="reports" element={<ReportsManager />} />
+                  <Route path="settings" element={<SiteSettings />} />
+                  <Route path="tables" element={<TableManager />} />
+                  <Route path="kitchen" element={<KitchenProvider><KitchenViewPage /></KitchenProvider>} />
+                  <Route path="users" element={<UsersManager />} />
+                </Route>
 
-                  {/* Mozo Routes */}
-                  <Route
-                    path="/mozo"
-                    element={
-                      <ProtectedRoute requiredRole="Mozo">
-                        <MozoLayout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route index element={<TableManager />} />
-                  </Route>
-                </Routes>
-              </HashRouter>
-            </KitchenProvider>
+                {/* Mozo Routes */}
+                <Route
+                  path="/mozo"
+                  element={
+                    <ProtectedRoute requiredRole="Mozo">
+                      <MozoLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<TableManager />} />
+                </Route>
+              </Routes>
+            </HashRouter>
           </AuthProvider>
         </CartProvider>
       </CatalogProvider>
