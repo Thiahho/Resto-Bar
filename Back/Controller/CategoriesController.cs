@@ -30,18 +30,37 @@ namespace Back.Controller
         {
             return await _context.Categories
                 .OrderBy(c => c.SortOrder)
-                .Select(c => new CategoryDto { Id = c.Id, Name = c.Name, SortOrder = c.SortOrder })
+                .Select(c => new CategoryDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    SortOrder = c.SortOrder,
+                    DefaultStation = c.DefaultStation.HasValue ? c.DefaultStation.ToString() : null
+                })
                 .ToListAsync();
         }
 
         [HttpPost]
         public async Task<ActionResult<CategoryDto>> PostCategory(CreateUpdateCategoryDto categoryDto)
         {
-            var category = new Category { Name = categoryDto.Name };
+            KitchenStation? station = null;
+            if (!string.IsNullOrWhiteSpace(categoryDto.DefaultStation) &&
+                Enum.TryParse<KitchenStation>(categoryDto.DefaultStation, out var parsedStation))
+            {
+                station = parsedStation;
+            }
+
+            var category = new Category { Name = categoryDto.Name, DefaultStation = station };
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, new CategoryDto { Id = category.Id, Name = category.Name, SortOrder = category.SortOrder });
+            return CreatedAtAction(nameof(GetCategories), new { id = category.Id }, new CategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                SortOrder = category.SortOrder,
+                DefaultStation = category.DefaultStation?.ToString()
+            });
         }
 
         [HttpPut("{id}")]
@@ -54,6 +73,17 @@ namespace Back.Controller
             }
 
             category.Name = categoryDto.Name;
+
+            if (!string.IsNullOrWhiteSpace(categoryDto.DefaultStation) &&
+                Enum.TryParse<KitchenStation>(categoryDto.DefaultStation, out var parsedStation))
+            {
+                category.DefaultStation = parsedStation;
+            }
+            else
+            {
+                category.DefaultStation = null;
+            }
+
             await _context.SaveChangesAsync();
 
             return NoContent();

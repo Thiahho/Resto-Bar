@@ -18,6 +18,7 @@ namespace Back.Hubs
         }
 
         public static string BranchGroup (int branchId) => $"admins:branch:{branchId}";
+        public static string KitchenGroup (string station) => $"Kitchen_{station}";
 
         public override async Task OnConnectedAsync()
         {
@@ -53,6 +54,20 @@ namespace Back.Hubs
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, BranchGroup(branchId));
             _logger.LogInformation("Admin unsubscribed from branch updates. ConnectionId: {ConnectionId}, BranchId: {BranchId}", Context.ConnectionId, branchId);
+        }
+
+        public async Task JoinKitchenGroup(string station)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, KitchenGroup(station));
+            _logger.LogInformation("Admin joined kitchen group. ConnectionId: {ConnectionId}, Station: {Station}",
+                Context.ConnectionId, station);
+        }
+
+        public async Task LeaveKitchenGroup(string station)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, KitchenGroup(station));
+            _logger.LogInformation("Admin left kitchen group. ConnectionId: {ConnectionId}, Station: {Station}",
+                Context.ConnectionId, station);
         }
     }
 }

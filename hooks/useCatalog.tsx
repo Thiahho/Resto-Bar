@@ -140,6 +140,7 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
     try {
       await apiClient.put(`/api/admin/categories/${category.id}`, {
         name: category.name,
+        defaultStation: category.defaultStation ?? null,
       });
       await fetchData();
       return true;

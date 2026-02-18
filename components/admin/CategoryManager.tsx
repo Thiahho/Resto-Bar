@@ -29,6 +29,11 @@ const CategoryManager: React.FC = () => {
     setCurrentCategory({ ...currentCategory, name: e.target.value });
   };
 
+  const handleStationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!currentCategory) return;
+    setCurrentCategory({ ...currentCategory, defaultStation: e.target.value || null });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentCategory || !currentCategory.name) return;
@@ -36,7 +41,7 @@ const CategoryManager: React.FC = () => {
 
     const success = currentCategory.id
       ? await updateCategory(currentCategory as Category)
-      : await addCategory({ name: currentCategory.name, sortOrder: categories.length });
+      : await addCategory({ name: currentCategory.name!, sortOrder: categories.length, defaultStation: currentCategory.defaultStation ?? undefined });
 
     if (success) {
       showToast(
@@ -156,6 +161,9 @@ const CategoryManager: React.FC = () => {
                 Nombre de Categoria
               </th>
               <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Estación Cocina
+              </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -192,6 +200,15 @@ const CategoryManager: React.FC = () => {
                 </td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   {category.name}
+                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  {category.defaultStation ? (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">
+                      {category.defaultStation}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400 text-xs">Sin asignar</span>
+                  )}
                 </td>
                 <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                   <button
@@ -284,6 +301,26 @@ const CategoryManager: React.FC = () => {
                   className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   required
                 />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Estación de Cocina
+                </label>
+                <select
+                  name="defaultStation"
+                  value={currentCategory.defaultStation ?? ''}
+                  onChange={handleStationChange}
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                >
+                  <option value="">Sin asignar (Cocina por defecto)</option>
+                  <option value="KITCHEN">🍳 Cocina</option>
+                  <option value="BAR">🍺 Bar</option>
+                  <option value="GRILL">🥩 Parrilla</option>
+                  <option value="DESSERTS">🍰 Postres</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Los pedidos de esta categoría se enviarán a esta estación.
+                </p>
               </div>
               <div className="flex items-center justify-end">
                 <button

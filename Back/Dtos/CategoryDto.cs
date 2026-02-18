@@ -7,6 +7,7 @@ namespace Back.Dtos
         public int Id { get; set; }
         public string Name { get; set; }
         public int SortOrder { get; set; }
+        public string? DefaultStation { get; set; }
     }
 
     public class CreateUpdateCategoryDto
@@ -14,6 +15,7 @@ namespace Back.Dtos
         [Required]
         [StringLength(100)]
         public string Name { get; set; }
+        public string? DefaultStation { get; set; }
     }
 
     public class ReorderCategoryDto

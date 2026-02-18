@@ -4,9 +4,11 @@ import { CatalogProvider } from "./hooks/useCatalog";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ToastProvider } from "./contexts/ToastContext";
 import { CartProvider } from "./contexts/CartContext";
+import { KitchenProvider } from "./contexts/KitchenContext";
 import CatalogPage from "./components/public/CatalogPage";
 import InfoPage from "./components/public/InfoPage";
 import OrderTrackingPage from "./components/public/OrderTrackingPage";
+import TableOrderPage from "./components/public/TableOrderPage";
 import LoginPage from "./components/admin/LoginPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import Dashboard from "./components/admin/Dashboard";
@@ -19,6 +21,8 @@ import CouponManager from "./components/admin/CouponManager";
 import ComboManager from "./components/admin/ComboManager";
 import ReportsManager from "./components/admin/ReportsManager";
 import GrowthManager from "./components/admin/GrowthManager";
+import KitchenViewPage from "./components/admin/KitchenViewPage";
+import TableManager from "./components/admin/TableManager";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -33,36 +37,41 @@ function App() {
       <CatalogProvider>
         <CartProvider>
           <AuthProvider>
-            <HashRouter>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<CatalogPage />} />
-                <Route path="/info" element={<InfoPage />} />
-                <Route path="/pedido/:code" element={<OrderTrackingPage />} />
+            <KitchenProvider>
+              <HashRouter>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<CatalogPage />} />
+                  <Route path="/info" element={<InfoPage />} />
+                  <Route path="/pedido/:code" element={<OrderTrackingPage />} />
+                  <Route path="/mesa/:tableId" element={<TableOrderPage />} />
 
-                {/* Admin Routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<Dashboard />} />
-                  <Route path="products" element={<ProductManager />} />
-                  <Route path="categories" element={<CategoryManager />} />
-                  <Route path="modifiers" element={<ModifierManager />} />
-                  <Route path="coupons" element={<CouponManager />} />
-                  <Route path="combos" element={<ComboManager />} />
-                  <Route path="growth" element={<GrowthManager />} />
-                  <Route path="orders" element={<OrderManager />} />
-                  <Route path="reports" element={<ReportsManager />} />
-                  <Route path="settings" element={<SiteSettings />} />
-                </Route>
-              </Routes>
-            </HashRouter>
+                  {/* Admin Routes */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute>
+                        <AdminLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Dashboard />} />
+                    <Route path="products" element={<ProductManager />} />
+                    <Route path="categories" element={<CategoryManager />} />
+                    <Route path="modifiers" element={<ModifierManager />} />
+                    <Route path="coupons" element={<CouponManager />} />
+                    <Route path="combos" element={<ComboManager />} />
+                    <Route path="growth" element={<GrowthManager />} />
+                    <Route path="orders" element={<OrderManager />} />
+                    <Route path="reports" element={<ReportsManager />} />
+                    <Route path="settings" element={<SiteSettings />} />
+                    <Route path="tables" element={<TableManager />} />
+                    <Route path="kitchen" element={<KitchenViewPage />} />
+                  </Route>
+                </Routes>
+              </HashRouter>
+            </KitchenProvider>
           </AuthProvider>
         </CartProvider>
       </CatalogProvider>

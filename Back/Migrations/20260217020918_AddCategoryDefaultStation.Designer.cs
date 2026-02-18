@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Back.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260217002316_AddDineInTables")]
-    partial class AddDineInTables
+    [Migration("20260217020918_AddCategoryDefaultStation")]
+    partial class AddCategoryDefaultStation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

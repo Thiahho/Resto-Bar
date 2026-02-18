@@ -88,18 +88,18 @@ export const useAdminHub = ({
     });
 
     // Eventos de conexión
-    connection.onclose((error) => {
+    connection.onclose((_error) => {
       // console.log('SignalR connection closed', error);
       isConnectingRef.current = false;
       onDisconnectedRef.current?.();
     });
 
-    connection.onreconnecting((error) => {
+    connection.onreconnecting((_error) => {
       // console.log('SignalR reconnecting...', error);
       onReconnectingRef.current?.();
     });
 
-    connection.onreconnected((connectionId) => {
+    connection.onreconnected((_connectionId) => {
       // console.log('SignalR reconnected', connectionId);
       onReconnectedRef.current?.();
     });

@@ -8,6 +8,7 @@ import apiClient from "../services/api/apiClient";
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  token: string | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -56,7 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated: !!token, login, logout, isLoading: false }}
+      value={{ isAuthenticated: !!token, token, login, logout, isLoading: false }}
     >
       {children}
     </AuthContext.Provider>

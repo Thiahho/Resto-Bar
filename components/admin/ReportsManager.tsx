@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useOrders } from "../../hooks/useOrders";
 import { useToast } from "../../contexts/ToastContext";
 import { OrderResponse, ParsedModifiers } from "../../types";
+import CajaPage from "./CajaPage";
 
 interface DailySales {
   date: string;
@@ -21,7 +22,7 @@ const ReportsManager: React.FC = () => {
   const { showToast } = useToast();
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [activeTab, setActiveTab] = useState<"resumen" | "ordenes" | "productos">("resumen");
+  const [activeTab, setActiveTab] = useState<"resumen" | "ordenes" | "productos" | "caja">("resumen");
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null);
   const [ordersPage, setOrdersPage] = useState(1);
   const [orderSearch, setOrderSearch] = useState("");
@@ -511,6 +512,7 @@ const ReportsManager: React.FC = () => {
               { id: "resumen", label: "📈 Resumen", icon: "📈" },
               { id: "ordenes", label: "📋 Órdenes", icon: "📋" },
               { id: "productos", label: "🏆 Productos", icon: "🏆" },
+              { id: "caja", label: "💰 Caja / Salón", icon: "💰" },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -688,6 +690,9 @@ const ReportsManager: React.FC = () => {
               )}
             </div>
           )}
+
+          {/* TAB: Caja / Salón */}
+          {activeTab === "caja" && <CajaPage />}
 
           {/* TAB: Productos */}
           {activeTab === "productos" && (

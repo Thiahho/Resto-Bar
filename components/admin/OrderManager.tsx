@@ -51,8 +51,8 @@ const OrderManager: React.FC = () => {
 
   // Suscribirse a alertas de nuevas órdenes y refrescar la lista (solo una vez al montar)
   useEffect(() => {
-    onNewOrderAlert((orderEvent) => {
-      // console.log('📦 Refrescando lista de órdenes por nueva alerta:', orderEvent.id);
+    onNewOrderAlert((_orderEvent) => {
+      // console.log('📦 Refrescando lista de órdenes por nueva alerta:', _orderEvent.id);
       // Usar la referencia actual para evitar dependencias obsoletas
       fetchOrdersRef.current({ silent: true });
     });
@@ -858,7 +858,7 @@ const OrderManager: React.FC = () => {
             <span className="sm:hidden">📊 CSV</span>
           </button>
           <button
-            onClick={fetchOrders}
+            onClick={() => fetchOrders()}
             className="flex-1 sm:flex-initial bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base"
           >
             🔄<span className="hidden sm:inline ml-1">Actualizar</span>
@@ -1431,16 +1431,19 @@ const OrderManager: React.FC = () => {
                 <div className="space-y-2">
                   {selectedOrder.items.map((item, index) => {
                     let modifiersData: ParsedModifiers | null = null;
+                    let flatModifiers: { id: number; name: string; priceCentsDelta: number }[] | null = null;
                     try {
                       if (item.modifiersSnapshot) {
-                        modifiersData = JSON.parse(item.modifiersSnapshot);
-                        // console.log(`Item ${index} modifiersData:`, modifiersData);
+                        const parsed = JSON.parse(item.modifiersSnapshot);
+                        if (Array.isArray(parsed)) {
+                          flatModifiers = parsed;
+                        } else {
+                          modifiersData = parsed;
+                        }
                       }
                     } catch (e) {
-                      // console.error("Error parsing modifiers:", e);
+                      // parse error — skip modifiers
                     }
-
-                    // console.log(`Item ${index}:`, { modifiersSnapshot: item.modifiersSnapshot, modifiersTotalCents: item.modifiersTotalCents, modifiersData });
 
                     return (
                       <div key={index} className="bg-gray-50 rounded-lg p-3">
@@ -1645,8 +1648,22 @@ const OrderManager: React.FC = () => {
                                 </div>
                               )}
 
+                            {/* Modificadores en formato plano (pedidos del mozo) */}
+                            {flatModifiers && flatModifiers.length > 0 && (
+                              <div className="mt-2 space-y-0.5 text-sm text-gray-600">
+                                {flatModifiers.map((m, idx) => (
+                                  <p key={idx} className="ml-4">
+                                    • {m.name}
+                                    {m.priceCentsDelta > 0 && (
+                                      <span className="text-gray-400 ml-1">(+{formatCurrency(m.priceCentsDelta)})</span>
+                                    )}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+
                             {/* Fallback si hay modificadores pero no hay snapshot detallado */}
-                            {item.modifiersTotalCents > 0 && !modifiersData && (
+                            {item.modifiersTotalCents > 0 && !modifiersData && !flatModifiers && (
                               <div className="mt-2 text-sm text-gray-600">
                                 <p className="ml-4 font-medium">
                                   • Modificadores (sin detalle):
@@ -1659,7 +1676,7 @@ const OrderManager: React.FC = () => {
                             )}
 
                             {/* Debug: Mostrar snapshot raw si no se pudo parsear pero existe */}
-                            {item.modifiersSnapshot && !modifiersData && (
+                            {item.modifiersSnapshot && !modifiersData && !flatModifiers && (
                               <div className="mt-2 text-sm bg-yellow-50 p-2 rounded">
                                 <p className="text-xs text-yellow-800 font-medium">
                                   ⚠️ Error parseando modificadores

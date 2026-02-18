@@ -22,6 +22,7 @@ export interface Category {
   id: string;
   name: string;
   sortOrder: number;
+  defaultStation?: string | null;
 }
 
 export interface Products {
@@ -215,4 +216,71 @@ export interface ParsedModifiers {
   extras?: ParsedModifierItem[];
   bebidas?: ParsedModifierItem;
   notes?: string;
+}
+
+// Dine-in types
+export type KitchenStation = "KITCHEN" | "BAR" | "GRILL" | "DESSERTS";
+export type KitchenTicketStatus = "PENDING" | "IN_PROGRESS" | "READY" | "DELIVERED";
+export type TableStatus = "AVAILABLE" | "OCCUPIED" | "RESERVED" | "OUT_OF_SERVICE" | "BILL_REQUESTED";
+export type TableSessionStatus = "ACTIVE" | "CLOSED";
+
+export interface KitchenTicket {
+  id: number;
+  orderId: number;
+  station: KitchenStation;
+  status: KitchenTicketStatus;
+  ticketNumber: string;
+  createdAt: string;
+  startedAt?: string;
+  readyAt?: string;
+  deliveredAt?: string;
+  assignedToUserId?: number;
+  assignedToUserName?: string;
+  itemsSnapshot?: string;
+  notes?: string;
+  tableName?: string;
+  customerName?: string;
+}
+
+export interface Table {
+  id: number;
+  branchId: number;
+  name: string;
+  capacity: number;
+  status: TableStatus;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TableSession {
+  id: number;
+  tableId: number;
+  tableName?: string;
+  customerName?: string;
+  guestCount: number;
+  openedAt: string;
+  closedAt?: string;
+  status: TableSessionStatus;
+  openedByUserId?: number;
+  openedByUserName?: string;
+  closedByUserId?: number;
+  closedByUserName?: string;
+  subtotalCents: number;
+  totalCents: number;
+  tipCents?: number;
+  paymentMethod?: string;
+  paidAt?: string;
+  notes?: string;
+  orders?: OrderResponse[];
+}
+
+export interface TableQR {
+  tableId: number;
+  tableName: string;
+  sessionId?: number;
+  token: string;
+  qrCodeUrl: string;
+  expiresAt: string;
 }

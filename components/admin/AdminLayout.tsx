@@ -93,6 +93,12 @@ const AdminLayoutContent: React.FC = () => {
             <NavLink to="/admin/orders" className={navLinkClasses} onClick={closeMobileMenu}>
               🛒 Órdenes
             </NavLink>
+            <NavLink to="/admin/tables" className={navLinkClasses} onClick={closeMobileMenu}>
+              🪑 Mesas
+            </NavLink>
+            <NavLink to="/admin/kitchen" className={navLinkClasses} onClick={closeMobileMenu}>
+              🍳 Cocina
+            </NavLink>
             <NavLink to="/admin/products" className={navLinkClasses} onClick={closeMobileMenu}>
               🍔 Productos
             </NavLink>

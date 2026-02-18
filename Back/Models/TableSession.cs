@@ -30,6 +30,10 @@ namespace Back.Models
 
         [MaxLength(500)] public string? Notes { get; set; }
 
+        [MaxLength(20)] public string? PaymentMethod { get; set; }  // "CASH" | "CARD" | "TRANSFER"
+        public int TipCents { get; set; } = 0;
+        public DateTimeOffset? PaidAt { get; set; }
+
         // Navigation
         public List<Order> Orders { get; set; } = new();
     }

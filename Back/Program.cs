@@ -80,7 +80,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidAudiences = new[]
+            {
+                builder.Configuration["Jwt:Audience"]!,
+                "TableOrder"  // Audience para tokens QR de mesa
+            },
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
 
@@ -99,6 +103,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    // Política que acepta tokens de admin o de mesa (scope: table_order)
+    options.AddPolicy("AdminOrTableOrder", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireAssertion(ctx =>
+        {
+            var audience = ctx.User.FindFirst("aud")?.Value;
+            var scope = ctx.User.FindFirst("scope")?.Value;
+            return audience == builder.Configuration["Jwt:Audience"] || scope == "table_order";
+        });
+    });
+});
 
 // Configurar CORS desde appsettings
 var allowedOrigins = builder.Configuration["Cors:AllowedOrigins"]?

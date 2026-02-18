@@ -84,25 +84,23 @@ public async Task<ActionResult<GrowthSettingsDto>> UpdateSettings([FromBody] Gro
     var happyHourProductIds = dto.Automations.HappyHourProductIds ?? new List<int>();
     var dynamicPricingProductIds = dto.DynamicPricing.ProductIds ?? new List<int>();
 
-    // Combinar IDs: si ambos están vacíos = todos, sino usar la unión de los seleccionados
+    // Combinar IDs: unión de los productos seleccionados en ambas features
+    // Si no hay ninguno seleccionado en una feature activa, esa feature no aporta productos
     var allSelectedIds = new HashSet<int>();
-    var applyToAll = true;
 
     if (dto.Automations.HappyHourEnabled && happyHourProductIds.Count > 0)
     {
         foreach (var id in happyHourProductIds) allSelectedIds.Add(id);
-        applyToAll = false;
     }
     if (dto.DynamicPricing.Enabled && dynamicPricingProductIds.Count > 0)
     {
         foreach (var id in dynamicPricingProductIds) allSelectedIds.Add(id);
-        applyToAll = false;
     }
 
     var products = await _context.Products.ToListAsync();
     foreach (var product in products)
     {
-        var shouldApplyDiscount = discountPercent > 0 && (applyToAll || allSelectedIds.Contains(product.Id));
+        var shouldApplyDiscount = discountPercent > 0 && allSelectedIds.Contains(product.Id);
 
         if (shouldApplyDiscount)
         {

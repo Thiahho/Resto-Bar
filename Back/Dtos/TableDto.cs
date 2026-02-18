@@ -30,6 +30,42 @@ namespace Back.Dtos
         public bool IsActive { get; set; } = true;
     }
 
+    public class CreateTableDto
+    {
+        [Required, Range(1, int.MaxValue)]
+        public int BranchId { get; set; } = 1;
+
+        [Required, MaxLength(50)]
+        public string Name { get; set; } = null!;
+
+        [Required, Range(1, 100)]
+        public int Capacity { get; set; }
+
+        public int SortOrder { get; set; } = 0;
+        public bool IsActive { get; set; } = true;
+    }
+
+    public class UpdateTableDto
+    {
+        [Required, MaxLength(50)]
+        public string Name { get; set; } = null!;
+
+        [Required, Range(1, 100)]
+        public int Capacity { get; set; }
+
+        public int SortOrder { get; set; } = 0;
+        public bool IsActive { get; set; } = true;
+    }
+
+    public class ReserveTableDto
+    {
+        [MaxLength(120)]
+        public string? CustomerName { get; set; }
+
+        [MaxLength(500)]
+        public string? Notes { get; set; }
+    }
+
     public class TableSessionSummaryDto
     {
         public int Id { get; set; }

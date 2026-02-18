@@ -42,6 +42,11 @@ namespace Back.Data
                 .Property(h => h.Status)
                 .HasConversion<string>();
 
+            // Configurar el enum KitchenStation para Category
+            modelBuilder.Entity<Category>()
+                .Property(c => c.DefaultStation)
+                .HasConversion<string>();
+
             modelBuilder.Entity<Category>().HasIndex(x => x.SortOrder);
             modelBuilder.Entity<Product>().HasIndex(x => x.CategoryId);
             modelBuilder.Entity<Product>().HasIndex(x => x.Name).HasMethod("gin");

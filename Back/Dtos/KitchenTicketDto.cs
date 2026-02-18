@@ -15,5 +15,7 @@ namespace Back.Dtos
         public string? AssignedToUserName { get; set; }
         public string? ItemsSnapshot { get; set; }
         public string? Notes { get; set; }
+        public string? TableName { get; set; }
+        public string? CustomerName { get; set; }
     }
 }

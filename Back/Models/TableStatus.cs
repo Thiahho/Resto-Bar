@@ -5,6 +5,7 @@ namespace Back.Models
         AVAILABLE,
         OCCUPIED,
         RESERVED,
-        OUT_OF_SERVICE
+        OUT_OF_SERVICE,
+        BILL_REQUESTED = 4
     }
 }

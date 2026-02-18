@@ -542,7 +542,7 @@ const GrowthManager: React.FC = () => {
             </div>
             <div>
               <label className="text-sm text-gray-600 block mb-2">
-                Productos con descuento (vacío = todos)
+                Productos con descuento (seleccioná al menos uno)
               </label>
               <div className="border border-gray-300 rounded-md p-2 max-h-40 overflow-y-auto">
                 {products.length === 0 ? (

@@ -54,11 +54,11 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
         Name = p.Name,
         Description = p.Description,
         PriceCents = ResolveDiscountedPrice(p.PriceCents, p.DiscountPriceCents, discountPercent, maxDiscountPercent),
-        OriginalPriceCents = discountPercent > 0 ? p.PriceCents : null,
+        OriginalPriceCents = discountPercent > 0 && p.DiscountPriceCents.HasValue ? p.PriceCents : null,
         DoublePriceCents = p.DoublePriceCents.HasValue
             ? ResolveDiscountedPrice(p.DoublePriceCents.Value, p.DiscountDoublePriceCents, discountPercent, maxDiscountPercent)
             : null,
-        OriginalDoublePriceCents = discountPercent > 0 && p.DoublePriceCents.HasValue ? p.DoublePriceCents : null,
+        OriginalDoublePriceCents = discountPercent > 0 && p.DiscountDoublePriceCents.HasValue ? p.DoublePriceCents : null,
         HasImage = p.ImageData != null && p.ImageData.Length > 0,
         CategoryId = p.CategoryId,
         CategoryName = p.CategoryName,
@@ -67,7 +67,13 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
 
     var categories = await _context.Categories
         .OrderBy(c => c.SortOrder)
-        .Select(c => new CategoryDto { Id = c.Id, Name = c.Name, SortOrder = c.SortOrder })
+        .Select(c => new CategoryDto
+        {
+            Id = c.Id,
+            Name = c.Name,
+            SortOrder = c.SortOrder,
+            DefaultStation = c.DefaultStation.HasValue ? c.DefaultStation.ToString() : null
+        })
         .ToListAsync();
 
     var settings = await _context.BusinessSettings
@@ -143,17 +149,12 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
 
 private static int ResolveDiscountedPrice(int priceCents, int? discountPriceCents, int discountPercent, int maxDiscountPercent)
 {
-    if (discountPercent <= 0)
+    if (discountPercent <= 0 || !discountPriceCents.HasValue)
     {
         return priceCents;
     }
 
-    if (discountPercent == maxDiscountPercent && discountPriceCents.HasValue)
-    {
-        return discountPriceCents.Value;
-    }
-
-    return DiscountPricingService.ApplyDiscount(priceCents, discountPercent);
+    return discountPriceCents.Value;
 }
 private static (int discountPercent, string type, string message) ResolveActivePromotion(GrowthSettings? settings)
 {

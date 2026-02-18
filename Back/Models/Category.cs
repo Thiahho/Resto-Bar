@@ -9,6 +9,7 @@ namespace Back.Models
         [Key] public int Id { get; set; }
         [Required, MaxLength(120)] public string Name { get; set; } = null!;
         public int SortOrder { get; set; }
+        public KitchenStation? DefaultStation { get; set; }
         public List<Product> Products { get; set; } = new();
     }
 }
