@@ -618,8 +618,9 @@ namespace Back.Controller
         private bool IsFeatureEnabled(string featureName)
         {
             var value = _configuration[$"Features:{featureName}"];
-            return !string.IsNullOrWhiteSpace(value) &&
-                   (value.Equals("true", StringComparison.OrdinalIgnoreCase) || value == "1");
+            // Si no está configurada, habilitada por defecto; solo se deshabilita explícitamente con "false" o "0"
+            if (string.IsNullOrWhiteSpace(value)) return true;
+            return value.Equals("true", StringComparison.OrdinalIgnoreCase) || value == "1";
         }
 
         private int? GetUserId()
