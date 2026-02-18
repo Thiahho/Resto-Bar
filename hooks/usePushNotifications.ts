@@ -59,8 +59,9 @@ export function usePushNotifications(station: string | null) {
     }
 
     // Check if already subscribed
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
+    // Usar getRegistration() en vez de .ready para no colgarse si el SW no está registrado aún
+    navigator.serviceWorker.getRegistration()
+      .then((reg) => reg ? reg.pushManager.getSubscription() : null)
       .then((sub) => setStatus(sub ? 'subscribed' : 'prompt'))
       .catch(() => setStatus('prompt'));
   }, []);
