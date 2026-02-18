@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTableOrder } from '../../hooks/useTableOrder';
 import { useCart } from '../../contexts/CartContext';
 import { useCatalog } from '../../hooks/useCatalog';
@@ -10,9 +10,18 @@ import DineInProductCard from './DineInProductCard';
 const TableOrderPage: React.FC = () => {
   const { isValid, isLoading, error, tableName, hasActiveSession, tableStatus } = useTableOrder();
   const { categories, products } = useCatalog();
-  const { cart: items, cartTotal: totalPrice } = useCart();
+  const { cart: items, cartTotal: totalPrice, clearCart } = useCart();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Aislamos el carrito de mesa del carrito de delivery:
+  // - Al montar: limpiamos cualquier item de delivery que haya quedado
+  // - Al desmontar: limpiamos los items de mesa para que no aparezcan en el checkout de delivery
+  useEffect(() => {
+    clearCart();
+    return () => { clearCart(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isLoading) {
     return (
