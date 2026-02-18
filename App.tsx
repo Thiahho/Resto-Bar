@@ -32,7 +32,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: strin
 }) => {
   const { isAuthenticated, userRole } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (requiredRole && userRole !== requiredRole) return <Navigate to="/login" replace />;
+  if (requiredRole && userRole !== requiredRole) {
+    // Redirigir a la ruta correcta según el rol real del usuario
+    if (userRole === "Mozo") return <Navigate to="/mozo" replace />;
+    return <Navigate to="/login" replace />;
+  }
   return <>{children}</>;
 };
 
@@ -55,7 +59,7 @@ function App() {
                 <Route
                   path="/admin"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute requiredRole="Admin">
                       <AdminLayout />
                     </ProtectedRoute>
                   }
