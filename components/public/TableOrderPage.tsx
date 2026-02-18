@@ -5,7 +5,7 @@ import { useCatalog } from '../../hooks/useCatalog';
 import TableHeader from './TableHeader';
 import OrderSummaryPanel from './OrderSummaryPanel';
 import ConfirmTableOrderModal from './ConfirmTableOrderModal';
-import ProductCard from './ProductCard';
+import DineInProductCard from './DineInProductCard';
 
 const TableOrderPage: React.FC = () => {
   const { isValid, isLoading, error, tableName, hasActiveSession, tableStatus } = useTableOrder();
@@ -106,13 +106,11 @@ const TableOrderPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Products grid */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+      {/* Products list */}
+      <div className="max-w-xl mx-auto px-4 py-4 space-y-2">
+        {filteredProducts.map((product) => (
+          <DineInProductCard key={product.id} product={product} />
+        ))}
 
         {filteredProducts.length === 0 && (
           <div className="text-center py-12">
