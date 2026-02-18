@@ -168,8 +168,26 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
   }, [soundEnabled]);
 
   // Función para probar el sonido manualmente
+  // Crea y reanuda el AudioContext sincrónicamente dentro del gesto del usuario
+  // (Android Chrome requiere que new AudioContext() y resume() estén en el mismo tick del evento)
   const testSound = useCallback(() => {
-    // console.log('🔔 Botón de prueba presionado');
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioContextClass) {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContextClass();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        // Llamar resume() sincrónicamente — no await aquí, pero se inicia dentro del gesto
+        ctx.resume().then(() => {
+          soundUnlockedRef.current = true;
+          setSoundUnlocked(true);
+        }).catch(() => {});
+      } else if (ctx.state === 'running' && !soundUnlockedRef.current) {
+        soundUnlockedRef.current = true;
+        setSoundUnlocked(true);
+      }
+    }
     playAlertSound();
   }, [playAlertSound]);
 
@@ -221,6 +239,18 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
       });
     };
   }, []);
+
+  // Escuchar mensajes del service worker (ej: push notification recibida mientras la app está abierta)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_KITCHEN_ORDER') {
+        playAlertSound().catch(() => {});
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', handler);
+    return () => navigator.serviceWorker.removeEventListener('message', handler);
+  }, [playAlertSound]);
 
   // Callback cuando llega una nueva orden por SignalR
   const handleNewOrder = useCallback((orderEvent: AdminOrderCreatedEvent) => {

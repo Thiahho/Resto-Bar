@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { AdminAlertsProvider, useAdminAlerts } from "../../contexts/AdminAlertsContext";
+import { usePushNotifications } from "../../hooks/usePushNotifications";
 
 const MozoLayoutContent: React.FC = () => {
   const { logout } = useAuth();
@@ -12,6 +13,8 @@ const MozoLayoutContent: React.FC = () => {
     setSoundEnabled,
     testSound,
   } = useAdminAlerts();
+  // null = suscribir a todas las estaciones
+  const { status: pushStatus, subscribe: subscribePush, unsubscribe: unsubscribePush } = usePushNotifications(null);
 
   const handleLogout = () => {
     logout();
@@ -72,6 +75,37 @@ const MozoLayoutContent: React.FC = () => {
             >
               🔔 Probar
             </button>
+            {pushStatus === 'not-standalone' && (
+              <span
+                title="En iOS instalá la app desde Safari → Compartir → Agregar a pantalla de inicio"
+                className="text-xs text-yellow-600 bg-yellow-100 border border-yellow-300 px-2 py-1.5 rounded-lg cursor-help"
+              >
+                📲 Instalar para notificaciones
+              </span>
+            )}
+            {pushStatus === 'denied' && (
+              <span className="text-xs text-red-600 bg-red-100 border border-red-300 px-2 py-1.5 rounded-lg">
+                🔕 Notif. bloqueadas
+              </span>
+            )}
+            {pushStatus === 'prompt' && (
+              <button
+                onClick={subscribePush}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                title="Recibir alertas aunque la pantalla esté apagada"
+              >
+                🔔 Activar alertas
+              </button>
+            )}
+            {pushStatus === 'subscribed' && (
+              <button
+                onClick={unsubscribePush}
+                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-red-600 transition-colors"
+                title="Alertas en segundo plano activas — clic para desactivar"
+              >
+                🔔 Alertas ON
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-700 text-white hover:bg-gray-800 transition-colors"
