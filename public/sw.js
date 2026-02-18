@@ -12,19 +12,28 @@ self.addEventListener('push', (event) => {
   // y no re-alerte (sin sonido ni vibración) incluso con renotify:true.
   const tag = 'kitchen-' + Date.now();
 
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/images/cartelito.webp',
-      badge: '/images/cartelito.webp',
-      tag,
-      silent: false,
-      data: { url: data.url },
-      // vibrate es ignorado por Chrome 70+ en Android (delegado al SO),
-      // pero se deja para navegadores que aún lo soporten.
-      vibrate: [300, 100, 300],
-    })
-  );
+  const showNotif = self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: '/images/cartelito.webp',
+    badge: '/images/cartelito.webp',
+    tag,
+    silent: false,
+    data: { url: data.url },
+    vibrate: [300, 100, 300],
+  });
+
+  // Notificar a las ventanas abiertas para que reproduzcan el sonido
+  // (el canal de notificaciones de Android puede estar en silencio,
+  //  pero el Web Audio API de la página siempre funciona si está abierta)
+  const notifyClients = clients
+    .matchAll({ type: 'window', includeUncontrolled: true })
+    .then((windowClients) => {
+      windowClients.forEach((client) =>
+        client.postMessage({ type: 'PUSH_KITCHEN_ORDER' })
+      );
+    });
+
+  event.waitUntil(Promise.all([showNotif, notifyClients]));
 });
 
 self.addEventListener('notificationclick', (event) => {

@@ -10,7 +10,6 @@ const MozoLayoutContent: React.FC = () => {
     isSignalRConnected,
     soundEnabled,
     setSoundEnabled,
-    soundUnlocked,
     testSound,
   } = useAdminAlerts();
 
@@ -66,15 +65,13 @@ const MozoLayoutContent: React.FC = () => {
             >
               {soundEnabled ? "Sonido ON" : "Sonido OFF"}
             </button>
-            {!soundUnlocked && (
-              <button
-                onClick={testSound}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                title="Probar sonido y desbloquear audio"
-              >
-                Probar sonido
-              </button>
-            )}
+            <button
+              onClick={testSound}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              title="Probar sonido y desbloquear audio"
+            >
+              🔔 Probar
+            </button>
             <button
               onClick={handleLogout}
               className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-700 text-white hover:bg-gray-800 transition-colors"
