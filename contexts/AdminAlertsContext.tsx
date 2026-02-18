@@ -36,6 +36,7 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const soundUnlockedRef = useRef(false);
   const onNewOrderCallbackRef = useRef<((order: AdminOrderCreatedEvent) => void) | null>(null);
   const processedOrderIdsRef = useRef<Set<number>>(new Set());
 
@@ -84,9 +85,9 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
       }
 
       // Marcar como desbloqueado si el contexto está corriendo
-      if (ctx.state === "running" && !soundUnlocked) {
+      if (ctx.state === "running" && !soundUnlockedRef.current) {
+        soundUnlockedRef.current = true;
         setSoundUnlocked(true);
-        // console.log('✅ Audio desbloqueado automáticamente');
       }
 
       // Función helper para crear un "ding" de campana
@@ -164,7 +165,7 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
     } catch (error) {
       console.error('❌ Error al reproducir sonido:', error);
     }
-  }, [soundEnabled, soundUnlocked]);
+  }, [soundEnabled]);
 
   // Función para probar el sonido manualmente
   const testSound = useCallback(() => {
@@ -172,41 +173,46 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
     playAlertSound();
   }, [playAlertSound]);
 
-  // Desbloquear audio automáticamente al interactuar
+  // Desbloquear audio al interactuar (Android requiere gesto directo + silent buffer)
   useEffect(() => {
     const unlockAudio = async () => {
+      if (soundUnlockedRef.current) return;
+
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) {
-        // console.warn('⚠️ AudioContext no disponible en este navegador');
-        return;
-      }
+      if (!AudioContextClass) return;
 
       try {
         if (!audioCtxRef.current) {
           audioCtxRef.current = new AudioContextClass();
-          // console.log('🎵 AudioContext creado');
         }
 
-        if (audioCtxRef.current.state === 'suspended') {
-          await audioCtxRef.current.resume();
-          // console.log('🎵 AudioContext desbloqueado (estado:', audioCtxRef.current.state, ')');
+        const ctx = audioCtxRef.current;
+
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
         }
 
-        setSoundUnlocked(true);
-        // console.log('✅ Audio completamente desbloqueado');
+        if (ctx.state === 'running') {
+          // Reproducir buffer silencioso — obligatorio en Android para desbloquear realmente
+          const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          src.connect(ctx.destination);
+          src.start(0);
+
+          soundUnlockedRef.current = true;
+          setSoundUnlocked(true);
+        }
       } catch (error) {
         console.error('❌ Error al desbloquear audio:', error);
-        setSoundUnlocked(false);
       }
     };
 
-    // Intentar desbloquear inmediatamente (por si el usuario ya interactuó)
-    unlockAudio();
-
     // Escuchar múltiples eventos de usuario para desbloquear audio
+    // Sin { once: true } para reintentar si el primer intento falla
     const events = ['click', 'touchstart', 'keydown', 'mousedown'];
     events.forEach(event => {
-      document.addEventListener(event, unlockAudio, { once: true });
+      document.addEventListener(event, unlockAudio);
     });
 
     return () => {
