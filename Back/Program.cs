@@ -218,7 +218,11 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// UseHttpsRedirection se omite cuando hay un reverse proxy (Render, etc.) que maneja HTTPS
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseStaticFiles(); // To serve images from wwwroot
 
