@@ -20,4 +20,6 @@ COPY --from=publish /app/publish .
 
 EXPOSE 10000
 
+ENV ASPNETCORE_URLS=http://+:10000
+
 ENTRYPOINT ["dotnet", "Back.dll"]
