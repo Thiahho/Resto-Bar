@@ -49,9 +49,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       if (response.data.token) {
         const newToken = response.data.token;
         sessionStorage.setItem("authToken", newToken);
-        sessionStorage.setItem("userRole", response.data.Rol ?? "");
+        sessionStorage.setItem("userRole", response.data.rol ?? "");
         setToken(newToken);
-        setUserRole(response.data.Rol ?? null);
+        setUserRole(response.data.rol ?? null);
         return true;
       }
       return false;
