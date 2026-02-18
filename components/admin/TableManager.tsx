@@ -1204,22 +1204,67 @@ interface OrdersViewModalProps {
 }
 
 const OrdersViewModal: React.FC<OrdersViewModalProps> = ({ table, session, onClose }) => {
-  const orders = session.orders ?? [];
   const fmt = (v: number) => `$${Math.round(v).toLocaleString('es-AR')}`;
+
+  // Consolidar todos los items de todos los pedidos agrupados por nombre + modificadores
+  const allItems = (session.orders ?? []).flatMap(o => o.items ?? []);
+
+  interface ConsolidatedItem {
+    key: string;
+    name: string;
+    modifierLabel: string;
+    qty: number;
+    unitPriceCents: number;
+    totalCents: number;
+  }
+
+  const consolidated: ConsolidatedItem[] = [];
+  for (const item of allItems) {
+    let modifierLabel = '';
+    if (item.modifiersSnapshot) {
+      try {
+        const mods = JSON.parse(item.modifiersSnapshot);
+        const parts: string[] = [];
+        if (mods.size) parts.push(mods.size === 'doble' ? 'Doble' : 'Simple');
+        if (mods.complementos?.length) parts.push(...mods.complementos.map((m: any) => m.name));
+        if (mods.aderezos?.length) parts.push(...mods.aderezos.map((m: any) => m.name));
+        if (mods.extras?.length) parts.push(...mods.extras.map((m: any) => m.name));
+        if (mods.bebidas) parts.push(mods.bebidas.name);
+        if (mods.notes) parts.push(`"${mods.notes}"`);
+        modifierLabel = parts.join(' · ');
+      } catch { /* ignore */ }
+    }
+    const key = `${item.nameSnapshot}||${modifierLabel}`;
+    const existing = consolidated.find(c => c.key === key);
+    if (existing) {
+      existing.qty += item.qty;
+      existing.totalCents += item.lineTotalCents;
+    } else {
+      consolidated.push({
+        key,
+        name: item.nameSnapshot,
+        modifierLabel,
+        qty: item.qty,
+        unitPriceCents: item.unitPriceCents,
+        totalCents: item.lineTotalCents,
+      });
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-t-2xl p-5 text-white flex items-center justify-between shrink-0">
           <div>
-            <p className="text-orange-100 text-xs font-medium uppercase tracking-wider">Pedidos activos</p>
+            <p className="text-orange-100 text-xs font-medium uppercase tracking-wider">Consumido en mesa</p>
             <h2 className="text-xl font-bold mt-0.5">{table.name}</h2>
             <p className="text-orange-100 text-sm mt-1">
-              {orders.length} pedido{orders.length !== 1 ? 's' : ''} · {session.guestCount} comensal{session.guestCount !== 1 ? 'es' : ''}
+              {session.guestCount} comensal{session.guestCount !== 1 ? 'es' : ''}
+              {session.customerName ? ` · ${session.customerName}` : ''}
             </p>
           </div>
           <button onClick={onClose} className="bg-white/20 hover:bg-white/30 rounded-xl p-2 transition-colors">
@@ -1229,66 +1274,35 @@ const OrdersViewModal: React.FC<OrdersViewModalProps> = ({ table, session, onClo
           </button>
         </div>
 
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 p-4 space-y-4">
-          {orders.length === 0 ? (
+        {/* Lista de productos */}
+        <div className="overflow-y-auto flex-1">
+          {consolidated.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-3">🍽️</div>
-              <p className="text-gray-500">Todavía no hay pedidos para esta mesa</p>
+              <p className="text-gray-500">Todavía no hay productos pedidos</p>
             </div>
           ) : (
-            orders.map((order, idx) => (
-              <div key={order.id} className="border border-gray-200 rounded-xl overflow-hidden">
-                {/* Order header */}
-                <div className="bg-gray-50 px-4 py-2.5 flex items-center justify-between border-b border-gray-200">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Pedido #{idx + 1}</span>
-                    {order.note && (
-                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
-                        {order.note}
-                      </span>
+            <div className="divide-y divide-gray-100">
+              {consolidated.map(item => (
+                <div key={item.key} className="px-5 py-3 flex items-center gap-3">
+                  <span className="shrink-0 w-8 h-8 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-sm font-bold">
+                    {item.qty}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 leading-tight">{item.name}</p>
+                    {item.modifierLabel && (
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{item.modifierLabel}</p>
                     )}
                   </div>
-                  <span className="text-sm font-bold text-green-700">{fmt(order.totalCents)}</span>
+                  <span className="text-sm font-bold text-gray-700 shrink-0">{fmt(item.totalCents)}</span>
                 </div>
-                {/* Items */}
-                <div className="divide-y divide-gray-100">
-                  {(order.items ?? []).map((item, iIdx) => (
-                    <div key={iIdx} className="px-4 py-2.5 flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-2 flex-1 min-w-0">
-                        <span className="shrink-0 w-6 h-6 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">
-                          {item.qty}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-gray-800 leading-tight">{item.nameSnapshot}</p>
-                          {item.modifiersSnapshot && (() => {
-                            try {
-                              const mods = JSON.parse(item.modifiersSnapshot);
-                              const parts: string[] = [];
-                              if (mods.size) parts.push(mods.size === 'doble' ? 'Doble' : 'Simple');
-                              if (mods.complementos?.length) parts.push(...mods.complementos.map((m: any) => m.name));
-                              if (mods.aderezos?.length) parts.push(...mods.aderezos.map((m: any) => m.name));
-                              if (mods.extras?.length) parts.push(...mods.extras.map((m: any) => m.name));
-                              if (mods.bebidas) parts.push(mods.bebidas.name);
-                              if (mods.notes) parts.push(`"${mods.notes}"`);
-                              return parts.length > 0 ? (
-                                <p className="text-xs text-gray-400 mt-0.5">{parts.join(' · ')}</p>
-                              ) : null;
-                            } catch { return null; }
-                          })()}
-                        </div>
-                      </div>
-                      <span className="text-sm text-gray-600 shrink-0">{fmt(item.lineTotalCents)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Footer: total */}
-        {orders.length > 0 && (
+        {/* Footer total */}
+        {consolidated.length > 0 && (
           <div className="shrink-0 border-t border-gray-200 px-5 py-4 flex items-center justify-between bg-gray-50 rounded-b-2xl">
             <span className="text-sm font-semibold text-gray-600">Total acumulado</span>
             <span className="text-xl font-bold text-green-700">{fmt(session.totalCents)}</span>
