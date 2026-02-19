@@ -39,7 +39,7 @@ namespace Back.Dtos
         public string Usuario { get; set; }
         public string Rol { get; set; }
         public string? Phone { get; set; }
-        public string? WhatsAppApiKey { get; set; }
+        public string? TelegramChatId { get; set; }
     }
 
     public class UpdateUserContactDto
@@ -47,7 +47,7 @@ namespace Back.Dtos
         [MaxLength(30)]
         public string? Phone { get; set; }
 
-        [MaxLength(100)]
-        public string? WhatsAppApiKey { get; set; }
+        [MaxLength(50)]
+        public string? TelegramChatId { get; set; }
     }
 }

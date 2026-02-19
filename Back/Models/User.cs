@@ -29,9 +29,9 @@ namespace Back.Models
         [Column("phone")]
         public string? Phone { get; set; }
 
-        [MaxLength(100)]
-        [Column("whatsapp_api_key")]
-        public string? WhatsAppApiKey { get; set; }
+        [MaxLength(50)]
+        [Column("telegram_chat_id")]
+        public string? TelegramChatId { get; set; }
 
         // [Column("created_at")]
         // public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

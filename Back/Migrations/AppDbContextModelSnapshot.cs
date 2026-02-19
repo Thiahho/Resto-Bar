@@ -1097,10 +1097,10 @@ namespace Back.Migrations
                         .HasColumnType("character varying(30)")
                         .HasColumnName("phone");
 
-                    b.Property<string>("WhatsAppApiKey")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("whatsapp_api_key");
+                    b.Property<string>("TelegramChatId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("telegram_chat_id");
 
                     b.HasKey("Id")
                         .HasName("pk_user");

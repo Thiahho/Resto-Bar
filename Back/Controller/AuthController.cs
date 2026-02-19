@@ -145,7 +145,7 @@ namespace Back.Controller
             var users = await _context.Users
                 .OrderBy(u => u.Rol)
                 .ThenBy(u => u.Usuario)
-                .Select(u => new UserDto { Id = u.Id, Usuario = u.Usuario, Rol = u.Rol, Phone = u.Phone, WhatsAppApiKey = u.WhatsAppApiKey })
+                .Select(u => new UserDto { Id = u.Id, Usuario = u.Usuario, Rol = u.Rol, Phone = u.Phone, TelegramChatId = u.TelegramChatId })
                 .ToListAsync();
             return Ok(users);
         }
@@ -159,11 +159,11 @@ namespace Back.Controller
                 return NotFound(new { message = "Usuario no encontrado" });
 
             user.Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim();
-            user.WhatsAppApiKey = string.IsNullOrWhiteSpace(dto.WhatsAppApiKey) ? null : dto.WhatsAppApiKey.Trim();
+            user.TelegramChatId = string.IsNullOrWhiteSpace(dto.TelegramChatId) ? null : dto.TelegramChatId.Trim();
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Contacto WhatsApp actualizado para usuario {Id} ({Usuario})", user.Id, user.Usuario);
-            return Ok(new { message = "Contacto actualizado", phone = user.Phone, whatsAppApiKey = user.WhatsAppApiKey });
+            _logger.LogInformation("Contacto Telegram actualizado para usuario {Id} ({Usuario})", user.Id, user.Usuario);
+            return Ok(new { message = "Contacto actualizado", phone = user.Phone, telegramChatId = user.TelegramChatId });
         }
 
         [HttpDelete("users/{id}")]

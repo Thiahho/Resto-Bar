@@ -18,20 +18,20 @@ namespace Back.Controller
         private readonly ILogger<KitchenTicketsController> _logger;
         private readonly IHubContext<AdminOrdersHub> _hubContext;
         private readonly PushNotificationService _pushService;
-        private readonly IWhatsAppService _whatsApp;
+        private readonly ITelegramService _telegram;
 
         public KitchenTicketsController(
             AppDbContext context,
             ILogger<KitchenTicketsController> logger,
             IHubContext<AdminOrdersHub> hubContext,
             PushNotificationService pushService,
-            IWhatsAppService whatsApp)
+            ITelegramService telegram)
         {
             _context = context;
             _logger = logger;
             _hubContext = hubContext;
             _pushService = pushService;
-            _whatsApp = whatsApp;
+            _telegram = telegram;
         }
 
         // GET /api/admin/kitchen-tickets - Get kitchen tickets with optional filters
@@ -207,14 +207,13 @@ namespace Back.Controller
                         $"Mesa {tableName} - listo para servir",
                         "/admin/kitchen");
 
-                    // WhatsApp al mozo asignado a la sesión (o quien abrió la mesa como fallback)
+                    // Telegram al mozo asignado a la sesión (o quien abrió la mesa como fallback)
                     var session = ticket.Order?.TableSession;
                     var waiter = session?.AssignedWaiter ?? session?.OpenedByUser;
-                    if (waiter?.Phone != null && waiter.WhatsAppApiKey != null)
+                    if (waiter?.TelegramChatId != null)
                     {
-                        _ = _whatsApp.SendAsync(
-                            waiter.Phone,
-                            waiter.WhatsAppApiKey,
+                        _ = _telegram.SendAsync(
+                            waiter.TelegramChatId,
                             $"Mesa {tableName}: el pedido está listo para servir 🍽️");
                     }
                 }
