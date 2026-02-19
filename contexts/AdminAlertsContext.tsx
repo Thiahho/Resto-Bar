@@ -35,212 +35,77 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
   const [pendingAlerts, setPendingAlerts] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
-  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // HTML5 Audio element — más confiable que Web Audio API en Android Chrome
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const soundUnlockedRef = useRef(false);
   const onNewOrderCallbackRef = useRef<((order: AdminOrderCreatedEvent) => void) | null>(null);
   const processedOrderIdsRef = useRef<Set<number>>(new Set());
 
   // Cargar preferencia de sonido desde localStorage
   useEffect(() => {
-    const storedSoundEnabled = localStorage.getItem("adminOrderAlertSoundEnabled");
-    if (storedSoundEnabled !== null) {
-      setSoundEnabled(storedSoundEnabled === "true");
-    }
+    const stored = localStorage.getItem('adminOrderAlertSoundEnabled');
+    if (stored !== null) setSoundEnabled(stored === 'true');
   }, []);
 
   // Guardar preferencia de sonido en localStorage
   useEffect(() => {
-    localStorage.setItem("adminOrderAlertSoundEnabled", String(soundEnabled));
+    localStorage.setItem('adminOrderAlertSoundEnabled', String(soundEnabled));
   }, [soundEnabled]);
 
-  // Función para reproducir sonido de campana
-  const playAlertSound = useCallback(async () => {
-    // console.log('🔊 Intentando reproducir sonido...', { soundEnabled, soundUnlocked });
-
-    if (!soundEnabled) {
-      // console.log('⚠️ Sonido desactivado por el usuario');
-      return;
-    }
-
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) {
-      console.error('❌ AudioContext no disponible');
-      return;
-    }
-
-    try {
-      // Crear o obtener contexto de audio
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContextClass();
-        // console.log('🎵 AudioContext creado en playAlertSound');
-      }
-
-      const ctx = audioCtxRef.current;
-
-      // Intentar reanudar el contexto si está suspendido
-      if (ctx.state === "suspended") {
-        // console.log('🎵 Intentando reanudar AudioContext...');
-        await ctx.resume();
-        // console.log('✅ AudioContext reanudado, estado:', ctx.state);
-      }
-
-      // Marcar como desbloqueado si el contexto está corriendo
-      if (ctx.state === "running" && !soundUnlockedRef.current) {
-        soundUnlockedRef.current = true;
-        setSoundUnlocked(true);
-      }
-
-      // Función helper para crear un "ding" de campana
-      const createBellTone = (startTime: number, frequency: number, duration: number) => {
-        // Oscilador principal
-        const oscillator = ctx.createOscillator();
-        const gainNode = ctx.createGain();
-
-        // Crear armónicos para sonido más rico (campana)
-        const harmonic1 = ctx.createOscillator();
-        const harmonic2 = ctx.createOscillator();
-        const harmonicGain1 = ctx.createGain();
-        const harmonicGain2 = ctx.createGain();
-
-        // Configurar frecuencias (fundamental + armónicos)
-        oscillator.frequency.value = frequency;
-        harmonic1.frequency.value = frequency * 2; // Primera octava
-        harmonic2.frequency.value = frequency * 3; // Quinta
-
-        // Tipo de onda para sonido de campana
-        oscillator.type = 'sine';
-        harmonic1.type = 'sine';
-        harmonic2.type = 'sine';
-
-        // Conectar nodos
-        oscillator.connect(gainNode);
-        harmonic1.connect(harmonicGain1);
-        harmonic2.connect(harmonicGain2);
-
-        gainNode.connect(ctx.destination);
-        harmonicGain1.connect(ctx.destination);
-        harmonicGain2.connect(ctx.destination);
-
-        // Envelope ADSR para sonido de campana (ataque rápido, decay largo)
-        const attackTime = 0.01;
-        const decayTime = duration;
-        const peakVolume = 0.3;
-        const harmonicVolume1 = 0.15;
-        const harmonicVolume2 = 0.08;
-
-        // Oscilador principal
-        gainNode.gain.setValueAtTime(0, startTime);
-        gainNode.gain.linearRampToValueAtTime(peakVolume, startTime + attackTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + decayTime);
-
-        // Armónicos
-        harmonicGain1.gain.setValueAtTime(0, startTime);
-        harmonicGain1.gain.linearRampToValueAtTime(harmonicVolume1, startTime + attackTime);
-        harmonicGain1.gain.exponentialRampToValueAtTime(0.001, startTime + decayTime);
-
-        harmonicGain2.gain.setValueAtTime(0, startTime);
-        harmonicGain2.gain.linearRampToValueAtTime(harmonicVolume2, startTime + attackTime);
-        harmonicGain2.gain.exponentialRampToValueAtTime(0.001, startTime + decayTime);
-
-        // Iniciar y detener
-        oscillator.start(startTime);
-        harmonic1.start(startTime);
-        harmonic2.start(startTime);
-
-        oscillator.stop(startTime + decayTime);
-        harmonic1.stop(startTime + decayTime);
-        harmonic2.stop(startTime + decayTime);
-      };
-
-      // Crear sonido "Ding-Dong" (dos tonos de campana)
-      const now = ctx.currentTime;
-
-      // Primer "Ding" (nota más alta - E6)
-      createBellTone(now, 1318.5, 1.2);
-
-      // Segundo "Dong" (nota más baja - C6, después de 0.35s)
-      createBellTone(now + 0.35, 1046.5, 1.5);
-
-      // console.log('✅ Sonido de campana reproducido correctamente');
-    } catch (error) {
-      console.error('❌ Error al reproducir sonido:', error);
-    }
-  }, [soundEnabled]);
-
-  // Función para probar el sonido manualmente
-  // Crea y reanuda el AudioContext sincrónicamente dentro del gesto del usuario
-  // (Android Chrome requiere que new AudioContext() y resume() estén en el mismo tick del evento)
-  const testSound = useCallback(() => {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (AudioContextClass) {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContextClass();
-      }
-      const ctx = audioCtxRef.current;
-      if (ctx.state === 'suspended') {
-        // Llamar resume() sincrónicamente — no await aquí, pero se inicia dentro del gesto
-        ctx.resume().then(() => {
-          soundUnlockedRef.current = true;
-          setSoundUnlocked(true);
-        }).catch(() => {});
-      } else if (ctx.state === 'running' && !soundUnlockedRef.current) {
-        soundUnlockedRef.current = true;
-        setSoundUnlocked(true);
-      }
-    }
-    playAlertSound();
-  }, [playAlertSound]);
-
-  // Desbloquear audio al interactuar (Android requiere gesto directo + silent buffer)
+  // Crear el elemento <audio> una sola vez
   useEffect(() => {
-    const unlockAudio = async () => {
-      if (soundUnlockedRef.current) return;
-
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-
-      try {
-        if (!audioCtxRef.current) {
-          audioCtxRef.current = new AudioContextClass();
-        }
-
-        const ctx = audioCtxRef.current;
-
-        if (ctx.state === 'suspended') {
-          await ctx.resume();
-        }
-
-        if (ctx.state === 'running') {
-          // Reproducir buffer silencioso — obligatorio en Android para desbloquear realmente
-          const buf = ctx.createBuffer(1, 1, ctx.sampleRate);
-          const src = ctx.createBufferSource();
-          src.buffer = buf;
-          src.connect(ctx.destination);
-          src.start(0);
-
-          soundUnlockedRef.current = true;
-          setSoundUnlocked(true);
-        }
-      } catch (error) {
-        console.error('❌ Error al desbloquear audio:', error);
-      }
-    };
-
-    // Escuchar múltiples eventos de usuario para desbloquear audio
-    // Sin { once: true } para reintentar si el primer intento falla
-    const events = ['click', 'touchstart', 'keydown', 'mousedown'];
-    events.forEach(event => {
-      document.addEventListener(event, unlockAudio);
-    });
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, unlockAudio);
-      });
-    };
+    const audio = new Audio('/notification.wav');
+    audio.preload = 'auto';
+    audio.volume = 0.8;
+    audioRef.current = audio;
   }, []);
 
-  // Escuchar mensajes del service worker (ej: push notification recibida mientras la app está abierta)
+  // Reproducir sonido de alerta
+  const playAlertSound = useCallback(async () => {
+    if (!soundEnabled || !audioRef.current) return;
+    try {
+      audioRef.current.currentTime = 0;
+      await audioRef.current.play();
+    } catch {
+      // Silencioso si falla (e.g. contexto suspendido en background)
+    }
+  }, [soundEnabled]);
+
+  // Probar sonido — también desbloquea el audio en Android
+  const testSound = useCallback(() => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play()
+      .then(() => {
+        if (!soundUnlockedRef.current) {
+          soundUnlockedRef.current = true;
+          setSoundUnlocked(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Desbloquear audio automáticamente en el primer gesto del usuario
+  useEffect(() => {
+    const unlock = () => {
+      if (soundUnlockedRef.current || !audioRef.current) return;
+      audioRef.current.play()
+        .then(() => {
+          audioRef.current!.pause();
+          audioRef.current!.currentTime = 0;
+          soundUnlockedRef.current = true;
+          setSoundUnlocked(true);
+        })
+        .catch(() => {});
+    };
+
+    const events = ['click', 'touchstart', 'keydown'];
+    events.forEach(e => document.addEventListener(e, unlock));
+    return () => events.forEach(e => document.removeEventListener(e, unlock));
+  }, []);
+
+  // Escuchar mensajes del service worker (push recibido mientras la app está abierta)
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
     const handler = (event: MessageEvent) => {
@@ -254,27 +119,18 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
 
   // Callback cuando llega una nueva orden por SignalR
   const handleNewOrder = useCallback((orderEvent: AdminOrderCreatedEvent) => {
-    // Verificar si ya procesamos este pedido (evitar duplicados por múltiples conexiones)
-    if (processedOrderIdsRef.current.has(orderEvent.id)) {
-      // console.log('⚠️ Pedido #' + orderEvent.id + ' ya fue procesado, ignorando duplicado');
-      return;
-    }
-
-    // Marcar como procesado
+    if (processedOrderIdsRef.current.has(orderEvent.id)) return;
     processedOrderIdsRef.current.add(orderEvent.id);
 
-    // Limpiar IDs antiguos (mantener solo los últimos 100 para evitar memory leak)
     if (processedOrderIdsRef.current.size > 100) {
-      const idsArray = Array.from(processedOrderIdsRef.current);
-      processedOrderIdsRef.current = new Set(idsArray.slice(-100));
+      const arr = Array.from(processedOrderIdsRef.current);
+      processedOrderIdsRef.current = new Set(arr.slice(-100));
     }
 
-    // console.log('🔔 Nueva orden recibida por SignalR:', orderEvent);
     setPendingAlerts((prev) => prev + 1);
-    showToast(`🔔 Nuevo pedido #${orderEvent.id} de ${orderEvent.customerName}`, "success");
-    playAlertSound().catch(err => console.error('Error playing sound:', err));
+    showToast(`🔔 Nuevo pedido #${orderEvent.id} de ${orderEvent.customerName}`, 'success');
+    playAlertSound().catch(() => {});
 
-    // Notificar a componentes suscritos (ej: OrderManager)
     if (onNewOrderCallbackRef.current) {
       onNewOrderCallbackRef.current(orderEvent);
     }
@@ -283,44 +139,25 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
   // Callback cuando un ticket de cocina está listo para servir
   const handleKitchenTicketReady = useCallback((ticket: KitchenTicket) => {
     const mesa = ticket.tableName ?? ticket.ticketNumber;
-    showToast(`Pedido listo - ${mesa} (${ticket.station})`, "info");
-    playAlertSound().catch(err => console.error('Error playing sound:', err));
+    showToast(`Pedido listo - ${mesa} (${ticket.station})`, 'info');
+    playAlertSound().catch(() => {});
   }, [showToast, playAlertSound]);
 
-  // Función para que los componentes se suscriban a nuevas órdenes
   const onNewOrderAlert = useCallback((callback: (order: AdminOrderCreatedEvent) => void) => {
     onNewOrderCallbackRef.current = callback;
   }, []);
 
-  // Conectar a SignalR
   useAdminHub({
-    // Solo escuchar el evento general para evitar duplicados
-    // (OrderCreated se envía a todos los admins, OrderCreatedByBranch solo a la sucursal específica)
     onOrderCreated: handleNewOrder,
-    // No escuchar OrderCreatedByBranch aquí para evitar alertas duplicadas
     onOrderCreatedByBranch: undefined,
     onKitchenTicketReady: handleKitchenTicketReady,
-    onConnected: () => {
-      // console.log("🟢 SignalR conectado - Alertas en tiempo real activas");
-      setIsSignalRConnected(true);
-    },
-    onDisconnected: () => {
-      // console.log("🔴 SignalR desconectado");
-      setIsSignalRConnected(false);
-    },
-    onReconnecting: () => {
-      // console.log("🟡 SignalR reconectando...");
-      setIsSignalRConnected(false);
-    },
-    onReconnected: () => {
-      // console.log("🟢 SignalR reconectado");
-      setIsSignalRConnected(true);
-    },
+    onConnected: () => setIsSignalRConnected(true),
+    onDisconnected: () => setIsSignalRConnected(false),
+    onReconnecting: () => setIsSignalRConnected(false),
+    onReconnected: () => setIsSignalRConnected(true),
   });
 
-  const clearAlerts = useCallback(() => {
-    setPendingAlerts(0);
-  }, []);
+  const clearAlerts = useCallback(() => setPendingAlerts(0), []);
 
   const value: AdminAlertsContextType = {
     isSignalRConnected,

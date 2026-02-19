@@ -2,6 +2,7 @@ using Back.Data;
 using Back.Dtos;
 using Back.Models;
 using Back.Hubs;
+using Back.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
@@ -16,15 +17,18 @@ namespace Back.Controller
         private readonly AppDbContext _context;
         private readonly ILogger<KitchenTicketsController> _logger;
         private readonly IHubContext<AdminOrdersHub> _hubContext;
+        private readonly PushNotificationService _pushService;
 
         public KitchenTicketsController(
             AppDbContext context,
             ILogger<KitchenTicketsController> logger,
-            IHubContext<AdminOrdersHub> hubContext)
+            IHubContext<AdminOrdersHub> hubContext,
+            PushNotificationService pushService)
         {
             _context = context;
             _logger = logger;
             _hubContext = hubContext;
+            _pushService = pushService;
         }
 
         // GET /api/admin/kitchen-tickets - Get kitchen tickets with optional filters
@@ -173,6 +177,14 @@ namespace Back.Controller
                 {
                     await _hubContext.Clients.Group(AdminOrdersHub.AdminsGroup)
                         .SendAsync("KitchenTicketReady", ticketDto);
+
+                    // Push notification para dispositivos en background/pantalla apagada
+                    var tableName = ticket.Order?.TableSession?.Table?.Name ?? ticket.TicketNumber;
+                    _ = _pushService.SendToKitchenAsync(
+                        ticket.Station.ToString(),
+                        "Pedido listo 🍽️",
+                        $"Mesa {tableName} - listo para servir",
+                        "/admin/kitchen");
                 }
 
                 return Ok(ticketDto);
