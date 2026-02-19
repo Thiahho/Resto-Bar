@@ -1,46 +1,51 @@
-using System.Net;
+using System.Text;
+using System.Text.Json;
 
 namespace Back.Services
 {
-    public interface IWhatsAppService
+    public interface ITelegramService
     {
-        Task SendAsync(string phone, string apiKey, string message);
+        Task SendAsync(string chatId, string message);
     }
 
-    public class CallMeBotWhatsAppService : IWhatsAppService
+    public class TelegramService : ITelegramService
     {
         private readonly HttpClient _http;
-        private readonly ILogger<CallMeBotWhatsAppService> _logger;
+        private readonly ILogger<TelegramService> _logger;
+        private readonly string? _botToken;
 
-        public CallMeBotWhatsAppService(HttpClient http, ILogger<CallMeBotWhatsAppService> logger)
+        public TelegramService(HttpClient http, ILogger<TelegramService> logger, IConfiguration configuration)
         {
             _http = http;
             _logger = logger;
+            _botToken = configuration["Telegram:BotToken"];
         }
 
-        public async Task SendAsync(string phone, string apiKey, string message)
+        public async Task SendAsync(string chatId, string message)
         {
-            if (string.IsNullOrWhiteSpace(phone) || string.IsNullOrWhiteSpace(apiKey))
+            if (string.IsNullOrWhiteSpace(chatId) || string.IsNullOrWhiteSpace(_botToken))
                 return;
 
-            var encodedMessage = WebUtility.UrlEncode(message);
-            var url = $"https://api.callmebot.com/whatsapp.php?phone={phone}&text={encodedMessage}&apikey={apiKey}";
+            var url = $"https://api.telegram.org/bot{_botToken}/sendMessage";
+            var payload = new { chat_id = chatId, text = message };
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
             try
             {
-                var response = await _http.GetAsync(url);
+                var response = await _http.PostAsync(url, content);
                 if (!response.IsSuccessStatusCode)
                 {
-                    _logger.LogWarning("[WhatsApp] CallMeBot returned {Status} for phone {Phone}", response.StatusCode, phone);
+                    var body = await response.Content.ReadAsStringAsync();
+                    _logger.LogWarning("[Telegram] Error {Status} para chat_id {ChatId}: {Body}", response.StatusCode, chatId, body);
                 }
                 else
                 {
-                    _logger.LogInformation("[WhatsApp] Sent to {Phone}: {Message}", phone, message);
+                    _logger.LogInformation("[Telegram] Mensaje enviado a {ChatId}: {Message}", chatId, message);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[WhatsApp] Error sending message to {Phone}", phone);
+                _logger.LogError(ex, "[Telegram] Error enviando mensaje a {ChatId}", chatId);
             }
         }
     }
