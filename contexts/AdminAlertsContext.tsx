@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import { useAdminHub, AdminOrderCreatedEvent } from '../hooks/useAdminHub';
 import { useToast } from './ToastContext';
+import { useAuth } from '../hooks/useAuth';
 import { KitchenTicket } from '../types';
 
 interface AdminAlertsContextType {
@@ -54,6 +55,8 @@ function playBellOn(ctx: AudioContext) {
 
 export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ children }) => {
   const { showToast } = useToast();
+  const { userRole } = useAuth();
+  const isMozo = userRole === 'Mozo' || userRole === 'Cocinero';
   const [isSignalRConnected, setIsSignalRConnected] = useState(false);
   const [pendingAlerts, setPendingAlerts] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -174,11 +177,12 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
   }, [showToast, playAlertSound]);
 
   // Callback cuando un ticket de cocina está listo para servir
+  // El mozo recibe el aviso por Telegram, no necesita sonido en el navegador.
   const handleKitchenTicketReady = useCallback((ticket: KitchenTicket) => {
     const mesa = ticket.tableName ?? ticket.ticketNumber;
     showToast(`Pedido listo - ${mesa} (${ticket.station})`, 'info');
-    playAlertSound().catch(() => {});
-  }, [showToast, playAlertSound]);
+    if (!isMozo) playAlertSound().catch(() => {});
+  }, [showToast, playAlertSound, isMozo]);
 
   const onNewOrderAlert = useCallback((callback: (order: AdminOrderCreatedEvent) => void) => {
     onNewOrderCallbackRef.current = callback;

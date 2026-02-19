@@ -12,6 +12,7 @@ import TableOrderPage from "./components/public/TableOrderPage";
 import LoginPage from "./components/admin/LoginPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import MozoLayout from "./components/admin/MozoLayout";
+import CocinaLayout from "./components/admin/CocinaLayout";
 import Dashboard from "./components/admin/Dashboard";
 import ProductManager from "./components/admin/ProductManager";
 import CategoryManager from "./components/admin/CategoryManager";
@@ -33,8 +34,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: strin
   const { isAuthenticated, userRole } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (requiredRole && userRole !== requiredRole) {
-    // Redirigir a la ruta correcta según el rol real del usuario
     if (userRole === "Mozo") return <Navigate to="/mozo" replace />;
+    if (userRole === "Cocinero") return <Navigate to="/cocina" replace />;
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
@@ -90,6 +91,18 @@ function App() {
                 >
                   <Route index element={<TableManager />} />
                   <Route path="cocina" element={<KitchenProvider><KitchenViewPage /></KitchenProvider>} />
+                </Route>
+
+                {/* Cocinero Routes */}
+                <Route
+                  path="/cocina"
+                  element={
+                    <ProtectedRoute requiredRole="Cocinero">
+                      <CocinaLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<KitchenProvider><KitchenViewPage /></KitchenProvider>} />
                 </Route>
               </Routes>
             </HashRouter>

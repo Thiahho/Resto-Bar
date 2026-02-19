@@ -5,9 +5,10 @@ import { AdminAlertsProvider, useAdminAlerts } from "../../contexts/AdminAlertsC
 
 // Componente interno que tiene acceso al contexto de alertas
 const AdminLayoutContent: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, userRole } = useAuth();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isMozo = userRole === 'Mozo';
   const {
     isSignalRConnected,
     pendingAlerts,
@@ -158,29 +159,33 @@ const AdminLayoutContent: React.FC = () => {
               </div>
               <div className="text-sm">
                 <span className="font-semibold">Alertas pendientes:</span> {pendingAlerts}
-                {!soundUnlocked && (
+                {!isMozo && !soundUnlocked && (
                   <span className="ml-2 text-xs text-gray-600">(hacé click en "Probar sonido")</span>
                 )}
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  soundEnabled
-                    ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                    : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                }`}
-              >
-                {soundEnabled ? "🔊 Sonido ON" : "🔇 Sonido OFF"}
-              </button>
-              <button
-                onClick={testSound}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                title="Probar sonido y desbloquear audio"
-              >
-                🔔 Probar
-              </button>
+              {!isMozo && (
+                <>
+                  <button
+                    onClick={() => setSoundEnabled(!soundEnabled)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      soundEnabled
+                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                        : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+                    }`}
+                  >
+                    {soundEnabled ? "🔊 Sonido ON" : "🔇 Sonido OFF"}
+                  </button>
+                  <button
+                    onClick={testSound}
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    title="Probar sonido y desbloquear audio"
+                  >
+                    🔔 Probar
+                  </button>
+                </>
+              )}
               <button
                 onClick={clearAlerts}
                 className="px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"

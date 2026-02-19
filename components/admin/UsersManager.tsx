@@ -16,16 +16,14 @@ interface CreateUserForm {
   rol: string;
 }
 
-const ROLES = ["Admin", "Mozo", "User"];
+const ROLES = ["Admin", "Mozo", "Cocinero", "User"];
 
 const rolBadgeClass = (rol: string) => {
   switch (rol) {
-    case "Admin":
-      return "bg-purple-100 text-purple-800";
-    case "Mozo":
-      return "bg-blue-100 text-blue-800";
-    default:
-      return "bg-gray-100 text-gray-700";
+    case "Admin":     return "bg-purple-100 text-purple-800";
+    case "Mozo":      return "bg-blue-100 text-blue-800";
+    case "Cocinero":  return "bg-orange-100 text-orange-800";
+    default:          return "bg-gray-100 text-gray-700";
   }
 };
 
@@ -37,11 +35,35 @@ interface TelegramModalProps {
   onSaved: (updated: UserDto) => void;
 }
 
+interface TelegramContact {
+  chatId: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+}
+
 const TelegramModal: React.FC<TelegramModalProps> = ({ user, onClose, onSaved }) => {
   const { showToast } = useToast();
   const [chatId, setChatId] = useState(user.telegramChatId ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [showInstructions, setShowInstructions] = useState(!user.telegramChatId);
+  const [contacts, setContacts] = useState<TelegramContact[]>([]);
+  const [isFetchingContacts, setIsFetchingContacts] = useState(false);
+
+  const fetchContacts = async () => {
+    setIsFetchingContacts(true);
+    try {
+      const res = await apiClient.get<{ contacts: TelegramContact[] }>("/api/telegram/updates");
+      setContacts(res.data.contacts);
+      if (res.data.contacts.length === 0) {
+        showToast("El bot no recibió mensajes aún. El mozo debe escribirle primero.", "info");
+      }
+    } catch {
+      showToast("Error al consultar el bot. Verificá el BotToken.", "error");
+    } finally {
+      setIsFetchingContacts(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +140,40 @@ const TelegramModal: React.FC<TelegramModalProps> = ({ user, onClose, onSaved })
             />
           </div>
 
+          {/* Buscar quién escribió al bot */}
+          <div className="border border-blue-200 rounded-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={fetchContacts}
+              disabled={isFetchingContacts}
+              className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 text-sm font-semibold text-blue-800 transition-colors disabled:opacity-50"
+            >
+              <span>🔍 Ver quién escribió al bot</span>
+              {isFetchingContacts && <span className="text-xs text-blue-500">Consultando...</span>}
+            </button>
+            {contacts.length > 0 && (
+              <ul className="divide-y divide-blue-100">
+                {contacts.map((c) => (
+                  <li key={c.chatId}>
+                    <button
+                      type="button"
+                      onClick={() => setChatId(c.chatId)}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors ${chatId === c.chatId ? "bg-blue-100" : ""}`}
+                    >
+                      <span className="text-gray-800 font-medium">
+                        {c.firstName} {c.lastName}
+                        {c.username && <span className="text-gray-400 ml-1 font-normal">@{c.username}</span>}
+                      </span>
+                      <span className={`font-mono text-xs px-2 py-0.5 rounded ${chatId === c.chatId ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"}`}>
+                        {c.chatId}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div className="flex gap-3 pt-1">
             <button
               type="button"
@@ -152,6 +208,9 @@ const UsersManager: React.FC = () => {
   const [form, setForm] = useState<CreateUserForm>({ usuario: "", password: "", rol: "Mozo" });
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [telegramUser, setTelegramUser] = useState<UserDto | null>(null);
+  const [showWebhookSetup, setShowWebhookSetup] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [isSettingWebhook, setIsSettingWebhook] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -194,6 +253,29 @@ const UsersManager: React.FC = () => {
     }
   };
 
+  const handleSetWebhook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSettingWebhook(true);
+    try {
+      await apiClient.post("/api/telegram/set-webhook", { url: webhookUrl });
+      showToast("Webhook registrado. El bot ya puede responder con el Chat ID.", "success");
+      setShowWebhookSetup(false);
+    } catch (err: any) {
+      showToast(err?.response?.data?.message ?? "Error al registrar el webhook", "error");
+    } finally {
+      setIsSettingWebhook(false);
+    }
+  };
+
+  const handleDeleteWebhook = async () => {
+    try {
+      await apiClient.delete("/api/telegram/set-webhook");
+      showToast("Webhook eliminado — volviste al modo getUpdates.", "info");
+    } catch {
+      showToast("Error al eliminar el webhook", "error");
+    }
+  };
+
   const handleDelete = async (user: UserDto) => {
     if (!window.confirm(`¿Eliminar al usuario "${user.usuario}"?`)) return;
     setDeletingId(user.id);
@@ -217,6 +299,56 @@ const UsersManager: React.FC = () => {
           onSaved={(updated) => setUsers(prev => prev.map(u => u.id === updated.id ? updated : u))}
         />
       )}
+
+      {/* Configuración de Webhook */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl mb-5 overflow-hidden">
+        <button
+          onClick={() => setShowWebhookSetup(!showWebhookSetup)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-blue-800 hover:bg-blue-100 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+            </svg>
+            Bot de Telegram — Respuesta automática con Chat ID
+          </span>
+          <svg className={`w-4 h-4 transition-transform ${showWebhookSetup ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {showWebhookSetup && (
+          <div className="px-4 pb-4 pt-1 border-t border-blue-200 bg-white space-y-3">
+            <p className="text-xs text-gray-500">
+              Cuando el bot tenga un webhook configurado, <strong>responde automáticamente</strong> con el Chat ID cada vez que alguien le escribe.
+              Requiere una URL pública (producción o ngrok).
+            </p>
+            <form onSubmit={handleSetWebhook} className="flex gap-2">
+              <input
+                type="url"
+                value={webhookUrl}
+                onChange={e => setWebhookUrl(e.target.value)}
+                placeholder="https://tudominio.com"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isSettingWebhook}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                {isSettingWebhook ? "..." : "Registrar"}
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={handleDeleteWebhook}
+              className="text-xs text-red-500 hover:text-red-700 underline"
+            >
+              Eliminar webhook (volver a modo manual)
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Gestión de Usuarios</h1>

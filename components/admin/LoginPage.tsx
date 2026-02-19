@@ -19,6 +19,8 @@ const LoginPage: React.FC = () => {
       const role = sessionStorage.getItem("userRole");
       if (role === "Mozo") {
         navigate("/mozo");
+      } else if (role === "Cocinero") {
+        navigate("/cocina");
       } else {
         navigate("/admin");
       }
