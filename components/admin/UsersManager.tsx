@@ -105,7 +105,7 @@ const WhatsAppModal: React.FC<WhatsAppModalProps> = ({ user, onClose, onSaved })
                       rel="noopener noreferrer"
                       className="font-semibold text-green-700 underline"
                     >
-                      +34 644 597 787
+                      +34 623 78 95 80
                     </a>
                     :
                     <div className="mt-1 bg-gray-100 rounded-lg px-3 py-1.5 font-mono text-xs text-gray-700 select-all">
