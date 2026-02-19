@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<PushNotificationService>();
+builder.Services.AddHttpClient<IWhatsAppService, CallMeBotWhatsAppService>();
 
 // Configurar límite de tamaño de archivos (10MB)
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>

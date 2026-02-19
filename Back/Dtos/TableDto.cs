@@ -74,5 +74,7 @@ namespace Back.Dtos
         public DateTimeOffset OpenedAt { get; set; }
         public int OrderCount { get; set; }
         public int TotalCents { get; set; }
+        public int? AssignedWaiterId { get; set; }
+        public string? AssignedWaiterName { get; set; }
     }
 }

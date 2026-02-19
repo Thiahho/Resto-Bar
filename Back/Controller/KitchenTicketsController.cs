@@ -18,17 +18,20 @@ namespace Back.Controller
         private readonly ILogger<KitchenTicketsController> _logger;
         private readonly IHubContext<AdminOrdersHub> _hubContext;
         private readonly PushNotificationService _pushService;
+        private readonly IWhatsAppService _whatsApp;
 
         public KitchenTicketsController(
             AppDbContext context,
             ILogger<KitchenTicketsController> logger,
             IHubContext<AdminOrdersHub> hubContext,
-            PushNotificationService pushService)
+            PushNotificationService pushService,
+            IWhatsAppService whatsApp)
         {
             _context = context;
             _logger = logger;
             _hubContext = hubContext;
             _pushService = pushService;
+            _whatsApp = whatsApp;
         }
 
         // GET /api/admin/kitchen-tickets - Get kitchen tickets with optional filters
@@ -46,6 +49,12 @@ namespace Back.Controller
                     .Include(t => t.Order)
                         .ThenInclude(o => o.TableSession)
                             .ThenInclude(s => s!.Table)
+                    .Include(t => t.Order)
+                        .ThenInclude(o => o.TableSession)
+                            .ThenInclude(s => s!.AssignedWaiter)
+                    .Include(t => t.Order)
+                        .ThenInclude(o => o.TableSession)
+                            .ThenInclude(s => s!.OpenedByUser)
                     .Include(t => t.AssignedToUser)
                     .AsQueryable();
 
@@ -91,6 +100,12 @@ namespace Back.Controller
                     .Include(t => t.Order)
                         .ThenInclude(o => o.TableSession)
                             .ThenInclude(s => s!.Table)
+                    .Include(t => t.Order)
+                        .ThenInclude(o => o.TableSession)
+                            .ThenInclude(s => s!.AssignedWaiter)
+                    .Include(t => t.Order)
+                        .ThenInclude(o => o.TableSession)
+                            .ThenInclude(s => s!.OpenedByUser)
                     .Include(t => t.AssignedToUser)
                     .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -130,6 +145,12 @@ namespace Back.Controller
                     .Include(t => t.Order)
                         .ThenInclude(o => o.TableSession)
                             .ThenInclude(s => s!.Table)
+                    .Include(t => t.Order)
+                        .ThenInclude(o => o.TableSession)
+                            .ThenInclude(s => s!.AssignedWaiter)
+                    .Include(t => t.Order)
+                        .ThenInclude(o => o.TableSession)
+                            .ThenInclude(s => s!.OpenedByUser)
                     .Include(t => t.AssignedToUser)
                     .FirstOrDefaultAsync(t => t.Id == id);
 
@@ -185,6 +206,17 @@ namespace Back.Controller
                         "Pedido listo 🍽️",
                         $"Mesa {tableName} - listo para servir",
                         "/admin/kitchen");
+
+                    // WhatsApp al mozo asignado a la sesión (o quien abrió la mesa como fallback)
+                    var session = ticket.Order?.TableSession;
+                    var waiter = session?.AssignedWaiter ?? session?.OpenedByUser;
+                    if (waiter?.Phone != null && waiter.WhatsAppApiKey != null)
+                    {
+                        _ = _whatsApp.SendAsync(
+                            waiter.Phone,
+                            waiter.WhatsAppApiKey,
+                            $"Mesa {tableName}: el pedido está listo para servir 🍽️");
+                    }
                 }
 
                 return Ok(ticketDto);
@@ -198,6 +230,8 @@ namespace Back.Controller
 
         private KitchenTicketDto MapToDto(KitchenTicket ticket)
         {
+            var session = ticket.Order?.TableSession;
+            var waiter = session?.AssignedWaiter ?? session?.OpenedByUser;
             return new KitchenTicketDto
             {
                 Id = ticket.Id,
@@ -213,8 +247,10 @@ namespace Back.Controller
                 AssignedToUserName = ticket.AssignedToUser?.Usuario,
                 ItemsSnapshot = ticket.ItemsSnapshot,
                 Notes = ticket.Notes,
-                TableName = ticket.Order?.TableSession?.Table?.Name,
-                CustomerName = ticket.Order?.TableSession?.CustomerName
+                TableName = session?.Table?.Name,
+                CustomerName = session?.CustomerName,
+                WaiterName = waiter?.Usuario,
+                WaiterPhone = waiter?.Phone
             };
         }
     }

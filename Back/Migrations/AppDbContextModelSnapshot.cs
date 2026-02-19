@@ -1005,6 +1005,10 @@ namespace Back.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("opened_by_user_id");
 
+                    b.Property<int?>("AssignedWaiterId")
+                        .HasColumnType("integer")
+                        .HasColumnName("assigned_waiter_id");
+
                     b.Property<DateTimeOffset?>("PaidAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("paid_at");
@@ -1043,6 +1047,9 @@ namespace Back.Migrations
 
                     b.HasIndex("OpenedByUserId")
                         .HasDatabaseName("ix_table_sessions_opened_by_user_id");
+
+                    b.HasIndex("AssignedWaiterId")
+                        .HasDatabaseName("ix_table_sessions_assigned_waiter_id");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_table_sessions_status");
@@ -1084,6 +1091,16 @@ namespace Back.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)")
                         .HasColumnName("usuario");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("phone");
+
+                    b.Property<string>("WhatsAppApiKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("whatsapp_api_key");
 
                     b.HasKey("Id")
                         .HasName("pk_user");
@@ -1304,12 +1321,20 @@ namespace Back.Migrations
                         .HasForeignKey("OpenedByUserId")
                         .HasConstraintName("fk_table_sessions_user_opened_by_user_id");
 
+                    b.HasOne("Back.Models.User", "AssignedWaiter")
+                        .WithMany()
+                        .HasForeignKey("AssignedWaiterId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_table_sessions_user_assigned_waiter_id");
+
                     b.HasOne("Back.Models.Table", "Table")
                         .WithMany("Sessions")
                         .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_table_sessions_tables_table_id");
+
+                    b.Navigation("AssignedWaiter");
 
                     b.Navigation("ClosedByUser");
 

@@ -45,7 +45,9 @@ namespace Back.Controller
 
                 var query = _context.Tables
                     .Include(t => t.Sessions.Where(s => s.ClosedAt == null))
-                    .ThenInclude(s => s.Orders)
+                        .ThenInclude(s => s.Orders)
+                    .Include(t => t.Sessions.Where(s => s.ClosedAt == null))
+                        .ThenInclude(s => s.AssignedWaiter)
                     .AsQueryable();
 
                 if (branchId.HasValue)
@@ -76,7 +78,9 @@ namespace Back.Controller
                         GuestCount = t.Sessions.First().GuestCount,
                         OpenedAt = t.Sessions.First().OpenedAt,
                         OrderCount = t.Sessions.First().Orders.Count,
-                        TotalCents = t.Sessions.First().TotalCents
+                        TotalCents = t.Sessions.First().TotalCents,
+                        AssignedWaiterId = t.Sessions.First().AssignedWaiterId,
+                        AssignedWaiterName = t.Sessions.First().AssignedWaiter?.Usuario
                     } : null
                 }).ToList();
 
@@ -104,8 +108,10 @@ namespace Back.Controller
 
                 var table = await _context.Tables
                     .Include(t => t.Sessions.Where(s => s.ClosedAt == null))
-                    .ThenInclude(s => s.Orders)
-                    .ThenInclude(o => o.Items)
+                        .ThenInclude(s => s.Orders)
+                            .ThenInclude(o => o.Items)
+                    .Include(t => t.Sessions.Where(s => s.ClosedAt == null))
+                        .ThenInclude(s => s.AssignedWaiter)
                     .FirstOrDefaultAsync(t => t.Id == id);
 
                 if (table == null)
@@ -130,6 +136,9 @@ namespace Back.Controller
                     ClosedAt = session.ClosedAt,
                     Status = session.Status.ToString(),
                     OpenedByUserId = session.OpenedByUserId,
+                    AssignedWaiterId = session.AssignedWaiterId,
+                    AssignedWaiterName = session.AssignedWaiter?.Usuario,
+                    AssignedWaiterPhone = session.AssignedWaiter?.Phone,
                     SubtotalCents = session.SubtotalCents,
                     TotalCents = session.TotalCents,
                     Notes = session.Notes,
@@ -212,6 +221,7 @@ namespace Back.Controller
                     GuestCount = dto.GuestCount,
                     Notes = dto.Notes,
                     OpenedByUserId = userId,
+                    AssignedWaiterId = dto.WaiterId,
                     OpenedAt = DateTimeOffset.UtcNow,
                     Status = TableSessionStatus.ACTIVE
                 };

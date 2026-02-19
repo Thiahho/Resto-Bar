@@ -25,6 +25,14 @@ namespace Back.Models
         [Column("rol")]
         public string Rol { get; set; }
 
+        [MaxLength(30)]
+        [Column("phone")]
+        public string? Phone { get; set; }
+
+        [MaxLength(100)]
+        [Column("whatsapp_api_key")]
+        public string? WhatsAppApiKey { get; set; }
+
         // [Column("created_at")]
         // public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }

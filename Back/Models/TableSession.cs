@@ -25,6 +25,9 @@ namespace Back.Models
         public int? ClosedByUserId { get; set; }
         [ForeignKey(nameof(ClosedByUserId))] public User? ClosedByUser { get; set; }
 
+        public int? AssignedWaiterId { get; set; }
+        [ForeignKey(nameof(AssignedWaiterId))] public User? AssignedWaiter { get; set; }
+
         public int SubtotalCents { get; set; } = 0;
         public int TotalCents { get; set; } = 0;
 

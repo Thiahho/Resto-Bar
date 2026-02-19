@@ -424,22 +424,37 @@ const ReserveTableModal: React.FC<ReserveTableModalProps> = ({ table, token, onS
 
 // ─── Modal: Abrir Mesa ────────────────────────────────────────────────────────
 
+interface WaiterOption { id: number; usuario: string; }
+
 interface OpenSessionModalProps {
   table: Table;
-  onConfirm: (guestCount: number, customerName: string, notes: string) => Promise<void>;
+  token: string;
+  onConfirm: (guestCount: number, customerName: string, notes: string, waiterId: number | null) => Promise<void>;
   onClose: () => void;
 }
 
-const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ table, onConfirm, onClose }) => {
+const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ table, token, onConfirm, onClose }) => {
   const [guestCount, setGuestCount] = useState(2);
   const [customerName, setCustomerName] = useState('');
   const [notes, setNotes] = useState('');
+  const [waiterId, setWaiterId] = useState<number | null>(null);
+  const [waiters, setWaiters] = useState<WaiterOption[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/auth/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then((users: Array<{ id: number; usuario: string; rol: string }>) =>
+        setWaiters(users.filter(u => u.rol === 'Mozo')))
+      .catch(() => {});
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    try { await onConfirm(guestCount, customerName, notes); } finally { setIsSubmitting(false); }
+    try { await onConfirm(guestCount, customerName, notes, waiterId); } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -497,6 +512,23 @@ const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ table, onConfirm, o
               placeholder="Ej: Reserva cumpleaños, alergias..." rows={2}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition" />
           </div>
+          {waiters.length > 0 && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Mozo responsable <span className="text-gray-400 font-normal">(opcional)</span>
+              </label>
+              <select
+                value={waiterId ?? ''}
+                onChange={e => setWaiterId(e.target.value ? Number(e.target.value) : null)}
+                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+              >
+                <option value="">— Sin asignar —</option>
+                {waiters.map(w => (
+                  <option key={w.id} value={w.id}>{w.usuario}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} disabled={isSubmitting}
               className="flex-1 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50">
@@ -1446,6 +1478,14 @@ const TableCard: React.FC<TableCardProps> = ({
                 <span>{elapsed}</span>
               </div>
             </div>
+            {session.assignedWaiterName && (
+              <p className="text-xs text-blue-700 font-semibold truncate flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                {session.assignedWaiterName}
+              </p>
+            )}
             {session.customerName && (
               <p className="text-xs text-gray-600 truncate">
                 <span className="font-medium">Cliente:</span> {session.customerName}
@@ -1851,12 +1891,12 @@ const TableManager: React.FC = () => {
 
   useEffect(() => { fetchTables(); }, [fetchTables]);
 
-  const handleOpenSession = async (guestCount: number, customerName: string, notes: string) => {
+  const handleOpenSession = async (guestCount: number, customerName: string, notes: string, waiterId: number | null) => {
     const m = modal as { type: 'open'; table: Table };
     if (!token) return;
     await apiFetch(`${apiUrl()}/api/admin/tables/${m.table.id}/open-session`, token, {
       method: 'POST',
-      body: JSON.stringify({ guestCount, customerName: customerName || null, notes: notes || null }),
+      body: JSON.stringify({ guestCount, customerName: customerName || null, notes: notes || null, waiterId: waiterId || null }),
     });
     showToast(`${m.table.name} abierta con ${guestCount} comensales`, 'success');
     closeModal();
@@ -1992,6 +2032,7 @@ const TableManager: React.FC = () => {
       {modal?.type === 'open' && (
         <OpenSessionModal
           table={modal.table}
+          token={token!}
           onConfirm={handleOpenSession}
           onClose={closeModal}
         />

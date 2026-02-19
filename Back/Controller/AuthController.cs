@@ -145,9 +145,25 @@ namespace Back.Controller
             var users = await _context.Users
                 .OrderBy(u => u.Rol)
                 .ThenBy(u => u.Usuario)
-                .Select(u => new UserDto { Id = u.Id, Usuario = u.Usuario, Rol = u.Rol })
+                .Select(u => new UserDto { Id = u.Id, Usuario = u.Usuario, Rol = u.Rol, Phone = u.Phone, WhatsAppApiKey = u.WhatsAppApiKey })
                 .ToListAsync();
             return Ok(users);
+        }
+
+        [HttpPut("users/{id}/contact")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateUserContact(int id, [FromBody] UpdateUserContactDto dto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound(new { message = "Usuario no encontrado" });
+
+            user.Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim();
+            user.WhatsAppApiKey = string.IsNullOrWhiteSpace(dto.WhatsAppApiKey) ? null : dto.WhatsAppApiKey.Trim();
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Contacto WhatsApp actualizado para usuario {Id} ({Usuario})", user.Id, user.Usuario);
+            return Ok(new { message = "Contacto actualizado", phone = user.Phone, whatsAppApiKey = user.WhatsAppApiKey });
         }
 
         [HttpDelete("users/{id}")]

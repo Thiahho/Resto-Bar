@@ -17,5 +17,7 @@ namespace Back.Dtos
         public string? Notes { get; set; }
         public string? TableName { get; set; }
         public string? CustomerName { get; set; }
+        public string? WaiterName { get; set; }
+        public string? WaiterPhone { get; set; }
     }
 }

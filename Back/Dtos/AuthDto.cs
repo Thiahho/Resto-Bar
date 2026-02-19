@@ -38,5 +38,16 @@ namespace Back.Dtos
         public int Id { get; set; }
         public string Usuario { get; set; }
         public string Rol { get; set; }
+        public string? Phone { get; set; }
+        public string? WhatsAppApiKey { get; set; }
+    }
+
+    public class UpdateUserContactDto
+    {
+        [MaxLength(30)]
+        public string? Phone { get; set; }
+
+        [MaxLength(100)]
+        public string? WhatsAppApiKey { get; set; }
     }
 }

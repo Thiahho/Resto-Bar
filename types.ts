@@ -240,6 +240,8 @@ export interface KitchenTicket {
   notes?: string;
   tableName?: string;
   customerName?: string;
+  waiterName?: string;
+  waiterPhone?: string;
 }
 
 export interface Table {
@@ -267,6 +269,9 @@ export interface TableSession {
   openedByUserName?: string;
   closedByUserId?: number;
   closedByUserName?: string;
+  assignedWaiterId?: number;
+  assignedWaiterName?: string;
+  assignedWaiterPhone?: string;
   subtotalCents: number;
   totalCents: number;
   tipCents?: number;

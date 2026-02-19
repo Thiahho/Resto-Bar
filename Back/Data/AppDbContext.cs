@@ -97,6 +97,11 @@ namespace Back.Data
                 .WithOne(o => o.TableSession)
                 .HasForeignKey(o => o.TableSessionId)
                 .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<TableSession>()
+                .HasOne(s => s.AssignedWaiter)
+                .WithMany()
+                .HasForeignKey(s => s.AssignedWaiterId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // KitchenTicket
             modelBuilder.Entity<KitchenTicket>()

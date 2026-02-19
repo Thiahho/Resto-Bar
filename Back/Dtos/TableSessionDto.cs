@@ -16,6 +16,9 @@ namespace Back.Dtos
         public string? OpenedByUserName { get; set; }
         public int? ClosedByUserId { get; set; }
         public string? ClosedByUserName { get; set; }
+        public int? AssignedWaiterId { get; set; }
+        public string? AssignedWaiterName { get; set; }
+        public string? AssignedWaiterPhone { get; set; }
         public int SubtotalCents { get; set; }
         public int TotalCents { get; set; }
         public int TipCents { get; set; }
@@ -35,6 +38,8 @@ namespace Back.Dtos
 
         [MaxLength(500)]
         public string? Notes { get; set; }
+
+        public int? WaiterId { get; set; }
     }
 
     public class CloseTableSessionDto
