@@ -1,0 +1,274 @@
+# Presupuesto — Sistema Resto-Bar
+
+**Sistema de Gestión Integral para Restaurantes y Bares**
+
+---
+
+## Descripción General
+
+Resto-Bar es una solución completa de gestión para restaurantes y bares, lista para producción, que combina carta digital para clientes, gestión de pedidos multicanal, administración interna por roles y sistema de cocina en tiempo real.
+
+El sistema está **completamente desarrollado** e incluye código fuente completo (frontend + backend), base de datos configurada y soporte para despliegue en la nube.
+
+---
+
+## Stack Tecnológico
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | React 18 + TypeScript + Vite |
+| Backend | ASP.NET Core 8 (C#) |
+| Base de datos | PostgreSQL |
+| ORM | Entity Framework Core 8 |
+| Tiempo real | SignalR (WebSocket) |
+| Autenticación | JWT Bearer + BCrypt |
+| Generación de PDF | jsPDF |
+| Notificaciones | Web Push API + Telegram Bot |
+| Procesamiento de imágenes | SixLabors.ImageSharp |
+| Deploy | Docker + Vercel |
+| Estilos | Tailwind CSS |
+
+---
+
+## Módulos del Sistema
+
+### MÓDULO 1 — Carta Digital Pública
+**Interfaz para el cliente final, accesible desde cualquier dispositivo.**
+
+- Catálogo de productos organizado por categorías con imágenes
+- Detalle de producto con selección de modificadores (extras, aderezos, bebidas, tamaños)
+- Carrito de compras con cálculo automático de precios
+- Validación y aplicación de cupones de descuento en el checkout
+- Seguimiento del pedido en tiempo real por código público
+- Pedido desde mesa vía escaneo de QR
+- Página de información del negocio (horarios, contacto, redes sociales)
+- Banner promocional configurable desde el panel admin
+
+---
+
+### MÓDULO 2 — Sistema de Pedidos Multicanal
+**Gestión unificada de pedidos desde todos los canales.**
+
+- Pedidos vía web: delivery con dirección y takeaway para retirar
+- Pedidos desde mesa: el cliente escanea el QR y pide directamente
+- Pedidos por el mozo: creados desde el panel administrativo
+- Pedidos programados con fecha y hora dentro del horario del negocio
+- Notas especiales por pedido e ítem
+- Flujo completo de estados:
+  `CREADO → CONFIRMADO → EN PREPARACIÓN → LISTO → ENTREGADO`
+  con posibilidad de cancelación en cualquier etapa
+- Historial de cambios de estado con auditoría
+- Código público de seguimiento por pedido
+- Cálculo automático: subtotal, descuento, propina y total
+
+---
+
+### MÓDULO 3 — Gestión de Menú
+**Panel completo para administrar la carta del negocio.**
+
+- CRUD de productos con imágenes (hasta 10 MB por imagen)
+- Categorías con orden de visualización personalizable
+- Precios diferenciados: simple y doble (porción normal / grande)
+- Precio de descuento por producto (precio tachado + precio oferta)
+- Modificadores vinculados por producto:
+  - Extras, Aderezos, Complementos, Bebidas
+  - Con diferencial de precio por modificador
+- Combos con múltiples productos y cantidades a precio especial
+- Reordenamiento de categorías por drag & drop
+- Asignación de estación de cocina por defecto a cada categoría
+
+---
+
+### MÓDULO 4 — Sistema de Mesas (Dine-In)
+**Gestión completa del salón y mesas del local.**
+
+- CRUD de mesas: nombre, capacidad, sector y orden de visualización
+- Estados de mesa en tiempo real:
+  Disponible | Ocupada | Reservada | Fuera de servicio | Pedido de cuenta
+- Sesiones de mesa: apertura con hora exacta, cierre y duración total
+- Asignación de mozo responsable por sesión
+- Registro del nombre del cliente y cantidad de comensales
+- Generación de código QR único por mesa con token seguro (JWT)
+- El QR de cada mesa queda vinculado exclusivamente a esa sesión activa
+- Registro de pago por sesión: método (Efectivo / Tarjeta / Transferencia), propina y total
+- Soporte multi-sucursal (múltiples locales)
+
+---
+
+### MÓDULO 5 — Sistema de Cocina en Tiempo Real (KDS)
+**Kitchen Display System para la operación interna de cocina y barra.**
+
+- Tickets de cocina generados automáticamente al confirmar un pedido
+- Enrutamiento por estación según el producto:
+  **Cocina | Bar | Parrilla | Postres**
+- Estados del ticket con flujo visual:
+  `PENDIENTE → EN PREPARACIÓN → LISTO → ENTREGADO`
+- Registro de tiempos por etapa: creación, inicio, listo, entregado
+- Snapshot de ítems por ticket (los items quedan guardados aunque se modifique el pedido)
+- Asignación de ticket a empleado de cocina responsable
+- Notas de cocina por ticket
+- Actualizaciones en tiempo real vía WebSocket (SignalR): sin necesidad de recargar la pantalla
+
+---
+
+### MÓDULO 6 — Roles y Usuarios
+**Control de acceso diferenciado para cada tipo de empleado.**
+
+| Rol | Acceso |
+|-----|--------|
+| **Admin** | Acceso total: menú, pedidos, usuarios, configuración, reportes, cocina |
+| **Mozo** | Gestión de mesas, sesiones, toma de pedidos |
+| **Cocinero** | Vista KDS, cambio de estado de tickets |
+| **Caja** | Cobros y cierre de sesiones de mesa |
+
+- Contraseñas almacenadas con hash seguro (BCrypt)
+- Protección contra fuerza bruta: máximo 5 intentos de login cada 15 minutos
+- Sesiones autenticadas con token JWT (duración 8 horas)
+- Tokens separados para panel admin y para QR de mesa
+- CRUD de usuarios desde el panel administrador
+
+---
+
+### MÓDULO 7 — Cupones y Descuentos
+**Sistema de códigos promocionales para el checkout.**
+
+- Creación y gestión de cupones desde el panel admin
+- Tipos de cupón:
+  - **Porcentaje (%):** descuento relativo al total
+  - **Monto fijo ($):** descuento en valor absoluto
+- Monto mínimo de orden requerido para aplicar el cupón
+- Ventana de validez: fecha de inicio y fecha de vencimiento
+- Límite de usos total por cupón
+- Activación / desactivación manual
+- Historial de redenciones por pedido
+
+---
+
+### MÓDULO 8 — Motor de Crecimiento y Promociones
+**Herramientas de revenue optimization integradas al sistema.**
+
+| Función | Descripción |
+|---------|-------------|
+| **Upsell** | Sugerir productos relacionados con descuento durante el checkout |
+| **2x1** | Configurar días de la semana y productos para la promoción |
+| **Happy Hour** | Descuento automático por rango horario y días en productos elegidos |
+| **Peak Hour Mode** | Ocultar productos lentos y destacar los más rápidos durante hora pico |
+| **Precios Dinámicos** | Descuento automático durante horario off-peak en productos seleccionados |
+| **Smart Combos** | Sugerencias contextuales: "más pedidos", "combo nocturno", "para dos" |
+| **Winback Campaign** | Reactivación de clientes inactivos configurando umbral de días |
+
+Todas las funciones son activables y desactivables individualmente desde el panel admin.
+
+---
+
+### MÓDULO 9 — Notificaciones
+**Sistema de alertas y comunicación en tiempo real.**
+
+- **Push Notifications** en el navegador (Web Push API / VAPID):
+  notificaciones al staff aunque la pestaña esté cerrada
+- **Telegram Bot** integrado:
+  notificaciones automáticas a mozos y cocina en Telegram
+- **WebSocket / SignalR:**
+  actualizaciones en tiempo real en el panel admin sin recargar
+- Suscripciones configurables por estación de cocina
+- Chat ID de Telegram por usuario para notificaciones dirigidas
+
+---
+
+### MÓDULO 10 — Reportes y Analytics
+**Información operativa y financiera del negocio.**
+
+- Resumen diario de sesiones de mesa
+- Ingresos desglosados por método de pago: Efectivo, Tarjeta, Transferencia bancaria
+- Total de propinas recaudadas por período
+- Historial completo de pedidos con sus estados
+- Métricas de tiempo de apertura/cierre por mesa
+- Auditoría de cambios en el sistema (quién hizo qué y cuándo)
+
+---
+
+### MÓDULO 11 — Configuración del Negocio
+**Personalización completa de la identidad del negocio.**
+
+- Nombre del negocio, descripción y slogan
+- Imagen de banner con actualización desde el panel (formato WebP optimizado)
+- Horarios de apertura configurables por día
+- Información de contacto: teléfono, WhatsApp, dirección
+- Redes sociales: Instagram, Facebook, TikTok
+- Alias de transferencia bancaria para pagos digitales
+- Configuración visual del sitio (UI/UX)
+
+---
+
+### MÓDULO 12 — Infraestructura y Deploy
+**Configuración lista para producción en la nube.**
+
+- **Dockerfile** multi-stage listo para producción (imagen Alpine, port 10000)
+- **Vercel** configurado para el frontend (`vercel.json` incluido)
+- Migraciones de base de datos ejecutadas automáticamente al iniciar
+- CORS configurable por entorno (desarrollo / producción)
+- Rate limiting multinivel: login (5/15 min), API (100/min), global (200/min)
+- HTTPS y HSTS habilitados en producción
+- Configuración por variables de entorno (`.env.example` incluido)
+- Compatible con: Railway, Fly.io, Render, AWS, DigitalOcean, VPS propio
+
+---
+
+## Resumen del Sistema
+
+| Indicador | Valor |
+|-----------|-------|
+| Archivos de backend (C#) | ~93 archivos |
+| Archivos de frontend (TypeScript/React) | ~54 archivos |
+| Controladores API | 17 controladores |
+| Endpoints API | 50+ |
+| Tablas en base de datos | 22 entidades |
+| Relaciones entre entidades | 25+ FK |
+| Migraciones aplicadas | 14 (Nov 2025 – Feb 2026) |
+| Componentes React | 30+ componentes |
+| Roles de usuario | 4 roles diferenciados |
+| Interfaces de usuario | 4 (Pública, Admin, Mozo, Cocina) |
+
+---
+
+## Lo que incluye la entrega
+
+- Código fuente completo del frontend (React + TypeScript)
+- Código fuente completo del backend (ASP.NET Core 8 / C#)
+- Base de datos PostgreSQL con esquema y migraciones
+- Dockerfile para despliegue en la nube
+- Configuración de Vercel para el frontend
+- Variables de entorno documentadas (`.env.example`)
+- Documentación técnica (estructura del sistema, endpoints, roles)
+
+---
+
+## Cuadro de Precios por Módulo
+
+| # | Módulo | Precio |
+|---|--------|--------|
+| 1 | Carta Digital Pública | $ |
+| 2 | Sistema de Pedidos Multicanal | $ |
+| 3 | Gestión de Menú | $ |
+| 4 | Sistema de Mesas (Dine-In) | $ |
+| 5 | KDS — Cocina en Tiempo Real | $ |
+| 6 | Roles y Usuarios | $ |
+| 7 | Cupones y Descuentos | $ |
+| 8 | Motor de Crecimiento y Promociones | $ |
+| 9 | Notificaciones (Push + Telegram + WebSocket) | $ |
+| 10 | Reportes y Analytics | $ |
+| 11 | Configuración del Negocio | $ |
+| 12 | Infraestructura y Deploy | $ |
+| | **TOTAL SISTEMA COMPLETO** | **$** |
+
+---
+
+*Presupuesto válido hasta:* _______________
+
+*Condiciones de pago:* _______________
+
+*Incluye soporte post-venta de:* _______________ días
+
+---
+
+> Documento generado el 19/02/2026
