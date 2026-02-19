@@ -29,6 +29,29 @@ interface AdminAlertsProviderProps {
   children: React.ReactNode;
 }
 
+// Toca un ding-dong sobre el AudioContext dado (que ya debe estar en 'running').
+function playBellOn(ctx: AudioContext) {
+  const playNote = (freq: number, startTime: number, duration: number, volume = 0.5) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  };
+  const now = ctx.currentTime;
+  // Ding: E6
+  playNote(1318.51, now, 0.7, 0.6);
+  playNote(2637.02, now, 0.35, 0.15);
+  // Dong: C6 (350ms después)
+  playNote(1046.50, now + 0.35, 0.7, 0.6);
+  playNote(2093.00, now + 0.35, 0.35, 0.15);
+}
+
 export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ children }) => {
   const { showToast } = useToast();
   const [isSignalRConnected, setIsSignalRConnected] = useState(false);
@@ -36,8 +59,8 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
 
-  // Persistent AudioContext — created ONCE, resumed on first user gesture.
-  // Never recreated so it stays in 'running' state after resume().
+  // AudioContext creado DENTRO de un gesto del usuario → arranca en 'running' en Chrome/Android.
+  // Crearlo fuera (useEffect) lo deja en 'suspended' y resume() puede fallar en Android.
   const audioCtxRef = useRef<AudioContext | null>(null);
   const soundUnlockedRef = useRef(false);
   const onNewOrderCallbackRef = useRef<((order: AdminOrderCreatedEvent) => void) | null>(null);
@@ -54,72 +77,39 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
     localStorage.setItem('adminOrderAlertSoundEnabled', String(soundEnabled));
   }, [soundEnabled]);
 
-  // Crear AudioContext una sola vez al montar
+  // Cleanup del AudioContext al desmontar
   useEffect(() => {
-    try {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-    } catch {
-      // AudioContext no soportado en este navegador
-    }
     return () => {
       audioCtxRef.current?.close().catch(() => {});
     };
   }, []);
 
-  // Sintetizar un ding-dong usando el AudioContext ya activo.
-  // Al no depender de ningún archivo externo, siempre funciona si ctx está running.
-  const playBell = useCallback(() => {
-    const ctx = audioCtxRef.current;
-    if (!ctx || ctx.state !== 'running') return;
-
-    const playNote = (freq: number, startTime: number, duration: number, volume = 0.5) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(volume, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    };
-
-    const now = ctx.currentTime;
-    // Ding: E6 + armónico
-    playNote(1318.51, now, 0.7, 0.6);
-    playNote(2637.02, now, 0.35, 0.15);
-    // Dong: C6 + armónico (350ms después)
-    playNote(1046.50, now + 0.35, 0.7, 0.6);
-    playNote(2093.00, now + 0.35, 0.35, 0.15);
-  }, []);
-
-  // Reproducir alerta: vibración (Android, sin restricciones) + campana (si desbloqueada)
-  const playAlertSound = useCallback(async () => {
-    if (!soundEnabled) return;
-
-    // Vibración — funciona en Android sin permiso de audio ni gesto del usuario
-    if ('vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200]);
+  /**
+   * Crea un nuevo AudioContext DENTRO de un gesto del usuario.
+   * En Chrome/Android, un AudioContext creado en un gesto arranca directamente
+   * en 'running', sin necesidad de llamar resume().
+   * Devuelve el contexto si tuvo éxito, o null si el navegador lo bloqueó.
+   */
+  const createRunningContext = useCallback((): AudioContext | null => {
+    try {
+      // Cerrar el anterior si existe
+      audioCtxRef.current?.close().catch(() => {});
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      audioCtxRef.current = ctx;
+      soundUnlockedRef.current = true;
+      setSoundUnlocked(true);
+      return ctx;
+    } catch {
+      return null;
     }
-
-    if (!soundUnlockedRef.current) return;
-    playBell();
-  }, [soundEnabled, playBell]);
-
-  // Desbloquear AudioContext en el primer gesto confiable del usuario.
-  // ctx.resume() es la API oficial para salir del estado 'suspended' en Chrome/Android.
-  const unlock = useCallback(() => {
-    if (soundUnlockedRef.current || !audioCtxRef.current) return;
-    audioCtxRef.current.resume()
-      .then(() => {
-        soundUnlockedRef.current = true;
-        setSoundUnlocked(true);
-      })
-      .catch(() => {});
   }, []);
 
+  // Auto-unlock en el primer gesto confiable del usuario (sin reproducir sonido)
   useEffect(() => {
+    const unlock = () => {
+      if (soundUnlockedRef.current) return;
+      createRunningContext();
+    };
     document.addEventListener('click', unlock);
     document.addEventListener('touchend', unlock);
     document.addEventListener('keydown', unlock);
@@ -128,20 +118,29 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
       document.removeEventListener('touchend', unlock);
       document.removeEventListener('keydown', unlock);
     };
-  }, [unlock]);
+  }, [createRunningContext]);
 
-  // Botón "Probar" — fuerza resume() + toca la campana inmediatamente
-  const testSound = useCallback(() => {
+  // Reproducir alerta: vibración + campana (si el contexto fue desbloqueado)
+  const playAlertSound = useCallback(async () => {
+    if (!soundEnabled) return;
+
+    // Vibración — funciona en Android sin restricciones de volumen ni gesto
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+
+    // Campana — solo si el AudioContext ya está corriendo (desbloqueado por gesto previo)
     const ctx = audioCtxRef.current;
-    if (!ctx) return;
-    ctx.resume()
-      .then(() => {
-        soundUnlockedRef.current = true;
-        setSoundUnlocked(true);
-        playBell();
-      })
-      .catch(() => {});
-  }, [playBell]);
+    if (ctx && ctx.state === 'running') {
+      playBellOn(ctx);
+    }
+  }, [soundEnabled]);
+
+  // Botón "Probar": crea el contexto en el gesto del usuario y toca inmediatamente
+  const testSound = useCallback(() => {
+    const ctx = createRunningContext();
+    if (ctx) playBellOn(ctx);
+  }, [createRunningContext]);
 
   // Escuchar mensajes del service worker (push recibido mientras la app está abierta)
   useEffect(() => {

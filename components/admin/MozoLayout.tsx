@@ -17,6 +17,7 @@ const MozoLayoutContent: React.FC = () => {
     isSignalRConnected,
     soundEnabled,
     setSoundEnabled,
+    soundUnlocked,
     testSound,
   } = useAdminAlerts();
   // null = suscribir a todas las estaciones
@@ -76,10 +77,14 @@ const MozoLayoutContent: React.FC = () => {
             </button>
             <button
               onClick={testSound}
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-              title="Probar sonido y desbloquear audio"
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                soundUnlocked
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-blue-100 text-blue-800 border border-blue-400 animate-pulse hover:bg-blue-200"
+              }`}
+              title={soundUnlocked ? "Sonido desbloqueado — clic para probar" : "Tapá aquí para activar el sonido de alertas"}
             >
-              🔔 Probar
+              {soundUnlocked ? "🔔 Probar" : "🔔 Activar sonido"}
             </button>
             {pushStatus === 'not-standalone' && (
               <span
