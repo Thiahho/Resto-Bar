@@ -1,31 +1,34 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CatalogProvider } from "./hooks/useCatalog";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ToastProvider } from "./contexts/ToastContext";
 import { CartProvider } from "./contexts/CartContext";
 import { KitchenProvider } from "./contexts/KitchenContext";
+// Rutas públicas principales — carga inmediata
 import CatalogPage from "./components/public/CatalogPage";
-import InfoPage from "./components/public/InfoPage";
-import OrderTrackingPage from "./components/public/OrderTrackingPage";
-import TableOrderPage from "./components/public/TableOrderPage";
-import LoginPage from "./components/admin/LoginPage";
-import AdminLayout from "./components/admin/AdminLayout";
-import MozoLayout from "./components/admin/MozoLayout";
-import CocinaLayout from "./components/admin/CocinaLayout";
-import Dashboard from "./components/admin/Dashboard";
-import ProductManager from "./components/admin/ProductManager";
-import CategoryManager from "./components/admin/CategoryManager";
-import SiteSettings from "./components/admin/SiteSettings";
-import OrderManager from "./components/admin/OrderManager";
-import ModifierManager from "./components/admin/ModifierManager";
-import CouponManager from "./components/admin/CouponManager";
-import ComboManager from "./components/admin/ComboManager";
-import ReportsManager from "./components/admin/ReportsManager";
-import GrowthManager from "./components/admin/GrowthManager";
-import KitchenViewPage from "./components/admin/KitchenViewPage";
-import TableManager from "./components/admin/TableManager";
-import UsersManager from "./components/admin/UsersManager";
+// Rutas públicas secundarias — lazy
+const InfoPage = lazy(() => import("./components/public/InfoPage"));
+const OrderTrackingPage = lazy(() => import("./components/public/OrderTrackingPage"));
+const TableOrderPage = lazy(() => import("./components/public/TableOrderPage"));
+// Rutas de admin/staff — lazy (el cliente nunca las descarga)
+const LoginPage = lazy(() => import("./components/admin/LoginPage"));
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const MozoLayout = lazy(() => import("./components/admin/MozoLayout"));
+const CocinaLayout = lazy(() => import("./components/admin/CocinaLayout"));
+const Dashboard = lazy(() => import("./components/admin/Dashboard"));
+const ProductManager = lazy(() => import("./components/admin/ProductManager"));
+const CategoryManager = lazy(() => import("./components/admin/CategoryManager"));
+const SiteSettings = lazy(() => import("./components/admin/SiteSettings"));
+const OrderManager = lazy(() => import("./components/admin/OrderManager"));
+const ModifierManager = lazy(() => import("./components/admin/ModifierManager"));
+const CouponManager = lazy(() => import("./components/admin/CouponManager"));
+const ComboManager = lazy(() => import("./components/admin/ComboManager"));
+const ReportsManager = lazy(() => import("./components/admin/ReportsManager"));
+const GrowthManager = lazy(() => import("./components/admin/GrowthManager"));
+const KitchenViewPage = lazy(() => import("./components/admin/KitchenViewPage"));
+const TableManager = lazy(() => import("./components/admin/TableManager"));
+const UsersManager = lazy(() => import("./components/admin/UsersManager"));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole?: string }> = ({
   children,
@@ -48,6 +51,7 @@ function App() {
         <CartProvider>
           <AuthProvider>
             <HashRouter>
+            <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>}>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<CatalogPage />} />
@@ -105,6 +109,7 @@ function App() {
                   <Route index element={<KitchenProvider><KitchenViewPage /></KitchenProvider>} />
                 </Route>
               </Routes>
+            </Suspense>
             </HashRouter>
           </AuthProvider>
         </CartProvider>

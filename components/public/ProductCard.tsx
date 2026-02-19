@@ -26,6 +26,7 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product, hasTwoForOne }) =>
           <img
             src={imageUrl}
             alt={product.name}
+            loading="lazy"
             className="w-full h-48 object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).src = "/placeholder.png";
@@ -77,4 +78,4 @@ const ProductsCard: React.FC<ProductsCardProps> = ({ product, hasTwoForOne }) =>
   );
 };
 
-export default ProductsCard;
+export default React.memo(ProductsCard);

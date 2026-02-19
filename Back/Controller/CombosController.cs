@@ -21,6 +21,7 @@ namespace Back.Controller
         public async Task<ActionResult<List<ComboDto>>> GetPublicCombos()
         {
             var combos = await _context.Combos
+                .AsNoTracking()
                 .Include(c => c.Items)
                 .ThenInclude(ci => ci.Product)
                 .Where(c => c.IsActive)

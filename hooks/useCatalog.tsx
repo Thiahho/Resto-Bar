@@ -42,36 +42,69 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
   const [twoForOneConfig, setTwoForOneConfig] = useState<TwoForOneConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const CACHE_KEY = "resto_catalog_cache";
+  const CACHE_TTL = 2 * 60 * 1000; // 2 minutos
+
+  const applyData = (data: any) => {
+    const {
+      products: apiProducts,
+      categories: apiCategories,
+      businessInfo: apiBusinessInfo,
+      activePromotion: apiActivePromotion,
+      upsellConfig: apiUpsellConfig,
+      twoForOneConfig: apiTwoForOneConfig,
+    } = data;
+
+    // El backend devuelve IDs numéricos, pero el frontend usa strings.
+    const transformedProducts = apiProducts.map((p: any) => ({
+      ...p,
+      id: p.id.toString(),
+      categoryId: p.categoryId.toString(),
+    }));
+    const transformedCategories = apiCategories.map((c: any) => ({
+      ...c,
+      id: c.id.toString(),
+    }));
+
+    setProducts(transformedProducts);
+    setCategories(transformedCategories);
+    setBusinessInfo(apiBusinessInfo);
+    setActivePromotion(apiActivePromotion || null);
+    setUpsellConfig(apiUpsellConfig || null);
+    setTwoForOneConfig(apiTwoForOneConfig || null);
+  };
+
   const fetchData = async () => {
-    setIsLoading(true);
+    let hasCache = false;
+
+    // 1. Intentar servir desde sessionStorage inmediatamente
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        const age = Date.now() - timestamp;
+        hasCache = true;
+        applyData(data);
+        setIsLoading(false);
+        if (age < CACHE_TTL) {
+          return; // Caché fresca: no refetch
+        }
+        // Caché expirada: mostrar datos y revalidar silenciosamente
+      }
+    } catch {
+      // sessionStorage no disponible — fetch normal
+    }
+
+    // 2. Fetch del servidor (con spinner solo si no hay caché)
+    if (!hasCache) setIsLoading(true);
     try {
       const response = await apiClient.get("/api/public/catalog");
-      const {
-        products: apiProducts,
-        categories: apiCategories,
-        businessInfo: apiBusinessInfo,
-        activePromotion: apiActivePromotion,
-        upsellConfig: apiUpsellConfig,
-        twoForOneConfig: apiTwoForOneConfig,
-      } = response.data;
-
-      // El backend devuelve IDs numéricos, pero el frontend usa strings. Hacemos la conversión.
-      const transformedProducts = apiProducts.map((p: any) => ({
-        ...p,
-        id: p.id.toString(),
-        categoryId: p.categoryId.toString(),
-      }));
-      const transformedCategories = apiCategories.map((c: any) => ({
-        ...c,
-        id: c.id.toString(),
-      }));
-
-      setProducts(transformedProducts);
-      setCategories(transformedCategories);
-      setBusinessInfo(apiBusinessInfo);
-      setActivePromotion(apiActivePromotion || null);
-      setUpsellConfig(apiUpsellConfig || null);
-      setTwoForOneConfig(apiTwoForOneConfig || null);
+      applyData(response.data);
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: response.data, timestamp: Date.now() }));
+      } catch {
+        // sessionStorage lleno o no disponible
+      }
     } catch (error) {
       // console.error("Failed to fetch catalog data", error);
     } finally {

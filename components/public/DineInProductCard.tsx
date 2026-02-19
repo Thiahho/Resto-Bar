@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Products } from '../../types';
 import { getProductsImageUrl } from '../../services/api/apiClient';
 import { useCart } from '../../contexts/CartContext';
@@ -13,9 +13,10 @@ const DineInProductCard: React.FC<DineInProductCardProps> = ({ product }) => {
   const { cart } = useCart();
 
   const imageUrl = product.hasImage ? getProductsImageUrl(product.id) : '/placeholder.png';
-  const totalQty = cart
-    .filter((item) => item.product?.id === product.id)
-    .reduce((sum, item) => sum + item.quantity, 0);
+  const totalQty = useMemo(
+    () => cart.filter((item) => item.product?.id === product.id).reduce((sum, item) => sum + item.quantity, 0),
+    [cart, product.id]
+  );
 
   const hasDiscount =
     product.originalPriceCents && product.originalPriceCents > product.priceCents;
@@ -28,6 +29,7 @@ const DineInProductCard: React.FC<DineInProductCardProps> = ({ product }) => {
           <img
             src={imageUrl}
             alt={product.name}
+            loading="lazy"
             className="w-20 h-20 rounded-lg object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).src = '/placeholder.png';
@@ -84,4 +86,4 @@ const DineInProductCard: React.FC<DineInProductCardProps> = ({ product }) => {
   );
 };
 
-export default DineInProductCard;
+export default React.memo(DineInProductCard);

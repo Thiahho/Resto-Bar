@@ -4,6 +4,7 @@ using Back.Models;
 using Back.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using SixLabors.ImageSharp;
@@ -23,6 +24,7 @@ namespace Back.Controller
         }
 
      [HttpGet("catalog")]
+     [OutputCache(PolicyName = "catalog")]
 public async Task<ActionResult<CatalogDto>> GetFullCatalog()
 {
     var growthSettings = await _context.GrowthSettings.FindAsync(1);
@@ -30,6 +32,7 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
     var maxDiscountPercent = DiscountPricingService.GetMaxDiscountPercent(growthSettings);
 
     var productsData = await _context.Products
+        .AsNoTracking()
         .Include(p => p.Category)
         .OrderBy(p => p.DisplayOrder)
         .Select(p => new
@@ -41,7 +44,7 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
             p.DiscountPriceCents,
             p.DoublePriceCents,
             p.DiscountDoublePriceCents,
-            p.ImageData,
+            HasImageData = p.ImageData != null,
             p.CategoryId,
             CategoryName = p.Category.Name,
             p.DisplayOrder
@@ -59,13 +62,14 @@ public async Task<ActionResult<CatalogDto>> GetFullCatalog()
             ? ResolveDiscountedPrice(p.DoublePriceCents.Value, p.DiscountDoublePriceCents, discountPercent, maxDiscountPercent)
             : null,
         OriginalDoublePriceCents = discountPercent > 0 && p.DiscountDoublePriceCents.HasValue ? p.DoublePriceCents : null,
-        HasImage = p.ImageData != null && p.ImageData.Length > 0,
+        HasImage = p.HasImageData,
         CategoryId = p.CategoryId,
         CategoryName = p.CategoryName,
         DisplayOrder = p.DisplayOrder
     }).ToList();
 
     var categories = await _context.Categories
+        .AsNoTracking()
         .OrderBy(c => c.SortOrder)
         .Select(c => new CategoryDto
         {
@@ -250,6 +254,7 @@ private static TwoForOneConfigDto? ResolveTwoForOneConfig(GrowthSettings? settin
                 return NotFound("Product image not found");
             }
 
+            Response.Headers["Cache-Control"] = "public, max-age=86400";
             return File(product.ImageData, "image/webp");
         }
 

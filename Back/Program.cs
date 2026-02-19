@@ -4,9 +4,11 @@ using Back.Middleware;
 using Back.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IO.Compression;
 using System.Text;
 using System.Threading.RateLimiting;
 
@@ -34,6 +36,30 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
 });
 
 builder.Services.AddControllers();
+
+// Compresión de respuestas (gzip + brotli)
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.EnableForHttps = true;
+    opts.Providers.Add<BrotliCompressionProvider>();
+    opts.Providers.Add<GzipCompressionProvider>();
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/json",
+        "image/webp"
+    });
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(opts =>
+    opts.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(opts =>
+    opts.Level = CompressionLevel.Fastest);
+
+// Output Cache para endpoints públicos
+builder.Services.AddOutputCache(opts =>
+{
+    opts.AddBasePolicy(b => b.Expire(TimeSpan.FromSeconds(120)));
+    opts.AddPolicy("catalog", b => b.Expire(TimeSpan.FromSeconds(120)).Tag("catalog"));
+});
 
 // Configurar SignalR con opciones para WebSockets
 builder.Services.AddSignalR(options =>
@@ -223,6 +249,8 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseResponseCompression();
+
 app.UseStaticFiles(); // To serve images from wwwroot
 
 app.UseCors("AllowConfiguredOrigins");
@@ -237,6 +265,7 @@ app.UseRateLimiter(); // Rate limiting debe ir antes de Authentication
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseOutputCache();
 
 app.MapControllers();
 app.MapHub<AdminOrdersHub>("/hubs/admin-orders");

@@ -33,8 +33,30 @@ const CatalogPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        Cargando...
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <div className="max-w-2xl mx-auto px-4 py-8 w-full">
+          {/* Skeleton categorías */}
+          <div className="flex gap-4 mb-8 overflow-hidden">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="animate-pulse h-8 w-20 bg-white/10 rounded-full flex-shrink-0" />
+            ))}
+          </div>
+          {/* Skeleton tarjetas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="animate-pulse bg-white/5 rounded-2xl overflow-hidden border border-white/10">
+                <div className="h-48 bg-white/10" />
+                <div className="p-4 space-y-2">
+                  <div className="h-5 bg-white/10 rounded w-3/4" />
+                  <div className="h-4 bg-white/10 rounded w-full" />
+                  <div className="h-4 bg-white/10 rounded w-2/3" />
+                  <div className="h-6 bg-white/10 rounded w-1/4 mt-3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
