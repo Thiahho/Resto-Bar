@@ -78,6 +78,7 @@ namespace Back.Controller
 
             return Ok(new LoginResponse
             {
+                Id = user.Id,
                 Token = token,
                 Usuario = user.Usuario,
                 Rol = user.Rol

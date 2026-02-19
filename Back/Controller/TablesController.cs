@@ -214,6 +214,15 @@ namespace Back.Controller
                 }
 
                 var userId = GetUserId();
+                var userRole = User.FindFirst("role")?.Value;
+
+                // Si es un Mozo y no se especificó mozo asignado, auto-asignarse
+                var assignedWaiterId = dto.WaiterId;
+                if (assignedWaiterId == null && userRole == "Mozo")
+                {
+                    assignedWaiterId = userId;
+                }
+
                 var session = new TableSession
                 {
                     TableId = id,
@@ -221,7 +230,7 @@ namespace Back.Controller
                     GuestCount = dto.GuestCount,
                     Notes = dto.Notes,
                     OpenedByUserId = userId,
-                    AssignedWaiterId = dto.WaiterId,
+                    AssignedWaiterId = assignedWaiterId,
                     OpenedAt = DateTimeOffset.UtcNow,
                     Status = TableSessionStatus.ACTIVE
                 };

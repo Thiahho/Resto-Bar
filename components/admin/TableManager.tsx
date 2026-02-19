@@ -434,6 +434,7 @@ interface OpenSessionModalProps {
 }
 
 const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ table, token, onConfirm, onClose }) => {
+  const { userId, userRole } = useAuth();
   const [guestCount, setGuestCount] = useState(2);
   const [customerName, setCustomerName] = useState('');
   const [notes, setNotes] = useState('');
@@ -446,10 +447,16 @@ const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ table, token, onCon
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.ok ? r.json() : [])
-      .then((users: Array<{ id: number; usuario: string; rol: string }>) =>
-        setWaiters(users.filter(u => u.rol === 'Mozo')))
+      .then((users: Array<{ id: number; usuario: string; rol: string }>) => {
+        const mozos = users.filter(u => u.rol === 'Mozo');
+        setWaiters(mozos);
+        // Si el usuario logueado es Mozo, pre-seleccionarlo
+        if (userRole === 'Mozo' && userId) {
+          setWaiterId(userId);
+        }
+      })
       .catch(() => {});
-  }, [token]);
+  }, [token, userId, userRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -512,7 +519,7 @@ const OpenSessionModal: React.FC<OpenSessionModalProps> = ({ table, token, onCon
               placeholder="Ej: Reserva cumpleaños, alergias..." rows={2}
               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none transition" />
           </div>
-          {waiters.length > 0 && (
+          {waiters.length > 0 && userRole !== 'Mozo' && (
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Mozo responsable <span className="text-gray-400 font-normal">(opcional)</span>
