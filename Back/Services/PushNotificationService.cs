@@ -18,12 +18,17 @@ namespace Back.Services
             _db = db;
             _logger = logger;
             _subject = config["Vapid:Subject"] ?? "mailto:admin@cartelito.app";
-            _publicKey = config["Vapid:PublicKey"] ?? throw new InvalidOperationException("Vapid:PublicKey not configured");
-            _privateKey = config["Vapid:PrivateKey"] ?? throw new InvalidOperationException("Vapid:PrivateKey not configured");
+            _publicKey = config["Vapid:PublicKey"] ?? string.Empty;
+            _privateKey = config["Vapid:PrivateKey"] ?? string.Empty;
+            if (string.IsNullOrEmpty(_publicKey) || string.IsNullOrEmpty(_privateKey))
+                _logger.LogWarning("Vapid keys not configured — push notifications disabled.");
         }
 
         public async Task SendToKitchenAsync(string station, string title, string body, string url = "/admin/kitchen")
         {
+            if (string.IsNullOrEmpty(_publicKey) || string.IsNullOrEmpty(_privateKey))
+                return;
+
             var subs = await _db.UserPushSubscriptions
                 .Where(s => s.Station == null || s.Station == station)
                 .ToListAsync();
