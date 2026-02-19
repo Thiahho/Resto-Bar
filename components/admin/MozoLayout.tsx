@@ -1,12 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { AdminAlertsProvider, useAdminAlerts } from "../../contexts/AdminAlertsContext";
 import { usePushNotifications } from "../../hooks/usePushNotifications";
 
+/** Detecta Android (no iOS, no desktop) */
+function isAndroid(): boolean {
+  return /Android/i.test(navigator.userAgent);
+}
+
 const MozoLayoutContent: React.FC = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [showAndroidTip, setShowAndroidTip] = useState(false);
   const {
     isSignalRConnected,
     soundEnabled,
@@ -98,13 +104,24 @@ const MozoLayoutContent: React.FC = () => {
               </button>
             )}
             {pushStatus === 'subscribed' && (
-              <button
-                onClick={unsubscribePush}
-                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-red-600 transition-colors"
-                title="Alertas en segundo plano activas — clic para desactivar"
-              >
-                🔔 Alertas ON
-              </button>
+              <>
+                <button
+                  onClick={unsubscribePush}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-red-600 transition-colors"
+                  title="Alertas en segundo plano activas — clic para desactivar"
+                >
+                  🔔 Alertas ON
+                </button>
+                {isAndroid() && (
+                  <button
+                    onClick={() => setShowAndroidTip((v) => !v)}
+                    className="px-2 py-1.5 rounded-lg text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-300 hover:bg-yellow-200 transition-colors"
+                    title="Consejos para Android"
+                  >
+                    ⚠️
+                  </button>
+                )}
+              </>
             )}
             <button
               onClick={handleLogout}
@@ -115,6 +132,24 @@ const MozoLayoutContent: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Panel de ayuda para Android: optimización de batería */}
+      {showAndroidTip && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3 text-sm text-yellow-900">
+          <p className="font-semibold mb-1">Para recibir alertas con la pantalla apagada en Android:</p>
+          <ol className="list-decimal list-inside space-y-1">
+            <li>Configuración → Aplicaciones → Chrome → Batería</li>
+            <li>Seleccioná <strong>Sin restricciones</strong> (no "Optimizada")</li>
+            <li>Configuración → Aplicaciones → Chrome → Datos → Activar datos en segundo plano</li>
+          </ol>
+          <button
+            onClick={() => setShowAndroidTip(false)}
+            className="mt-2 text-xs text-yellow-700 underline"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
 
       <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4">
         <Outlet />

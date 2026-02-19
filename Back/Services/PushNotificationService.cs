@@ -1,5 +1,6 @@
 using Back.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using WebPush;
 
@@ -12,6 +13,8 @@ namespace Back.Services
         private readonly string _subject;
         private readonly string _publicKey;
         private readonly string _privateKey;
+        // HttpClient compartido — reutilizable y thread-safe
+        private static readonly HttpClient _http = new();
 
         public PushNotificationService(AppDbContext db, IConfiguration config, ILogger<PushNotificationService> logger)
         {
@@ -37,6 +40,8 @@ namespace Back.Services
 
             var vapidDetails = new VapidDetails(_subject, _publicKey, _privateKey);
             var client = new WebPushClient();
+            client.SetVapidDetails(vapidDetails);
+
             var payload = JsonSerializer.Serialize(new { title, body, url });
             var toDelete = new List<int>();
 
@@ -45,13 +50,28 @@ namespace Back.Services
                 try
                 {
                     var pushSub = new PushSubscription(sub.Endpoint, sub.P256dh, sub.Auth);
-                    await client.SendNotificationAsync(pushSub, payload, vapidDetails);
-                }
-                catch (WebPushException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Gone
-                                                || ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    _logger.LogInformation("Push subscription expired for endpoint {Endpoint}, removing", sub.Endpoint);
-                    toDelete.Add(sub.Id);
+
+                    // Generamos el HttpRequestMessage con las cabeceras VAPID ya firmadas,
+                    // y luego añadimos Urgency:high + TTL antes de enviarlo.
+                    // Urgency:high le indica a los servidores FCM/APNS que entreguen el
+                    // mensaje incluso cuando el dispositivo está en Doze mode (pantalla apagada).
+                    var request = client.GenerateRequestDetails(pushSub, payload);
+                    request.Headers.TryAddWithoutValidation("Urgency", "high");
+                    request.Headers.TryAddWithoutValidation("TTL", "60");
+
+                    var response = await _http.SendAsync(request);
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.Gone
+                        || response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        _logger.LogInformation("Push subscription expired for endpoint {Endpoint}, removing", sub.Endpoint);
+                        toDelete.Add(sub.Id);
+                    }
+                    else if (!response.IsSuccessStatusCode)
+                    {
+                        _logger.LogWarning("Push returned {Status} for endpoint {Endpoint}",
+                            response.StatusCode, sub.Endpoint);
+                    }
                 }
                 catch (Exception ex)
                 {
