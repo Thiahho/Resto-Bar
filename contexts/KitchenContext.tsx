@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { KitchenTicket, KitchenStation, KitchenTicketStatus } from '../types';
 import { useAuth } from '../hooks/useAuth';
+import { useAdminAlerts } from './AdminAlertsContext';
 
 interface KitchenContextType {
   tickets: KitchenTicket[];
@@ -18,6 +19,10 @@ const KitchenContext = createContext<KitchenContextType | undefined>(undefined);
 
 export const KitchenProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token } = useAuth();
+  const { playAlertSound } = useAdminAlerts();
+  const playAlertSoundRef = useRef(playAlertSound);
+  useEffect(() => { playAlertSoundRef.current = playAlertSound; }, [playAlertSound]);
+
   const [tickets, setTickets] = useState<KitchenTicket[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
@@ -76,9 +81,7 @@ export const KitchenProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // Add to tickets if it matches current station filter
       if (!currentStation || ticket.station === currentStation) {
         setTickets((prev) => [ticket, ...prev]);
-
-        // Play notification sound
-        playNotificationSound();
+        playAlertSoundRef.current().catch(() => {});
       }
     });
 
@@ -218,16 +221,6 @@ export const KitchenProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     refreshTickets();
   }, [refreshTickets]);
-
-  const playNotificationSound = () => {
-    try {
-      const audio = new Audio('/notification.mp3');
-      audio.volume = 0.5;
-      audio.play().catch((e) => console.log('Could not play sound:', e));
-    } catch (error) {
-      console.log('Notification sound not available');
-    }
-  };
 
   return (
     <KitchenContext.Provider
