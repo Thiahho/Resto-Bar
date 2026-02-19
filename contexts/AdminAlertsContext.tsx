@@ -36,8 +36,9 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
 
-  // HTML5 Audio element — más confiable que Web Audio API en Android Chrome
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Persistent AudioContext — created ONCE, resumed on first user gesture.
+  // Never recreated so it stays in 'running' state after resume().
+  const audioCtxRef = useRef<AudioContext | null>(null);
   const soundUnlockedRef = useRef(false);
   const onNewOrderCallbackRef = useRef<((order: AdminOrderCreatedEvent) => void) | null>(null);
   const processedOrderIdsRef = useRef<Set<number>>(new Set());
@@ -53,57 +54,94 @@ export const AdminAlertsProvider: React.FC<AdminAlertsProviderProps> = ({ childr
     localStorage.setItem('adminOrderAlertSoundEnabled', String(soundEnabled));
   }, [soundEnabled]);
 
-  // Crear el elemento <audio> una sola vez
+  // Crear AudioContext una sola vez al montar
   useEffect(() => {
-    const audio = new Audio('/notification.wav');
-    audio.preload = 'auto';
-    audio.volume = 0.8;
-    audioRef.current = audio;
+    try {
+      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    } catch {
+      // AudioContext no soportado en este navegador
+    }
+    return () => {
+      audioCtxRef.current?.close().catch(() => {});
+    };
   }, []);
 
-  // Reproducir sonido de alerta
-  const playAlertSound = useCallback(async () => {
-    if (!soundEnabled || !audioRef.current) return;
-    try {
-      audioRef.current.currentTime = 0;
-      await audioRef.current.play();
-    } catch {
-      // Silencioso si falla (e.g. contexto suspendido en background)
-    }
-  }, [soundEnabled]);
+  // Sintetizar un ding-dong usando el AudioContext ya activo.
+  // Al no depender de ningún archivo externo, siempre funciona si ctx está running.
+  const playBell = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (!ctx || ctx.state !== 'running') return;
 
-  // Probar sonido — también desbloquea el audio en Android
-  const testSound = useCallback(() => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = 0;
-    audioRef.current.play()
+    const playNote = (freq: number, startTime: number, duration: number, volume = 0.5) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(volume, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+
+    const now = ctx.currentTime;
+    // Ding: E6 + armónico
+    playNote(1318.51, now, 0.7, 0.6);
+    playNote(2637.02, now, 0.35, 0.15);
+    // Dong: C6 + armónico (350ms después)
+    playNote(1046.50, now + 0.35, 0.7, 0.6);
+    playNote(2093.00, now + 0.35, 0.35, 0.15);
+  }, []);
+
+  // Reproducir alerta: vibración (Android, sin restricciones) + campana (si desbloqueada)
+  const playAlertSound = useCallback(async () => {
+    if (!soundEnabled) return;
+
+    // Vibración — funciona en Android sin permiso de audio ni gesto del usuario
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+
+    if (!soundUnlockedRef.current) return;
+    playBell();
+  }, [soundEnabled, playBell]);
+
+  // Desbloquear AudioContext en el primer gesto confiable del usuario.
+  // ctx.resume() es la API oficial para salir del estado 'suspended' en Chrome/Android.
+  const unlock = useCallback(() => {
+    if (soundUnlockedRef.current || !audioCtxRef.current) return;
+    audioCtxRef.current.resume()
       .then(() => {
-        if (!soundUnlockedRef.current) {
-          soundUnlockedRef.current = true;
-          setSoundUnlocked(true);
-        }
+        soundUnlockedRef.current = true;
+        setSoundUnlocked(true);
       })
       .catch(() => {});
   }, []);
 
-  // Desbloquear audio automáticamente en el primer gesto del usuario
   useEffect(() => {
-    const unlock = () => {
-      if (soundUnlockedRef.current || !audioRef.current) return;
-      audioRef.current.play()
-        .then(() => {
-          audioRef.current!.pause();
-          audioRef.current!.currentTime = 0;
-          soundUnlockedRef.current = true;
-          setSoundUnlocked(true);
-        })
-        .catch(() => {});
+    document.addEventListener('click', unlock);
+    document.addEventListener('touchend', unlock);
+    document.addEventListener('keydown', unlock);
+    return () => {
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('touchend', unlock);
+      document.removeEventListener('keydown', unlock);
     };
+  }, [unlock]);
 
-    const events = ['click', 'touchstart', 'keydown'];
-    events.forEach(e => document.addEventListener(e, unlock));
-    return () => events.forEach(e => document.removeEventListener(e, unlock));
-  }, []);
+  // Botón "Probar" — fuerza resume() + toca la campana inmediatamente
+  const testSound = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    ctx.resume()
+      .then(() => {
+        soundUnlockedRef.current = true;
+        setSoundUnlocked(true);
+        playBell();
+      })
+      .catch(() => {});
+  }, [playBell]);
 
   // Escuchar mensajes del service worker (push recibido mientras la app está abierta)
   useEffect(() => {
