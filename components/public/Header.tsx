@@ -21,7 +21,7 @@ const Header: React.FC = () => {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5277";
   const bannerSrc = banner.imageUrl
     ? `${API_URL}${banner.imageUrl}`
-    : "/images/banner2.webp";
+    : "/images/banneroperon.png";
 
   return (
     <header className="relative w-full flex justify-center">
@@ -34,7 +34,7 @@ const Header: React.FC = () => {
           className="w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
           onError={(e) => {
             // Fallback a imagen local si la URL de la BD falla
-            e.currentTarget.src = "/images/banner2.webp";
+            e.currentTarget.src = "/images/banneroperon.png";
           }}
         />
 
@@ -45,6 +45,15 @@ const Header: React.FC = () => {
 
         {/* CONTENIDO DEL BANNER */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+          {/* Logo circular */}
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-dark rounded-full shadow-2xl mb-3 overflow-hidden flex items-center justify-center">
+            <img
+              src="/images/operon2.webp"
+              alt="Logo"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
           <h1 className="text-white text-3xl md:text-4xl font-black uppercase tracking-tighter drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)]">
             {banner.title || businessInfo.name}
           </h1>

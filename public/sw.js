@@ -1,7 +1,7 @@
 // Service Worker — Cartelito Push Notifications
 
 self.addEventListener('push', (event) => {
-  let data = { title: 'Cartelito', body: '', url: '/' };
+  let data = { title: 'Operon', body: '', url: '/' };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch (_) {}
@@ -14,8 +14,8 @@ self.addEventListener('push', (event) => {
 
   const showNotif = self.registration.showNotification(data.title, {
     body: data.body,
-    icon: '/images/cartelito.webp',
-    badge: '/images/cartelito.webp',
+    icon: '/images/operon2.png',
+    badge: '/images/operon2.png',
     tag,
     silent: false,
     data: { url: data.url },

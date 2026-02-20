@@ -38,7 +38,7 @@ const InfoPage: React.FC = () => {
 
   const bannerSrc = businessInfo.banner?.imageUrl
     ? `${API_URL}${businessInfo.banner.imageUrl}`
-    : "/images/banner2.webp";
+    : "/images/banneroperon.png";
 
   return (
     <div className="min-h-screen flex flex-col font-sans">
@@ -54,7 +54,7 @@ const InfoPage: React.FC = () => {
             className="w-full h-full object-cover object-center"
             onError={(e) => {
               // Si la imagen falla, pone una genérica automáticamente
-              e.currentTarget.src = "/images/banner2.webp";
+              e.currentTarget.src = "/images/banneroperon.png";
             }}
           />
           {/* Overlay oscuro mejorado para leer el texto */}
@@ -73,7 +73,7 @@ const InfoPage: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-full p-6 text-center z-10 flex flex-col items-center">
           <div className="w-24 h-24 bg-secondary border-4 border-background rounded-full shadow-2xl mb-3 overflow-hidden flex items-center justify-center">
             <img
-              src="/images/cartelito.webp"
+              src="/images/operon2.webp"
               alt="Logo"
               className="w-full h-full object-cover"
             />

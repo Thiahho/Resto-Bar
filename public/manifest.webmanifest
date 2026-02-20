@@ -1,7 +1,7 @@
 {
-  "name": "Cartelito - Gestión",
-  "short_name": "Cartelito",
-  "description": "Panel de gestión para Cartelito Resto-Bar",
+  "name": "Operon - Gestión",
+  "short_name": "Operon",
+  "description": "Panel de gestión para Operon",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#120C0B",
@@ -9,13 +9,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/images/cartelito.webp",
+      "src": "/images/operon2.webp",
       "sizes": "192x192",
       "type": "image/webp",
       "purpose": "any maskable"
     },
     {
-      "src": "/images/cartelito.webp",
+      "src": "/images/operon2.webp",
       "sizes": "512x512",
       "type": "image/webp",
       "purpose": "any maskable"
