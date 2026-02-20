@@ -214,7 +214,7 @@ namespace Back.Controller
                     {
                         _ = _telegram.SendAsync(
                             waiter.TelegramChatId,
-                            $"Mesa {tableName}: el pedido está listo para servir 🍽️");
+                            $"Mesa: {tableName}: el pedido está listo para servir 🍽️");
                     }
                 }
 

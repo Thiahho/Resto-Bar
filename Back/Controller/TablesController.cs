@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Back.Controller
 {
@@ -214,13 +215,13 @@ namespace Back.Controller
                 }
 
                 var userId = GetUserId();
-                var userRole = User.FindFirst("role")?.Value;
 
                 // Si es un Mozo y no se especificó mozo asignado, auto-asignarse
                 var assignedWaiterId = dto.WaiterId;
-                if (assignedWaiterId == null && userRole == "Mozo")
+                if (assignedWaiterId == null && User.IsInRole("Mozo"))
                 {
                     assignedWaiterId = userId;
+                    _logger.LogInformation("Auto-asignando mozo {UserId} a la mesa {TableId}", userId, id);
                 }
 
                 var session = new TableSession
