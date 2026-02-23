@@ -1,6 +1,7 @@
 ﻿using Back.Data;
 using Back.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Org.BouncyCastle.Security;
 
 namespace Back.Services
@@ -13,13 +14,33 @@ namespace Back.Services
     public sealed class InsightsService : IInsightsService
     {
         private readonly AppDbContext _context;
-        public InsightsService(AppDbContext context)
+        private readonly IMemoryCache _cache;
+        private readonly ILogger<InsightsService> _logger;
+
+        public InsightsService(
+            AppDbContext context,
+            IMemoryCache cache,
+            ILogger<InsightsService> logger)
         {
             _context = context;
+            _cache = cache;
+            _logger = logger;
         }
 
         public async Task<DailyMetricsDto> GetDailyMetricsAsync(DateOnly date, CancellationToken ct)
         {
+            var cacheKey = $"daily_metrics_{date:yyyy-MM-dd}";
+
+            // Intentar obtener del cache
+            if (_cache.TryGetValue(cacheKey, out DailyMetricsDto? cachedMetrics) && cachedMetrics != null)
+            {
+                _logger.LogInformation("Cache HIT para métricas de {Date}", date);
+                return cachedMetrics;
+            }
+
+            _logger.LogInformation("Cache MISS para métricas de {Date}", date);
+
+            // Calcular métricas
             var tz = TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
 
             var startLocal= date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified);
@@ -102,11 +123,11 @@ namespace Back.Services
                 .Select(g => new HourlyBucketDto(
                     g.Key,
                     g.Count(),
-                    g.Where(x => x.Status == "DELIVERED").Sum(x => (long)x.TotalCents)
+                    g.Where(x => x.Status == Models.OrderStatus.DELIVERED).Sum(x => (long)x.TotalCents)
                 ))
                 .ToList();
 
-            return new DailyMetricsDto
+            var metrics = new DailyMetricsDto
             {
                 Date = date,
                 OrdersTotal = kpi.OrdersTotal,
@@ -119,6 +140,21 @@ namespace Back.Services
                 TopProducts = topProducts,
                 HourlyBuckets = hourlyBuckets
             };
+
+            // Guardar en cache con TTL dinámico
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var ttl = date == today
+                ? TimeSpan.FromMinutes(5)   // Hoy: 5 minutos (datos cambiantes)
+                : TimeSpan.FromHours(4);    // Pasado: 4 horas (datos estables)
+
+            _cache.Set(cacheKey, metrics, ttl);
+
+            _logger.LogInformation(
+                "Métricas calculadas y cacheadas para {Date} con TTL de {TTL}",
+                date,
+                ttl);
+
+            return metrics;
         }
 
     }

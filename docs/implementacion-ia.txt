@@ -1,0 +1,302 @@
+Acá tenés la lista completa, ordenada y sin agujeros. Si seguís esto, vas a tener un copiloto interno útil, seguro y controlable (y sin quemar tokens).
+
+Checklist completo para integrar IA interna (Copiloto dueño – Resumen diario)
+A. Definición del alcance (1 hora)
+
+Elegí 1 pantalla inicial: Resumen del día (ya lo decidiste).
+
+Definí qué va a mostrar sí o sí (sin IA):
+
+Pedidos totales
+
+Entregados
+
+Cancelados
+
+Recaudación (solo entregados)
+
+Ticket promedio (solo entregados)
+
+Propinas (si aplica)
+
+Items vendidos (solo entregados)
+
+Top productos (qty + $)
+
+Horas pico (buckets por hora)
+
+Definí qué puede proponer la IA:
+
+0–3 alertas
+
+1–3 recomendaciones
+
+Siempre “draft” (requiere confirmación del dueño)
+
+Definí qué NO puede hacer la IA:
+
+Nunca escribir en DB
+
+Nunca aplicar descuentos
+
+Nunca cambiar precios
+
+Nunca cancelar pedidos
+
+Nunca “inventar” números
+
+B. Preparar el backend (base sólida antes de IA) (2–4 horas)
+
+Crear DTOs:
+
+DailyMetricsDto
+
+TopProductDto
+
+HourlyBucketDto
+
+(más adelante) DailySummaryDto
+
+Crear IInsightsService + InsightsService
+
+Implementar queries solo con agregaciones (barato y confiable):
+
+KPIs del día (orders + revenue + avg ticket)
+
+Items vendidos (join orders + order_items)
+
+Top productos (group by name_snapshot)
+
+Buckets por hora (hora Argentina)
+
+Blindar el “por día” correctamente:
+
+Convertir DateOnly → ventana local Argentina → UTC
+
+Consultar DB en UTC (created_at >= startUtc && < endUtc)
+
+Endpoint de métricas:
+
+GET /api/admin/insights/daily?date=YYYY-MM-DD
+
+Seguridad:
+
+[Authorize(Roles="Admin")] o Policy equivalente
+
+Validar date (no permitir futuro, o permitir hoy máximo)
+
+C. Calidad de datos (si no hacés esto, IA te empeora todo) (1–2 horas)
+
+Confirmar que status sea consistente:
+
+DELIVERED y CANCELLED existen siempre en mayúsculas (ya lo confirmaste)
+
+Regla de negocio:
+
+Revenue y AvgTicket solo usan DELIVERED
+
+Confirmar que total_cents incluya lo que querés (descuento ya aplicado o no):
+
+si total_cents ya es final, perfecto
+
+si no, se calcula: subtotal - discount + tip (según tu lógica)
+
+Manejo de días sin ventas:
+
+devolver métricas en 0 (no nulls raros)
+
+Validar performance:
+
+índices sugeridos:
+
+orders(created_at)
+
+orders(status, created_at) si el volumen crece
+
+order_items(order_id)
+
+con esto vuela
+
+D. Meter IA de forma segura (sin alucinaciones operativas) (4–8 horas)
+
+Crear DTO de salida IA: DailySummaryDto
+
+headline
+
+highlights (3–5 bullets)
+
+alerts (0–3) con Evidence
+
+recommendations (1–3) con Evidence + OwnerAction
+
+Construir el payload mínimo para IA:
+
+NO enviar pedidos crudos
+
+enviar solo métricas agregadas + top 10 + hourly buckets
+
+Prompt con reglas duras:
+
+“No inventes datos”
+
+“Si falta info: ‘No disponible’”
+
+“Máximo 3 recomendaciones”
+
+“Cada recomendación debe citar evidencia numérica del JSON”
+
+“Respuesta en JSON válido (schema estricto)”
+
+Endpoint IA:
+
+POST /api/admin/insights/daily/summary con body { date }
+
+Validación en backend (obligatoria):
+
+Parseo JSON estricto
+
+Máximo 3 recomendaciones
+
+Evidence debe contener números presentes en métricas (o referencia directa a campos)
+
+Si falla:
+
+Reintento 1 vez con “corrigí / devolvé solo lo evidenciable”
+
+Si falla de nuevo: fallback sin IA (solo métricas)
+
+Auditoría (para control y debugging real):
+
+guardar: usuario, date, input_hash, model, tokens, output, success/error
+
+usar tu audit_logs o tabla propia
+
+E. Control de costos (para que tokens no te asusten) (1–2 horas)
+
+Cache de métricas por día:
+
+TTL 5–10 min si es “hoy”
+
+si es día pasado: cache largo (horas o permanente)
+
+Cache del resumen IA por día:
+
+“Resumen del 2026-02-21” se genera una vez
+
+Modelo chico para resumen:
+
+el resumen es redacción, no análisis pesado
+
+Limitar salida:
+
+1 headline
+
+5 bullets máximo
+
+3 recomendaciones máximo
+
+Limitar frecuencia:
+
+botón “Generar resumen” (manual)
+
+o auto 1 vez al cerrar el día
+
+Medir costo:
+
+tokens por request
+
+costo estimado
+
+requests por día
+
+si no medís, no controlás
+
+F. UI Admin (lo mínimo que la hace vendible) (4–8 horas)
+
+Pantalla “Resumen diario”:
+
+selector de fecha
+
+Cards de métricas
+
+sección de top productos
+
+gráfico/tabla por hora
+
+Sección “IA – Resumen”:
+
+highlights
+
+alertas (severidad)
+
+recomendaciones (con botón “Confirmar / Aplicada”)
+
+Acciones siempre humanas:
+
+“Aplicar recomendación” = registrar una acción (audit) + ejecutar un cambio solo si el dueño confirma
+
+la IA jamás ejecuta sola
+
+G. Hardening para producción (lo que te diferencia de un amateur) (2–6 horas)
+
+Timeouts y retries:
+
+timeout de llamada IA
+
+retry máximo 1
+
+Rate limit:
+
+evitar que un admin spamee el endpoint
+
+Observabilidad:
+
+logs estructurados
+
+latencia DB vs IA
+
+Seguridad:
+
+no mandar PII a IA
+
+no guardar secretos en logs
+
+Versionado de prompts:
+
+guardá prompt_version en auditoría
+
+Tests mínimos:
+
+día sin ventas
+
+día con ventas y cancelaciones
+
+top productos
+
+hourly buckets
+
+validación IA (JSON inválido → fallback)
+
+Las 7 cosas que más suelen romper esto (no las ignores)
+
+Timezone mal ⇒ el “por día” queda corrido.
+
+Usar revenue con pedidos no entregados ⇒ métricas falsas.
+
+Mandar demasiado contexto a IA ⇒ caro y peor.
+
+No validar salida IA ⇒ alucinaciones y vergüenza.
+
+Sin auditoría ⇒ no podés mejorar ni defenderte.
+
+Sin cache ⇒ pagás tokens al pedo.
+
+Intentar n8n antes del core ⇒ dispersión y sistema frágil.
+
+Tu próxima acción (1 sola, concreta)
+
+Implementá solo esta parte hoy:
+
+GET /api/admin/insights/daily?date=... con métricas reales + top productos + hourly.
+
+Cuando eso esté funcionando, recién ahí metemos IA encima (porque si no, estás construyendo sobre arena).

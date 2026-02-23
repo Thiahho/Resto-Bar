@@ -1,4 +1,5 @@
 using Back.Data;
+using Back.HealthChecks;
 using Back.Hubs;
 using Back.Middleware;
 using Back.Services;
@@ -19,9 +20,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
         .UseSnakeCaseNamingConvention());
 
+builder.Services.AddMemoryCache();
+
 builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<PushNotificationService>();
+builder.Services.AddScoped<IInsightsService, InsightsService>();
+builder.Services.AddScoped<IIAInsightsService, IAInsightsService>();
 builder.Services.AddHttpClient<ITelegramService, TelegramService>();
+
+// Configurar Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>()
+    .AddCheck<OpenAIHealthCheck>("openai");
 
 // Configurar límite de tamaño de archivos (10MB)
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
@@ -188,6 +198,15 @@ builder.Services.AddRateLimiter(options =>
         opt.QueueLimit = 2;
     });
 
+    // Política para endpoints de IA (muy restrictiva por costos)
+    options.AddFixedWindowLimiter("ai", opt =>
+    {
+        opt.PermitLimit = 10; // 10 requests
+        opt.Window = TimeSpan.FromMinutes(15); // cada 15 minutos
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = 0; // No encolar requests
+    });
+
     // Política por defecto - EXCLUIR SignalR
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
@@ -269,4 +288,5 @@ app.UseOutputCache();
 
 app.MapControllers();
 app.MapHub<AdminOrdersHub>("/hubs/admin-orders");
+app.MapHealthChecks("/health");
 app.Run();
