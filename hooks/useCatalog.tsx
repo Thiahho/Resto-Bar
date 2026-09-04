@@ -43,7 +43,7 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const CACHE_KEY = "resto_catalog_cache";
-  const CACHE_TTL = 2 * 60 * 1000; // 2 minutos
+  const CACHE_TTL = 2 * 60 * 1000; // 2 minutos: tiempo antes de revalidar en segundo plano
 
   const applyData = (data: any) => {
     const {
@@ -77,9 +77,10 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
   const fetchData = async () => {
     let hasCache = false;
 
-    // 1. Intentar servir desde sessionStorage inmediatamente
+    // 1. Intentar servir desde localStorage inmediatamente (sobrevive a pestañas
+    // nuevas y cierres del navegador, no solo a la navegación dentro de la misma sesión)
     try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
+      const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const { data, timestamp } = JSON.parse(cached);
         const age = Date.now() - timestamp;
@@ -92,7 +93,7 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
         // Caché expirada: mostrar datos y revalidar silenciosamente
       }
     } catch {
-      // sessionStorage no disponible — fetch normal
+      // localStorage no disponible — fetch normal
     }
 
     // 2. Fetch del servidor (con spinner solo si no hay caché)
@@ -101,9 +102,9 @@ export const CatalogProvider: React.FC<{ children: ReactNode }> = ({
       const response = await apiClient.get("/api/public/catalog");
       applyData(response.data);
       try {
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: response.data, timestamp: Date.now() }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: response.data, timestamp: Date.now() }));
       } catch {
-        // sessionStorage lleno o no disponible
+        // localStorage lleno o no disponible
       }
     } catch (error) {
       // console.error("Failed to fetch catalog data", error);

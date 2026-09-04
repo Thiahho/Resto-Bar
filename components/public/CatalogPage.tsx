@@ -20,12 +20,35 @@ const CatalogPage: React.FC = () => {
   );
 
   useEffect(() => {
+    const CACHE_KEY = "resto_combos_cache";
+    const CACHE_TTL = 2 * 60 * 1000; // 2 minutos, igual que el catálogo
+
     const loadCombos = async () => {
+      let hasCache = false;
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          hasCache = true;
+          setCombos(data);
+          if (Date.now() - timestamp < CACHE_TTL) return; // Caché fresca: no refetch
+        }
+      } catch {
+        // localStorage no disponible — fetch normal
+      }
+
       try {
         const data = await api.get<Combo[]>("/api/public/combos");
         setCombos(data);
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ data, timestamp: Date.now() }));
+        } catch {
+          // localStorage lleno o no disponible
+        }
       } catch (error) {
-        // console.error("Error loading combos:", error);
+        if (!hasCache) {
+          // console.error("Error loading combos:", error);
+        }
       }
     };
     loadCombos();
